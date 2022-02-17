@@ -1,14 +1,9 @@
 const express = require('express');
 const app = express();
 const mysql = require('mysql');
+const fs = require('fs');
 
-const mysqlConfig = {
-    host: 'localhost',
-    port: 3306,
-    user: 'magma',
-    password: 'lmy030405',
-    database: 'dev'
-}
+const config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
 
 function handleError(err) {
     if (err) {  // 如果是连接断开，自动重新连接
@@ -18,7 +13,7 @@ function handleError(err) {
 }
 
 function connect() {
-    connection = mysql.createConnection(mysqlConfig);
+    connection = mysql.createConnection(config);
     connection.connect(handleError);
     connection.on('error', handleError);
 }
@@ -26,11 +21,19 @@ function connect() {
 connect()
 
 app.get(`/v1/view/add/*`, (req, res) => { // 新增点击量
-    viewsHandler(req, res, true)
+    try {
+        viewsHandler(req, res, true)
+    } catch (error) {
+        console.error(error);
+    }
 });
 
 app.get('/v1/view/get/*', (req, res) => { // 查询点击量
-    viewsHandler(req, res, false)
+    try {
+        viewsHandler(req, res, false)
+    } catch (error) {
+        console.error(error);
+    }
 })
 
 
@@ -40,7 +43,7 @@ function viewsHandler(req, res, update) { // 处理点击量请求
     res.header("access-control-allow-methods", "*")
     res.header("Access-Control-Allow-Credentials", "true")
     res.header("Content-Type", "application/json");
-    
+
     let nowTime = new Date().toLocaleString(); // 获取当前时间
     console.log('=================================');
     console.log(`[传入请求] ${req.ip} ${req.method} ${req.url} [${nowTime}]`);
