@@ -29,7 +29,7 @@ app.all('/*', async function (req, res, next) {
     res.header('Access-Control-Allow-Methods', '*');
     res.header('Content-Type', 'application/json');
     let nowTime = new Date().toLocaleString(); // 获取当前时间
-    console.log(`\n[传入请求] ${req.ip} ${req.method} ${req.url} [${nowTime}]`);
+    console.log(`[传入请求] [${req.headers['x-real-ip']}] ${req.method} ${req.url} [${nowTime}]`);
     next();
 });
 
