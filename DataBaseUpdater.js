@@ -31,6 +31,8 @@ axios.get(`https://dav.5t5.top/api/v3/share/list/${shareId}/`).then(ret => { // 
                                 objects[i].month = objects[i].path.split('/')[2];
                                 objects[i].bgmid = objects[i].name.match("\\d+$")[0];
                                 objects[i].name = objects[i].name.replace('\'', '\\\'');
+                                objects[i].title = objects[i].name.replace(objects[i].bgmid, '');
+                                objects[i].title = objects[i].title.slice(0, objects[i].title.length - 1)
 
                                 // 查询数据库中是否存在该 ID 的数据
                                 selectSql = `SELECT * FROM anime WHERE id = '${objects[i].id}'`
@@ -39,7 +41,7 @@ axios.get(`https://dav.5t5.top/api/v3/share/list/${shareId}/`).then(ret => { // 
                                     if (error) throw error;
                                     // 如果查询结果为空，则插入数据
                                     if (results.length == 0) {
-                                        insertSql = `INSERT INTO anime (id, bgmid, name, year, month, views) VALUES ('${objects[i].id}', '${objects[i].bgmid}', '${objects[i].name}', '${objects[i].year}', '${objects[i].month}', 0)`
+                                        insertSql = `INSERT INTO anime (id, bgmid, name, year, month, views, title) VALUES ('${objects[i].id}', '${objects[i].bgmid}', '${objects[i].name}', '${objects[i].year}', '${objects[i].month}', 0, ${objects[i].title})`
                                         connection.query(insertSql, function (error, results) {
                                             if (error) throw error;
                                             console.log(`未发现 ${objects[i].id} 对应的记录，全新插入了一条相关记录: `, results);
@@ -55,7 +57,7 @@ axios.get(`https://dav.5t5.top/api/v3/share/list/${shareId}/`).then(ret => { // 
                                         //         console.log(results);
                                         //     });
                                         // }
-                                        updateSql = `UPDATE anime SET bgmid = '${objects[i].bgmid}', name = '${objects[i].name}', year = '${objects[i].year}', month = '${objects[i].month}' WHERE id = '${objects[i].id}'`
+                                        updateSql = `UPDATE anime SET bgmid = '${objects[i].bgmid}', name = '${objects[i].name}', year = '${objects[i].year}', month = '${objects[i].month}', title = '${objects[i].title}' WHERE id = '${objects[i].id}'`
                                         connection.query(updateSql, function (error, results) {
                                             if (error) throw error;
                                             console.log(`更新了 ${objects[i].id} 对应的记录: `, results);
