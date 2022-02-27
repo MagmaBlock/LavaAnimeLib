@@ -41,7 +41,7 @@ axios.get(`https://dav.5t5.top/api/v3/share/list/${shareId}/`).then(ret => { // 
                                     if (error) throw error;
                                     // 如果查询结果为空，则插入数据
                                     if (results.length == 0) {
-                                        insertSql = `INSERT INTO anime (id, bgmid, name, year, month, views, title) VALUES ('${objects[i].id}', '${objects[i].bgmid}', '${objects[i].name}', '${objects[i].year}', '${objects[i].month}', 0, ${objects[i].title})`
+                                        insertSql = `INSERT INTO anime (id, bgmid, name, year, month, views, title) VALUES ('${objects[i].id}', '${objects[i].bgmid}', '${objects[i].name}', '${objects[i].year}', '${objects[i].month}', 0, '${objects[i].title}')`
                                         connection.query(insertSql, function (error, results) {
                                             if (error) throw error;
                                             console.log(`未发现 ${objects[i].id} 对应的记录，全新插入了一条相关记录: `, results);
