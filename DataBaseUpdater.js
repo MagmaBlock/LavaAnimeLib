@@ -2,9 +2,9 @@ const axios = require('axios');
 const mysql = require('mysql');
 const fs = require('fs');
 
-const config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
+const config = require('./common/config');
 
-var connection = mysql.createConnection(config);
+var connection = mysql.createConnection(config.mysql);
 
 const shareId = 'jqMFl';
 
