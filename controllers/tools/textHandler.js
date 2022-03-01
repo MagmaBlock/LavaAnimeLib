@@ -15,7 +15,9 @@ function idHandler(id) {
             console.error(`[异常警告] 请求中包含SQL关键字`);
             return id = undefined
         }
-        return id;
+        else {
+            return id;
+        }
     }
 }
 
@@ -30,8 +32,11 @@ function textHandler(text) {
         }
         if (text.match(/\'|\"|\`|\<|\>|\=|\*|\\|\?/)) {
             console.error(`[解析错误] 请求中包含特殊字符`);
+            return text = undefined
         }
-        return text;
+        else {
+            return text;
+        }
     }
 }
 
