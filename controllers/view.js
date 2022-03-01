@@ -1,8 +1,15 @@
-const { idHandler } = require("./idHandler");
+const { textHandler } = require("./tools/textHandler");
+
+function addView (req, res){
+    viewsHandler(req, res, true);
+}
+function getView (req, res){
+    viewsHandler(req, res, false);
+}
 
 function viewsHandler(req, res, update) { // 处理播放量请求
 
-    let id = idHandler(req.params[0]); // 调用函数验证 ID
+    let id = textHandler(req.params[0]); // 调用函数验证 ID
     if (id == undefined) { // 如果 ID 不正常，则返回错误
         let response = { code: 400, message: '提供的 ID 有误、不合法或未提供!', data: '' };
         res.send(JSON.stringify(response));
@@ -21,9 +28,7 @@ function viewsHandler(req, res, update) { // 处理播放量请求
             console.error('[发送错误]', response);
         })
     }
-
 }
-
 
 
 // 新增播放量
@@ -33,7 +38,7 @@ function getViews(id, update) {
         selectSql = `SELECT * FROM anime WHERE id = '${id}'`
         // console.log('[SQL查询]', selectSql);
         // 执行查询
-        connection.query(selectSql, function (error, results) {
+        db.query(selectSql, function (error, results) {
             if (error) throw error;
             let thisAnime = results
             if (results.length == 0) { // 如果数据库未查询到该 ID 的记录
@@ -44,7 +49,7 @@ function getViews(id, update) {
                     let newViews = parseInt(results[0].views) + 1; // 新的播放量
                     updateSql = `UPDATE anime SET views = '${newViews}' WHERE id = '${id}'`
                     // console.log('[SQL查询]', updateSql);
-                    connection.query(updateSql, function (error, results) {
+                    db.query(updateSql, function (error, results) {
                         if (error) throw error;
                         else {
                             console.log(`[新增播放] 新增了播放量 [${thisAnime[0].id}] ${thisAnime[0].name} => ${newViews} !`); // 打印更新后的播放量
@@ -61,4 +66,7 @@ function getViews(id, update) {
     })
 }
 
-module.exports = viewsHandler;
+module.exports = {
+    addView,
+    getView
+}
