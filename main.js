@@ -1,6 +1,7 @@
 // 引用库
 const express = require('express');
 const bodyParser = require('body-parser');
+const cron = require("node-cron"); // 定时任务
 // 引用全局脚本
 require('./common/sql');
 // 创建服务器
