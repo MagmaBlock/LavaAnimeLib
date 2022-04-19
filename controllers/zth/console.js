@@ -8,7 +8,6 @@ function runConmand(req, res) {
     if (req.headers['x-real-ip']) { // 兼容nginx代理
         ip = req.headers['x-real-ip']
     }
-
     let command = req.body.command; // 获取客户端传入的命令或批量命令
 
     if (typeof command == 'string') { // 如果是字符串，说明是单条命令

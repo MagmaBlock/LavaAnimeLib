@@ -3,61 +3,90 @@
 */
 
 const { idHandler, textHandler } = require('./tools/textHandler');
-const orderMonth = require('./tools/orderMonth');
+const orderType = require('./tools/orderType');  // 引入排序器
+
+// require('../common/sql'); // For Debug
 
 function getYearList(req, res) { // 获取年份列表
-    db.query(`SELECT \`year\` FROM anime GROUP BY \`year\` ORDER BY \`year\` DESC`, function (error, results) {
-        if (error) throw error;
-        if (results.length) {
-            let yearList = [];
-            for (i in results) {
-                yearList.push(results[i].year);
+    db.query(
+        `SELECT \`year\` FROM anime GROUP BY \`year\` ORDER BY \`year\` DESC`,
+        function (error, results) {
+            if (error) throw error;
+            if (results.length > 0) {
+                let yearList = new Array(); // 新建年份列表
+                for (i in results) yearList.push(results[i].year); // 将年份添加到列表
+                let response = { code: 0, data: yearList }; // 将列表发送给客户端
+                res.send(JSON.stringify(response));
             }
-            let response = { code: 0, data: yearList };
-            res.send(JSON.stringify(response));
+            else {
+                let response = { code: 400, data: '没有找到相关数据' };
+                res.send(JSON.stringify(response));
+            }
         }
-    })
+    )
 }
 
-function getMonthList(req, res) { // 获取对应年的月份(季度/类型列表)
-    let year = textHandler(req.params[0])
-    console.log(year);
-    if (year == undefined) { // 如果年份不正常，则返回错误
-        let response = { code: 400, message: '提供的年份有误、不合法或未提供!', data: '' };
-        res.send(JSON.stringify(response));
-        console.log('[发送错误]', response);
-    }
-    else {
-        db.query(`SELECT \`month\` FROM anime WHERE \`year\` = '${year}' GROUP BY \`month\` ORDER BY \`month\``, function (error, results) {
+function getTypeList(req, res) { // 获取对应年的月份(季度/类型列表)
+    let reqYear = req.params[0]; // 客户端请求的年份
+    db.query(
+        'SELECT * FROM anime WHERE year = ? ORDER BY ?',
+        [reqYear, 'type'],
+        function (error, results) {
+            if (error) throw error;
+            if (results.length > 0) {
+                let typeList = new Array();
+                for (i in results) {
+                    typeList.push(results[i].type);
+                }
+                let response = { code: 0, data: orderType(typeList) };
+                res.send(JSON.stringify(response));
+            }
+            else {
+                let response = { code: 400, data: '没有找到相关数据' };
+                res.send(JSON.stringify(response));
+            }
+
+        })
+}
+
+
+function getAnimeList(req, res) { // 获取对应年份和类型下的所有动画
+    let index = req.body;
+    let reqYear = index.year;
+    let reqType = index.type;
+    db.query(
+        'SELECT * FROM anime WHERE year = ? AND type = ? AND deleted = 0 ORDER BY views DESC',
+        [reqYear, reqType],
+        function (error, results) {
+            if (error) throw error;
+            let animeList = results
+            let response = { code: 0, data: animeList };
+            res.send(JSON.stringify(response));
+        }
+    )
+
+}
+
+function getAllTypeList(req, res) { // 获取所有类型列表
+    db.query(
+        `SELECT \`type\` FROM anime GROUP BY \`type\``,
+        function (error, results) {
             if (error) throw error;
             if (results.length) {
-                let monthList = [];
+                let typeList = new Array();
                 for (i in results) {
-                    monthList.push(results[i].month);
+                    typeList.push(results[i].type);
                 }
-                let response = { code: 0, data: orderMonth(monthList) };
+                let response = { code: 0, data: orderType(typeList) };
                 res.send(JSON.stringify(response));
             }
         })
-    }
 }
 
-function getAllMonthList(req, res) {
-    db.query(`SELECT \`month\` FROM anime GROUP BY \`month\` ORDER BY \`month\``, function (error, results) {
-        if (error) throw error;
-        if (results.length) {
-            let monthList = [];
-            for (i in results) {
-                monthList.push(results[i].month);
-            }
-            let response = { code: 0, data: orderMonth(monthList) };
-            res.send(JSON.stringify(response));
-        }
-    })
-}
 
 module.exports = {
     getYearList,
-    getMonthList,
-    getAllMonthList
+    getTypeList,
+    getAnimeList,
+    getAllTypeList
 }
