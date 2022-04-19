@@ -1,6 +1,6 @@
 const order = ["1月冬", "4月春", "7月夏", "10月秋", "剧场版", "其他地区", "三次元", "SP、OVA、OAD等", "OST、MV、LIVE等"]
 
-function orderMonth(array) {
+function orderType(array) {
     if (!array) return []
     let array1 = [] // 拿来排序的数组
     for (i in array) {
@@ -14,4 +14,4 @@ function orderMonth(array) {
     return array2
 }
 
-module.exports = orderMonth
+module.exports = orderType
