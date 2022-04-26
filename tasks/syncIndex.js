@@ -7,7 +7,7 @@ const axios = require('axios');
 
 syncDB();
 
-function syncDB(){
+function syncDB() {
     getYearIndex()
 }
 
@@ -63,7 +63,10 @@ function getAnimeIndex(thisYearName, thisTypeName) {
     })
 }
 
-checkDB()
+setTimeout(() => {
+    checkDB();
+    console.log("[同步] 完成，开始检查是否有番剧被删除");
+}, 5000);
 
 function checkDB() {
     // 先检查数据库里有多少年份
@@ -135,7 +138,12 @@ function checkDB() {
     }
 }
 
-cutBgmId();
+setTimeout(() => {
+    console.log("[检查] 完成，开始分割文件夹名称");
+    cutBgmId();
+}, 10000);
+
+
 function cutBgmId() {
     db.query(
         'SELECT * FROM anime WHERE bgmid is null',
@@ -151,7 +159,7 @@ function cutBgmId() {
                     'UPDATE anime SET bgmid = ?, title = ? WHERE id = ?',
                     [thisAnimeBgmId, thisAnimeTitle, thisAnimeId],
                     function (error, result) {
-                        console.log(`分割番剧名: ${thisAnimeTitle} - ${thisAnimeBgmId}`);
+                        console.log(`成功分割番剧名: ${thisAnimeTitle} - ${thisAnimeBgmId}`);
                     }
                 )
             }
@@ -159,7 +167,11 @@ function cutBgmId() {
     )
 }
 
-insertBgmId()
+setTimeout(() => {
+    console.log("[分割] 完成，开始更新番剧信息表");
+    insertBgmId()
+}, 15000);
+
 function insertBgmId() { // 从 anime 表读取数据，向 bangumi_data 表插入新的 Bangumi ID。
     db.query(
         'SELECT bgmid FROM anime where deleted = \'0\'',
@@ -187,9 +199,12 @@ function insertBgmId() { // 从 anime 表读取数据，向 bangumi_data 表插�
     )
 }
 
+setTimeout(() => {
+    console.log("[更新] 完成，开始更新 Bangumi 数据");
+    updataAllBgm()
+}, 20000);
 
 
-// updataAllBgm()
 function updataAllBgm() { // 更新和 Bangumi API 相关的数据 (但不含相关番剧信息)
     db.query(
         'SELECT id,bgmid FROM anime',
@@ -209,10 +224,16 @@ function updataAllBgm() { // 更新和 Bangumi API 相关的数据 (但不含相
                             let thisAnimePoster = bgmData.images.large.replace("lain.bgm.tv", "anime-img.5t5.top") + '/poster'; // 处理海报地址
                             let thisAnimeNSFW = bgmData.nsfw // 是否是 NSFW 的番剧
                             db.query( // 更新数据库
-                                'UPDATE anime SET poster = ? nsfw = ? WHERE id = ?',
+                                'UPDATE anime SET poster = ?, nsfw = ? WHERE id = ?',
                                 [thisAnimePoster, thisAnimeNSFW, thisId],
                                 function (error, result) {
-                                    console.log(`从番组计划 API 更新番剧数据: la${thisId} => ${thisAnimePoster}, nsfw: ${thisAnimeNSFW}`);
+                                    // console.log(result);
+                                    if (result.message.match('Rows matched: 1  Changed: 1')) {
+                                        console.log(`更新了新的番剧数据: la${thisId} => ${thisAnimePoster}, nsfw: ${thisAnimeNSFW}`);
+                                    }
+                                    else {
+                                        console.log(`UPDATE la${thisId} 结果 ${result.message}`);
+                                    }
                                 }
                             )
                         }
@@ -227,7 +248,7 @@ function updataAllBgm() { // 更新和 Bangumi API 相关的数据 (但不含相
 
 function getBgm(bgmId, callback, executeTime) { // 获取 Bangumi 数据并返回的函数, 自带异步延迟
     setTimeout(() => { // 异步延迟执行
-        console.log(`在 ${executeTime}ms 后执行了 bgm${bgmId} 的抓取`);
+        // console.log(`在 ${executeTime}ms 后执行了 bgm${bgmId} 的抓取`);
 
         if (bgmId == 0) { // 如果 Bangumi ID 是 000000 或者不存在，直接填占位图
             callback([]);
@@ -248,8 +269,12 @@ function getBgm(bgmId, callback, executeTime) { // 获取 Bangumi 数据并返�
     }, executeTime);
 }
 
+setTimeout(() => {
+    console.log("[更新] 完成，开始更新番剧关联信息");
+    updataRelations()
+}, 60000);
 
-// updataRelations()
+
 function updataRelations() { // 获取关联番剧数据
     db.query(
         'SELECT bgmid FROM anime', // 获取 bangumi_data 表的所有 Bangumi ID
@@ -269,7 +294,12 @@ function updataRelations() { // 获取关联番剧数据
                             'UPDATE bangumi_data SET relations_anime = ? WHERE bgmid = ?',
                             [thisBgmRelationsJSON, thisBgmId],
                             function (error, result) {
-                                if (bgmRelations.length > 0) console.log(`抓取并更新了 bgm${thisBgmId} 的 ${bgmRelations.length} 条关联番剧数据`);
+                                if (result.message.match('Rows matched: 1  Changed: 1')) {
+                                    if (bgmRelations.length > 0) console.log(`抓取并更新了 bgm${thisBgmId} 的 ${bgmRelations.length} 条关联番剧数据`);
+                                }
+                                else{
+                                    console.log(`UPDATE bgm${thisBgmId} 的关联番剧结果 ${result.message}`);
+                                }
                             }
                         )
 
@@ -283,7 +313,7 @@ function updataRelations() { // 获取关联番剧数据
 
 function getBgmRelations(bgmId, bgmIdList, callback, executeTime) { // 获取 Bangumi 关联番剧的函数
     setTimeout(() => { // 异步延迟执行
-        console.log(`在 ${executeTime}ms 后执行了 bgm${bgmId} 的关联抓取`);
+        // console.log(`在 ${executeTime}ms 后执行了 bgm${bgmId} 的关联抓取`);
         if (bgmId == 0) { // 如果 Bangumi ID 是 000000 或者不存在，直接回复空数组
             callback([]);
             return
@@ -296,7 +326,7 @@ function getBgmRelations(bgmId, bgmIdList, callback, executeTime) { // 获取 Ba
                     if (relationsData[i].type == 2) { // 找出来是动画的作品
                         for (let j = 0; j < bgmIdList.length; j++) { // 遍历 Bangumi ID List，找出来番剧库内有的作品
                             if (relationsData[i].id == bgmIdList[j]) { // 如果找到了
-                                console.log(`找到了 bgm${bgmId} 的关联库内相关番剧: bgm${relationsData[i].id}`);
+                                // console.log(`找到了 bgm${bgmId} 的关联库内相关番剧: bgm${relationsData[i].id}`);
                                 animeRelationsResults.push(relationsData[i])
                                 break
                             }
