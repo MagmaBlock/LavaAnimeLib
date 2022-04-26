@@ -33,7 +33,7 @@ function getAnimesByIds(req, res) { // 根据id获取动画信息, POST 批量�
     }
     else{
         db.query(
-            'SELECT * FROM anime WHERE id IN (?)',
+            'SELECT * FROM anime WHERE id IN (?) AND deleted = 0 ORDER BY views DESC',
             [idList],
             function (error, results) {
                 if (results.length > 0) {
