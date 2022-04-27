@@ -37,7 +37,7 @@ function getViews(id, update) {
         // 查询数据库中是否存在该 ID 的记录
         // 执行查询
         db.query(
-            `SELECT * FROM anime WHERE id = ?`,
+            `SELECT * FROM anime WHERE id = ? AND deleted = 0`,
             [id],
             function (error, results) {
                 if (error) throw error;
@@ -50,7 +50,7 @@ function getViews(id, update) {
                     if (update) { // 如果需要更新播放量
                         let newViews = parseInt(results[0].views) + 1; // 新的播放量
                         db.query(
-                            'UPDATE anime SET views = ? WHERE id = ?',
+                            'UPDATE anime SET views = ? WHERE id = ? AND deleted = 0',
                             [newViews, id],
                             function (error, results) {
                                 if (error) throw error;
