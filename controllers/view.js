@@ -1,5 +1,3 @@
-const { textHandler } = require("./tools/textHandler");
-
 function addView(req, res) {
     viewsHandler(req, res, true);
 }
