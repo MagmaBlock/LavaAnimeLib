@@ -2,7 +2,6 @@
     索引页 API
 */
 
-const { idHandler, textHandler } = require('./tools/textHandler');
 const orderType = require('./tools/orderType');  // 引入排序器
 
 // require('../common/sql'); // For Debug

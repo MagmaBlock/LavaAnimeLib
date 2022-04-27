@@ -26,7 +26,6 @@ app.all('/*', async function (req, res, next) {
 
 app.use(`/v1/search`, require('./routes/search')); // 搜索
 app.use(`/v1/view`, require('./routes/view')); // 播放量
-app.use(`/v1/file`, require('./routes/file')); // 文件
 app.use(`/v1/index`, require('./routes/index')); // 索引页
 app.use(`/v1/zth`, require('./routes/zth')); // Zth API，和番剧库无关
 app.use(`/v1/anime`, require('./routes/anime')); // 动画信息
