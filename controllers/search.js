@@ -1,7 +1,7 @@
 function searchByBgmId(req, res) {
     let id = req.params[0]; // 请求的ID
     db.query(
-        `SELECT * FROM anime WHERE bgmid = ?`,
+        `SELECT * FROM anime WHERE bgmid = ? AND deleted = 0 ORDER BY views DESC`,
         [id],
         function (error, results) {
             if (error) throw error;

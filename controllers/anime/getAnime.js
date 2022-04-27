@@ -8,7 +8,7 @@ function getAnimeById(req, res) { // 根据id获取动画信息
     }
 
     db.query(
-        'SELECT * FROM anime WHERE id = ?',
+        'SELECT * FROM anime WHERE id = ? AND deleted = 0',
         [reqId],
         function (error, results) {
             if (results.length > 0) {
@@ -59,7 +59,7 @@ function getAnimeByBgmID(req, res) { // 根据bgmid获取动画信息
     }
 
     db.query(
-        'SELECT * FROM anime WHERE bgmid = ?',
+        'SELECT * FROM anime WHERE bgmid = ? AND deleted = 0 ORDER BY views DESC',
         [reqBgmId],
         function (error, results) {
             if (results.length > 0) {

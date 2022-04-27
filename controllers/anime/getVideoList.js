@@ -12,7 +12,7 @@ function getVideoList(req, res) {
         return;
     }
     db.query(
-        'SELECT * FROM anime WHERE id = ?',
+        'SELECT * FROM anime WHERE id = ? AND deleted = 0',
         [reqId],
         function (error, result) {
             if (result.length == 0) {
