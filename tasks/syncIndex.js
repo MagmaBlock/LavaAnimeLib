@@ -24,12 +24,14 @@ function getIndexByDir(path) { // 异步获取文件夹列表并返回
 
 doEverything()
 async function doEverything() {
-    // await updateIndex(); // 从 Alist 刷新索引，比较耗时
+    await updateIndex(); // 从 Alist 刷新索引，比较耗时
     await cutBgmId(); // 分割番剧名和ID  一瞬间
     await insertBgmId(); // 把 anime 表的 bgmId 同步到 bangumi_data 表
-    // await updateBgmSubjectsData(); // 升级 bangumi_data 表的 Subjects 数据，同时顺便更新 anime 表的 Poster，也很耗时
+    await updateBgmSubjectsData(); // 升级 bangumi_data 表的 Subjects 数据，同时顺便更新 anime 表的 Poster，也很耗时
     await updataRelations(); // 刷新获取关联番剧的数据
-
+    console.log("[同步] 全部完成, 将于 10 秒后关闭");
+    await Delay(10000);
+    db.end();
 }
 
 function updateIndex() { // 更新索引
@@ -263,6 +265,8 @@ function updateBgmSubjectsData() { // 升级 bangumi_data 表的 Bangumi 主题�
             })();
             await Delay(100);
         }
+
+        resolve('success');
 
     })
 
