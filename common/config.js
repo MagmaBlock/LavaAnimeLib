@@ -15,5 +15,8 @@ module.exports = {
         host: "https://share.5t5.top",
         password: "1",
         root: "/1A/LavaAnimeLib"
+    },
+    bangumi: {
+        host: "https://bgm-api.5t5.top"
     }
 }

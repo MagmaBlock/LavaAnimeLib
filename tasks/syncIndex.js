@@ -2,382 +2,318 @@
 
 require('../common/sql'); // For Debug
 
+const config = require('../common/config');
+
 const getPath = require('../controllers/tools/alistGetPath');
+const getPathAsync = require('../controllers/tools/alistGetPathAsync').getPathAsync;
+const dbQueryAsync = require('../controllers/tools/dbQuery').dbQueryAsync;
 const axios = require('axios');
 
-syncDB();
-
-function syncDB() {
-    getYearIndex()
-}
-
-function getYearIndex() {
-    getPath("", (files) => { // 从Alist获取年份列表
-        let yearIndex = new Array()
-        for (let i = 0; i < files.length; i++) {
-            if (files[i].type == 1) { // 如果是文件夹再加入年份列表
-                yearIndex.push(files[i].name)
+function getIndexByDir(path) { // 异步获取文件夹列表并返回
+    return new Promise(async (resolve, reject) => {
+        let dirs = await getPathAsync(path); // 获取文件夹列表
+        for (let i = 0; i < dirs.length; i++) { // 遍历，删除不是文件夹的信息
+            if (dirs[i].type !== 1) {
+                console.log(`忽略非文件夹信息: ${dirs[i].name}`);
+                dirs.splice(i, 1); // 删除不是文件夹的信息
             }
         }
-        if (yearIndex.length != 0) { // 如果成功得到年份列表
-            console.log(`[同步] 年份列表获取成功，共 ${yearIndex.length} 个年份`);
-            getTypeIndex(yearIndex); // 把年份索引传入 getTypeIndex 进行下一步
-        }
+        resolve(dirs); // 返回文件夹列表
     })
 }
 
-function getTypeIndex(yearIndex) { // 获取年份列表下的类型列表
-    for (let i = 0; i < yearIndex.length; i++) {
-        let thisYearName = yearIndex[i]
-        getPath("/" + thisYearName, (files) => { // 获取 /20xx年 下的所有类型
-            for (let j = 0; j < files.length; j++) {
-                if (files[j].type == 1) { // 如果是文件夹，那么准备获取番剧列表
-                    let thisTypeName = files[j].name;
-                    getAnimeIndex(thisYearName, thisTypeName); // 把 20xx 年和 x月x 传入 getAnimeIndex 进行下一步
-                }
-            }
-        })
-    }
+doEverything()
+async function doEverything() {
+    // await updateIndex(); // 从 Alist 刷新索引，比较耗时
+    await cutBgmId(); // 分割番剧名和ID  一瞬间
+    await insertBgmId(); // 把 anime 表的 bgmId 同步到 bangumi_data 表
+    // await updateBgmSubjectsData(); // 升级 bangumi_data 表的 Subjects 数据，同时顺便更新 anime 表的 Poster，也很耗时
+    await updataRelations(); // 刷新获取关联番剧的数据
+
 }
 
-function getAnimeIndex(thisYearName, thisTypeName) {
-    getPath("/" + thisYearName + "/" + thisTypeName, (files) => { // 获取 /20xx年/x月x 下的所有番剧
-        for (let i = 0; i < files.length; i++) { // 遍历处理每个番剧
-            let thisAnimeName = files[i].name;
-            db.query(    // 查询是否已经存在于数据库
-                'SELECT * FROM anime WHERE year=? AND type=? AND name = ?',
-                [thisYearName, thisTypeName, thisAnimeName], // 占位符写法
-                function (error, result) {
-                    if (result == undefined || result.length == 0) { // 如果不存在，那么插入
-                        console.log(`发现新番剧文件夹: ${thisYearName}/${thisTypeName}/${thisAnimeName}`);
+function updateIndex() { // 更新索引
+
+    return new Promise(async (resolve, reject) => {
+
+        // 获取年份列表
+        let yearIndex = await getIndexByDir('/');
+        console.log(`[同步] 年份列表获取成功，共 ${yearIndex.length} 个年份`);
+
+        // 遍历年份列表，获取每年的分类列表
+        for (let i = 0; i < yearIndex.length; i++) { // 循环遍历
+
+            let thisYear = yearIndex[i].name; // 这年的名称
+
+            // 同步获取每年的分类列表
+            let thisYearTypeIndex = await getIndexByDir('/' + thisYear);
+            console.log(`[同步] ${thisYear} 分类列表获取成功，共 ${thisYearTypeIndex.length} 个分类`);
+
+            // 遍历每年的分类列表，获取每个分类的番剧列表
+            for (let j = 0; j < thisYearTypeIndex.length; j++) {
+
+                let thisType = thisYearTypeIndex[j].name; // 这个分类的名称
+
+                // 同步获取每个分类的番剧列表
+                let thisTypeAnime = await getIndexByDir(`/${thisYear}/${thisType}`);
+                // console.log(`[同步] ${thisYear}/${thisType} 番剧列表获取成功，共 ${thisTypeAnime.length} 个番剧`);
+
+                // 同步获取数据库中的相应番剧列表
+                let dbResult = await dbQueryAsync(
+                    'SELECT * FROM anime WHERE year=? AND type=?',
+                    [thisYear, thisType] // 占位符写法
+                )
+
+                // 从 Alist 方向比较 Alist 和 数据库内的番剧列表，找到新的番剧
+                for (let k = 0; k < thisTypeAnime.length; k++) { // 父遍历 Alist
+
+                    let thisAlistAnime = thisTypeAnime[k];
+                    let thisAnimeInDB = false; // 如果为true，则说明数据库中有这个番剧
+
+                    for (let l = 0; l < dbResult.length; l++) { // 子遍历 数据库
+
+                        let thisDBAnime = dbResult[l];
+
+                        if (thisAlistAnime.name == thisDBAnime.name && thisDBAnime.deleted == 0) { // 如果库内已有
+                            thisAnimeInDB = true; //  标记已有
+                            break; // 跳出子遍历
+                        }
+
+                        else if (thisAlistAnime.name == thisDBAnime.name && thisDBAnime.deleted == 1) { // 如果库内已有，但是已被删除
+                            console.log(`[同步][恢复] ${thisAlistAnime.name} 被删除后重新出现，将被恢复`);
+                            // console.log(thisAlistAnime);
+                            thisAnimeInDB = true;
+                            db.query(`UPDATE anime SET deleted=0 WHERE id=?`, [thisDBAnime.id]);
+                        }
+
+                    }
+
+                    if (!thisAnimeInDB) { // 遍历完了，如果数据库中没有这个番剧，则插入
+
                         db.query(
                             'INSERT INTO anime (\`year\`, \`type\`, name) VALUES (?, ?, ?)',
-                            [thisYearName, thisTypeName, thisAnimeName], // 占位符写法
+                            [thisYear, thisType, thisAlistAnime.name], // 占位符写法
                             function (error, result) {
-                                console.log(`插入成功: ${thisYearName}/${thisTypeName}/${thisAnimeName}`);
+                                if (error) {
+                                    console.error(error);
+                                }
+                                console.log(`[同步][新番剧] ${thisAlistAnime.name} 已插入数据库`);
                             }
                         )
                     }
-                })
-        }
-    })
-}
 
-setTimeout(() => {
-    checkDB();
-    console.log("[同步] 完成，开始检查是否有番剧被删除");
-}, 5000);
-
-function checkDB() {
-    // 先检查数据库里有多少年份
-    db.query(
-        'select \`year\` from anime group by \`year\`',
-        function (error, result) {
-            let yearList = result;
-            for (let i = 0; i < yearList.length; i++) {
-                let DBthisYearName = yearList[i].year;
-                checkDBType(DBthisYearName);
-            }
-        })
-
-    // 检查此年份中有多少类型
-    function checkDBType(DBthisYearName) {
-        db.query(
-            'select \`type\` from anime where \`year\` = ? group by \`type\`',
-            [DBthisYearName],
-            function (error, result) {
-                let typeList = result;
-                for (let i = 0; i < typeList.length; i++) {
-                    let DBthisTypeName = typeList[i].type;
-                    checkDBAnime(DBthisYearName, DBthisTypeName);
                 }
-            }
-        )
-    }
 
-    // 检查此类型中有哪些番剧
-    function checkDBAnime(DBthisYearName, DBthisTypeName) {
-        db.query(
-            'select id,name from anime where \`year\` = ? and \`type\` = ? and deleted = 0',
-            [DBthisYearName, DBthisTypeName],
-            function (error, result) {
-                let DBthisTypeAnimeList = result;
-                compareWithAlist(DBthisYearName, DBthisTypeName, DBthisTypeAnimeList);
-            }
-        )
-    }
+                // 从 数据库内方向比较 数据库内的番剧列表 和 Alist 内的番剧列表，找到已删除的番剧
+                for (let k = 0; k < dbResult.length; k++) { // 父遍历 数据库
 
-    // 比较 Alist 中的番剧列表和数据库中的番剧列表
-    function compareWithAlist(DBthisYearName, DBthisTypeName, DBthisTypeAnimeList) {
-        getPath(
-            "/" + DBthisYearName + "/" + DBthisTypeName,
-            (files) => {
-                let AthisTypeAnimeList = files; // 拿到 Alist 的此分类番剧列表
-                for (let i = 0; i < AthisTypeAnimeList.length; i++) { // 从Alist向数据库中找，剔除数据库中已有的
-                    let AthisAnimeName = AthisTypeAnimeList[i].name;
-                    for (let j = 0; j < DBthisTypeAnimeList.length; j++) { // 找数据库中和Alist一样的
-                        let DBthisAnimeName = DBthisTypeAnimeList[j].name;
-                        if (AthisAnimeName == DBthisAnimeName) {
-                            DBthisTypeAnimeList.splice(j, 1); // 删除
+                    let thisDBAnime = dbResult[k]; // 这个番剧的数据库信息
+                    let thisAnimeInAlist = false; // 如果为true，则说明Alist中有这个番剧
+
+                    for (let l = 0; l < thisTypeAnime.length; l++) { // 子遍历 Alist
+
+                        let thisAlistAnime = thisTypeAnime[l]; // 这个Alist的番剧文件夹信息
+
+                        if (thisDBAnime.name == thisAlistAnime.name && thisDBAnime.deleted == 0) { // 数据库中有，Alist中也有
+                            thisAnimeInAlist = true;
+                            break; // 跳出子遍历
                         }
+
+                        if (thisDBAnime.deleted == 1) { // 如果数据库中已被标记删除 
+                            thisAnimeInAlist = true; // 标记已有，虽然并没有
+                            break; // 直接跳过当前番剧
+                        }
+
                     }
-                } // Alist 遍历完了，数据库若还有值，那么说明数据库里多了，需要删除
-                if (DBthisTypeAnimeList.length != 0) {
-                    console.log('发现遗失的番剧: ', DBthisTypeAnimeList);
-                    for (let i = 0; i < DBthisTypeAnimeList.length; i++) {
+
+                    if (!thisAnimeInAlist) { // 遍历完了，如果数据库中有，但是Alist中没有，则删除
+
                         db.query(
-                            'UPDATE anime SET `deleted` = 1 WHERE id = ?',
-                            [DBthisTypeAnimeList[i].id],
+                            'UPDATE anime SET deleted=1 WHERE name=?',
+                            [thisDBAnime.name], // 占位符写法
                             function (error, result) {
-                                console.log('已添加遗失标签: ', DBthisTypeAnimeList[i].name);
+                                if (error) {
+                                    console.error(error);
+                                }
+                                console.log(`[同步][遗失番剧] ${thisDBAnime.name} 仅在数据库中有记录，标记为删除`);
                             }
                         )
                     }
                 }
-            })
-    }
+
+                // console.log(`[同步] ${thisYear}/${thisType} 数据库中已有 ${dbResult.length} 个番剧`);
+            }
+        }
+        console.log(`[同步] 同步完成`);
+        resolve('success');
+    })
+
 }
-
-setTimeout(() => {
-    console.log("[检查] 完成，开始分割文件夹名称");
-    cutBgmId();
-}, 10000);
-
 
 function cutBgmId() {
-    db.query(
-        'SELECT * FROM anime WHERE bgmid is null',
-        function (error, result) {
-            let noBgmIdList = result;
-            for (let i = 0; i < noBgmIdList.length; i++) {
-                let thisAnimeId = noBgmIdList[i].id;
-                let thisAnimeDirName = noBgmIdList[i].name;
-                let thisAnimeBgmId = thisAnimeDirName.match("\\d+$")[0];
-                let thisAnimeTitle = thisAnimeDirName.replace(thisAnimeBgmId, "")
-                thisAnimeTitle = thisAnimeTitle.substring(0, thisAnimeTitle.length - 1);
-                db.query(
-                    'UPDATE anime SET bgmid = ?, title = ? WHERE id = ?',
-                    [thisAnimeBgmId, thisAnimeTitle, thisAnimeId],
-                    function (error, result) {
-                        console.log(`成功分割番剧名: ${thisAnimeTitle} - ${thisAnimeBgmId}`);
-                    }
-                )
-            }
+
+    return new Promise(async (resolve, reject) => {
+
+        let noBgmIdList = await dbQueryAsync(
+            'SELECT * FROM anime WHERE bgmid is null and deleted = 0'
+        );
+
+        for (let i = 0; i < noBgmIdList.length; i++) {
+            let thisAnimeId = noBgmIdList[i].id;
+            let thisAnimeDirName = noBgmIdList[i].name;
+            let thisAnimeBgmId = thisAnimeDirName.match("\\d+$")[0];
+            let thisAnimeTitle = thisAnimeDirName.replace(thisAnimeBgmId, "")
+            thisAnimeTitle = thisAnimeTitle.substring(0, thisAnimeTitle.length - 1);
+            db.query(
+                'UPDATE anime SET bgmid = ?, title = ? WHERE id = ?',
+                [thisAnimeBgmId, thisAnimeTitle, thisAnimeId],
+                function (error, result) {
+                    console.log(`[分割] 成功分割番剧名: ${thisAnimeTitle} - ${thisAnimeBgmId}`);
+                }
+            )
         }
-    )
+
+        console.log("[分割] 已发射全部异步线程写入数据库");
+        resolve('success');
+
+    })
+
 }
 
-setTimeout(() => {
-    console.log("[分割] 完成，开始更新番剧信息表");
-    insertBgmId()
-}, 15000);
 
 function insertBgmId() { // 从 anime 表读取数据，向 bangumi_data 表插入新的 Bangumi ID。
-    db.query(
-        'SELECT bgmid FROM anime where deleted = \'0\'',
-        function (error, result) {
-            let bgmIdList = result;
-            for (let i = 0; i < bgmIdList.length; i++) {
-                let thisBgmId = bgmIdList[i].bgmid;
+
+    return new Promise(async (resolve, reject) => {
+
+        let allBgmIdInAnimeTable = await dbQueryAsync('SELECT bgmid FROM anime WHERE deleted = 0');
+        let allBgmIdInAnime = new Array(); // anime 表所有的 Bangumi ID
+        for (let i = 0; i < allBgmIdInAnimeTable.length; i++) {
+            allBgmIdInAnime.push(parseInt(allBgmIdInAnimeTable[i].bgmid));
+        }
+
+        let allBgmIdInBangumiDataTable = await dbQueryAsync('SELECT bgmid FROM bangumi_data');
+        let allBgmIdInBangumiData = new Array(); // bangumi_data 表所有的 Bangumi ID
+        for (let i = 0; i < allBgmIdInBangumiDataTable.length; i++) {
+            allBgmIdInBangumiData.push(parseInt(allBgmIdInBangumiDataTable[i].bgmid));
+        }
+
+        // console.log(allBgmIdInAnime, allBgmIdInBangumiData);
+
+        let newBgmId = new Array(); // bangumi_data 表缺少的 Bangumi ID
+        allBgmIdInAnime.forEach((bgmId) => {
+            if (!allBgmIdInBangumiData.includes(bgmId)) {
+                newBgmId.push(bgmId);
+            }
+        })
+        if (newBgmId.length > 0) { // 如果有新的 Bangumi ID，则插入数据库
+            console.log(`[Bangumi Data] bangumi_data 表缺少数据 ${JSON.stringify(newBgmId)}`);
+            newBgmId.forEach((bgmId) => {
                 db.query(
-                    'SELECT * FROM bangumi_data WHERE bgmid = ?',
-                    [thisBgmId],
+                    'INSERT INTO bangumi_data (bgmid) VALUES (?)',
+                    [bgmId],
                     function (error, result) {
-                        if (result.length == 0) {
-                            db.query(
-                                'INSERT INTO bangumi_data (bgmid) VALUES (?)',
-                                [thisBgmId],
-                                function (error, result) {
-                                    console.log(`数据库新建了 bgm${thisBgmId} 的行`);
-                                }
-                            )
-                        }
+                        console.log(`[Bangumi Data] 已新建 bgm${bgmId}`);
                     }
                 )
-            }
-        }
-    )
-}
-
-setTimeout(() => {
-    console.log("[更新] 完成，开始更新 Bangumi 数据");
-    updataAllBgm()
-}, 20000);
-
-
-function updataAllBgm() { // 更新和 Bangumi API 相关的数据 (但不含相关番剧信息)
-    db.query(
-        'SELECT id,bgmid FROM anime',
-        function (error, result) {
-            let animeList = result;
-            for (let i = 0; i < animeList.length; i++) {
-                let executeTime = i * 100; // 每个抓取间隔
-                let thisBgmId = animeList[i].bgmid;
-                let thisId = animeList[i].id;
-                getBgm( // 调用 getBgm 函数, 获取 Bgm API Data
-                    thisBgmId, // 传入 Bangumi ID
-                    (bgmData) => {
-                        // console.log(bgmData);
-                        if (bgmData.length == 0) {
-                            let thisAnimePoster = 'https://anime-img.5t5.top/assets/noposter.png' // 占位图，给没有海报的番剧使用
-                        } else {
-                            let thisAnimePoster = bgmData.images.large.replace("lain.bgm.tv", "anime-img.5t5.top") + '/poster'; // 处理海报地址
-                            let thisAnimeNSFW = bgmData.nsfw // 是否是 NSFW 的番剧
-                            db.query( // 更新数据库
-                                'UPDATE anime SET poster = ?, nsfw = ? WHERE id = ?',
-                                [thisAnimePoster, thisAnimeNSFW, thisId],
-                                function (error, result) {
-                                    // console.log(result);
-                                    if (result.message.match('Rows matched: 1  Changed: 1')) {
-                                        console.log(`更新了新的番剧数据: la${thisId} => ${thisAnimePoster}, nsfw: ${thisAnimeNSFW}`);
-                                    }
-                                    else {
-                                        console.log(`UPDATE la${thisId} 结果 ${result.message}`);
-                                    }
-                                }
-                            )
-                        }
-                    },
-                    executeTime // 传入延迟时间
-                );
-
-            }
-        }
-    )
-}
-
-function getBgm(bgmId, callback, executeTime) { // 获取 Bangumi 数据并返回的函数, 自带异步延迟
-    setTimeout(() => { // 异步延迟执行
-        // console.log(`在 ${executeTime}ms 后执行了 bgm${bgmId} 的抓取`);
-
-        if (bgmId == 0) { // 如果 Bangumi ID 是 000000 或者不存在，直接填占位图
-            callback([]);
-        }
-        else {
-            axios({
-                method: 'get',
-                url: 'https://bgm-api.5t5.top/v0/subjects/' + bgmId,
             })
-                .then((result) => {
-                    let bgmData = result.data;
-                    if (bgmData.images.large) {
-                        callback(bgmData); // 返回 Bangumi Data
-                    }
-                })
-                .catch(error => { })
+            resolve('success');
         }
-    }, executeTime);
+        if (newBgmId.length == 0) {
+            console.log(`[Bangumi Data] bangumi_data 不需要更新.`);
+            resolve('lastest');
+        }
+
+    })
+
 }
 
-setTimeout(() => {
-    console.log("[更新] 完成，开始更新番剧关联信息");
-    updataRelations()
-}, 60000);
+
+function updateBgmSubjectsData() { // 升级 bangumi_data 表的 Bangumi 主题数据，同时顺便更新 Poster
+
+    return new Promise(async (resolve, reject) => {
+
+        let bgmIdListDB = await dbQueryAsync(
+            'SELECT bgmid FROM bangumi_data'
+        )
+        let bgmIdList = new Array();
+        bgmIdListDB.forEach(bgmId => {
+            bgmIdList.push(bgmId.bgmid);
+        })
+
+        for (let i = 0; i < bgmIdList.length; i++) {
+            let bgmId = bgmIdList[i];
+            if (bgmId == 0) continue;
+            (async () => {
+                let subjectData = await axios.get(config.bangumi.host + '/v0/subjects/' + bgmId);
+                if (subjectData.data.images.large) {
+                    let posterUrl = subjectData.data.images.large;
+                    posterUrl = posterUrl.replace('lain.bgm.tv', 'anime-img.5t5.top') + '/poster'
+                    db.query(
+                        'UPDATE anime SET poster = ? WHERE bgmid = ?',
+                        [posterUrl, bgmId],
+                        function (error, result) {
+                            console.log(`[Bangumi Data] 更新番剧 bgm${bgmId} ${subjectData.data.name} 的海报`);
+                        }
+                    )
+                }
+                db.query(
+                    `UPDATE bangumi_data SET subjects = ? WHERE bgmid = ?`,
+                    [JSON.stringify(subjectData.data), bgmId]
+                )
+            })();
+            await Delay(100);
+        }
+
+    })
+
+}
+
 
 
 function updataRelations() { // 获取关联番剧数据
-    db.query(
-        'SELECT bgmid FROM anime', // 获取 bangumi_data 表的所有 Bangumi ID
-        function (error, result) {
-            let bgmIdList = new Array(); // 全部 Bangumi ID 列表
-            for (let i = 0; i < result.length; i++) {
-                bgmIdList.push(result[i].bgmid);
-            }
-            for (let i = 0; i < bgmIdList.length; i++) {
-                let thisBgmId = bgmIdList[i];
-                getBgmRelations( // 调用 getBgmRelations 函数, 获取番组计划上的关联番剧数据
-                    thisBgmId, // 传入 Bangumi ID
-                    bgmIdList, // 传入 Bangumi ID List
-                    (bgmRelations) => { // 回调函数
-                        let thisBgmRelationsJSON = JSON.stringify(bgmRelations);
-                        db.query(
-                            'UPDATE bangumi_data SET relations_anime = ? WHERE bgmid = ?',
-                            [thisBgmRelationsJSON, thisBgmId],
-                            function (error, result) {
-                                if (result.message.match('Rows matched: 1  Changed: 1')) {
-                                    if (bgmRelations.length > 0) console.log(`抓取并更新了 bgm${thisBgmId} 的 ${bgmRelations.length} 条关联番剧数据`);
-                                }
-                                else{
-                                    console.log(`UPDATE bgm${thisBgmId} 的关联番剧结果 ${result.message}`);
-                                }
-                            }
-                        )
 
-                    },
-                    i * 50 // 传入延迟时间
+    return new Promise(async (resolve, reject) => {
+
+        // 取 BgmId 列表
+        let bgmIdListDB = await dbQueryAsync('SELECT bgmid FROM bangumi_data');
+        let bgmIdList = new Array();
+        bgmIdListDB.forEach(bgmId => { bgmIdList.push(bgmId.bgmid) }); // bangumi_data 表的 BgmId 列表
+
+        // 取所有库内已有番剧 BgmID 用于下面的筛选
+        let allBgmIdInAnimeTable = await dbQueryAsync('SELECT bgmid FROM anime WHERE deleted = 0');
+        let allBgmIdInAnime = new Array();
+        allBgmIdInAnimeTable.forEach(bgmId => { allBgmIdInAnime.push(parseInt(bgmId.bgmid)) }); // anime 表的 BgmID 列表
+
+        for (let i = 0; i < bgmIdList.length; i++) { // 获取每个 data 表里的关联番剧
+
+            let bgmId = bgmIdList[i];
+            if (bgmId == 0) continue;
+
+            (async () => { // 发出一个异步线程
+                let subjectRelationsData = await axios.get(config.bangumi.host + '/v0/subjects/' + bgmId + '/subjects') // 从 BGM API 抓
+                let subjectRelations = new Array();
+                subjectRelationsData.data.forEach(subject => {
+                    // 如果这个番剧在 anime 表里，且是动画，则添加进关联番剧列表
+                    if (allBgmIdInAnime.includes(subject.id) && subject.type == 2) {
+                        console.log(`[Bangumi Data] bgm${bgmId} <== ${subject.id}(${subject.name})`);
+                        subjectRelations.push(subject);
+                    }
+                })
+                db.query(
+                    `UPDATE bangumi_data SET relations_anime = ? WHERE bgmid = ?`,
+                    [JSON.stringify(subjectRelations), bgmId]
                 )
-            }
+                console.log(`[Bangumi Data] 更新番剧 bgm${bgmId} 的关联番剧，找到 ${subjectRelations.length} 个`);
+            })();
+            await Delay(100);
         }
-    )
+
+        resolve('success');
+
+    })
+
 }
 
-function getBgmRelations(bgmId, bgmIdList, callback, executeTime) { // 获取 Bangumi 关联番剧的函数
-    setTimeout(() => { // 异步延迟执行
-        // console.log(`在 ${executeTime}ms 后执行了 bgm${bgmId} 的关联抓取`);
-        if (bgmId == 0) { // 如果 Bangumi ID 是 000000 或者不存在，直接回复空数组
-            callback([]);
-            return
-        }
-        axios('https://bgm-api.5t5.top/v0/subjects/' + bgmId + '/subjects') // 调用 Bangumi API 获取关联番剧数据
-            .then((result) => {
-                let relationsData = result.data; // 原始数据
-                let animeRelationsResults = new Array()
-                for (let i = 0; i < relationsData.length; i++) { // 遍历每个关联作品
-                    if (relationsData[i].type == 2) { // 找出来是动画的作品
-                        for (let j = 0; j < bgmIdList.length; j++) { // 遍历 Bangumi ID List，找出来番剧库内有的作品
-                            if (relationsData[i].id == bgmIdList[j]) { // 如果找到了
-                                // console.log(`找到了 bgm${bgmId} 的关联库内相关番剧: bgm${relationsData[i].id}`);
-                                animeRelationsResults.push(relationsData[i])
-                                break
-                            }
-                        }
-                    }
-                }
-                callback(animeRelationsResults) // 返回关联番剧数据
-
-
-
-
-
-                // /*  因为 JavaScript 是异步的，所以说无法在主线程确定接下来的检查是否完成，
-                //     因此创建一个数组存储每个关联番剧的检查任务，当检查完成时就把这个数组中的任务删除，
-                //     最终当数组为空时，说明所有关联番剧都检查完成                                    */
-                // let thisAnimeRelationsTask = relationsData // 任务数组，全部检查完成后为空
-                // let thisAnimeRelationsResults = new Array() // 结果数组，存储既是动画又在番剧库内的相关番剧
-                // for (let i = 0; i < thisAnimeRelationsTask.length; i++) { // 遍历任务数组，删除掉不是动画的相关作品
-                //     if (thisAnimeRelationsTask[i].type != 2) { // 只存类型为动画的相关作品
-                //         console.log(thisAnimeRelationsTask.length);
-                //         thisAnimeRelationsTask.splice(i, 1); // 删除掉这个任务
-                //         console.log(thisAnimeRelationsTask.length);
-                //         continue
-                //     }
-                //     if (thisAnimeRelationsTask[i].type == 2) {
-                //         db.query(
-                //             'SELECT * FROM anime WHERE bgmid = ?',
-                //             [thisAnimeRelationsTask[i].id],
-                //             function (error, result) {
-                //                 console.log(result);
-                //                 if (result.length > 0) { // 如果在番剧库中
-                //                     thisAnimeRelationsResults.push(thisAnimeRelationsTask[i]); // 存入结果数组
-                //                     thisAnimeRelationsTask.splice(i, 1); // 删除这个任务
-                //                 }
-                //                 if (result.length == 0) { // 如果不在番剧库中
-                //                     thisAnimeRelationsTask.splice(i, 1); // 删除这个任务
-                //                 }
-                //             }
-                //         )
-                //     }
-                //     waitAllEnd()
-                // }
-                // function waitAllEnd() {
-                //     if (thisAnimeRelationsTask.length == 0) { // 如果任务数组为空，说明所有任务都完成
-                //         callback(thisAnimeRelationsResults); // 返回结果数组
-                //     }
-                //     else {
-                //         console.log(`等待关联番剧检查完成... ${thisAnimeRelationsTask.length} 个任务还未完成`);
-                //         setTimeout(waitAllEnd, 1000); // 如果任务数组不为空，继续等待
-                //     }
-                // }
-            })
-    }, executeTime);
+function Delay(ms = 1000) { // 延迟函数，默认延迟 1000 毫秒
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
