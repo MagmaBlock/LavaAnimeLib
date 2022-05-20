@@ -1,12 +1,12 @@
 /* 此脚本用于执行文件夹目录索引的定期同步，从Alist保存至MySQl，然后完成一些番剧信息的刷新 */
 
-import db from './common/sql.js'; // 数据库连接模块
-import config from '../../common/config';
+import axios from 'axios';
 
-import { getPathAsync } from '../tools/alistGetPath';
-import { dbQueryAsync } from '../tools/dbQuery';
-const dbQueryAsync = require('../controllers/tools/dbQuery').dbQueryAsync;
-const axios = require('axios');
+import db from '../common/sql.js'; // 数据库连接模块
+import config from '../common/config.js';
+
+import { getPathAsync } from '../controllers/tools/alistGetPath.js';
+import { dbQueryAsync } from '../controllers/tools/dbQuery.js';
 
 function getIndexByDir(path) { // 异步获取文件夹列表并返回
     return new Promise(async (resolve, reject) => {
@@ -28,8 +28,8 @@ async function doEverything() {
     await insertBgmId(); // 把 anime 表的 bgmId 同步到 bangumi_data 表
     await updateBgmSubjectsData(); // 升级 bangumi_data 表的 Subjects 数据，同时顺便更新 anime 表的 Poster，也很耗时
     await updataRelations(); // 刷新获取关联番剧的数据
-    console.log("[同步] 全部完成, 将于 10 秒后关闭");
-    await Delay(10000);
+    console.log("[同步] 全部完成, 将于 20 秒后关闭");
+    await Delay(20000);
     db.end();
 }
 
