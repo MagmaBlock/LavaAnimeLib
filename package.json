@@ -1,8 +1,8 @@
 {
   "name": "lavaanime",
   "version": "1.0.0",
-  "description": "熔岩番剧库后端,私有",
-  "main": "AnimeViewsAPI.js",
+  "description": "熔岩番剧库后端，私有",
+  "main": "main.js",
   "type":"module",
   "scripts": {
     "start": "node main.js",
