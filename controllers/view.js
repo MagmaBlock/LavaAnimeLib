@@ -1,7 +1,7 @@
-function addView(req, res) {
+export function addView(req, res) {
     viewsHandler(req, res, true);
 }
-function getView(req, res) {
+export function getView(req, res) {
     viewsHandler(req, res, false);
 }
 
@@ -63,9 +63,4 @@ function getViews(id, update) {
             }
         );
     })
-}
-
-module.exports = {
-    addView,
-    getView
 }

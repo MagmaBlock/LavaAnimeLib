@@ -1,4 +1,4 @@
-function dbQueryAsync(sql, values) {
+export function dbQueryAsync(sql, values) {
     return new Promise(function (resolve, reject) {
         db.query(
             sql,
@@ -13,5 +13,3 @@ function dbQueryAsync(sql, values) {
         )
     })
 }
-
-module.exports = { dbQueryAsync };

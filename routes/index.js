@@ -1,11 +1,11 @@
-const express = require('express');
-const router = express.Router();
+import { Router } from 'express';
+const router = Router();
 
-const index = require('../controllers/index'); 
+import { getYearList, getTypeList, getAllTypeList, getAnimeList } from '../controllers/index.js'; 
 
-router.get(`/list/year/`, index.getYearList); // 获取年份列表
-router.get(`/list/type/*`, index.getTypeList); // 获取类型列表
-router.get(`/list/all/type`, index.getAllTypeList); // 获取所有类型列表
-router.post(`/list/anime`, index.getAnimeList); // 获取番剧列表
+router.get(`/list/year/`, getYearList); // 获取年份列表
+router.get(`/list/type/*`, getTypeList); // 获取类型列表
+router.get(`/list/all/type`, getAllTypeList); // 获取所有类型列表
+router.post(`/list/anime`, getAnimeList); // 获取番剧列表
 
-module.exports = router;
+export default router;

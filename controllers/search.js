@@ -1,4 +1,4 @@
-function searchByBgmId(req, res) {
+export function searchByBgmId(req, res) {
     let id = req.params[0]; // 请求的ID
     db.query(
         `SELECT * FROM anime WHERE bgmid = ? AND deleted = 0 ORDER BY views DESC`,
@@ -19,7 +19,7 @@ function searchByBgmId(req, res) {
     );
 }
 
-function searchByName(req, res) {
+export function searchByName(req, res) {
     let text = decodeURIComponent(req.params[0]); // 获取搜索内容
     if (text != '') {
         let splitTextList = text.split(' '); // 分割搜索内容
@@ -51,9 +51,4 @@ function searchByName(req, res) {
         res.send(JSON.stringify(response));
         console.log('[发送错误]', response);
     }
-}
-
-module.exports = {
-    searchByBgmId,
-    searchByName
 }

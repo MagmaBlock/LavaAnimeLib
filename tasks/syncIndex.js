@@ -1,11 +1,10 @@
 /* 此脚本用于执行文件夹目录索引的定期同步，从Alist保存至MySQl，然后完成一些番剧信息的刷新 */
 
-require('../common/sql'); // For Debug
+import db from './common/sql.js'; // 数据库连接模块
+import config from '../../common/config';
 
-const config = require('../common/config');
-
-const getPath = require('../controllers/tools/alistGetPath');
-const getPathAsync = require('../controllers/tools/alistGetPathAsync').getPathAsync;
+import { getPathAsync } from '../tools/alistGetPath';
+import { dbQueryAsync } from '../tools/dbQuery';
 const dbQueryAsync = require('../controllers/tools/dbQuery').dbQueryAsync;
 const axios = require('axios');
 

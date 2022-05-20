@@ -1,9 +1,9 @@
-const express = require('express');
-const router = express.Router();
+import { Router } from 'express';
+const router = Router();
 
-const search = require('../controllers/search');
+import { searchByBgmId, searchByName } from '../controllers/search.js';
 
-router.get(`/bgm/*`, search.searchByBgmId); // 用 Bangumi ID 搜索
-router.get(`/name/*`, search.searchByName); // 用名称搜索
+router.get(`/bgm/*`, searchByBgmId); // 用 Bangumi ID 搜索
+router.get(`/name/*`, searchByName); // 用名称搜索
 
-module.exports = router;
+export default router;
