@@ -5,7 +5,8 @@
   "main": "AnimeViewsAPI.js",
   "type":"module",
   "scripts": {
-    "start": "main.js"
+    "start": "node main.js",
+    "sync": "node ./tasks/syncIndex.js"
   },
   "repository": {
     "type": "git",
