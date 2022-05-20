@@ -1,9 +1,8 @@
 // 引用库
-const express = require('express');
-const bodyParser = require('body-parser');
-const cron = require("node-cron"); // 定时任务
+import express from 'express';
+// import cron from 'node-cron'; // 定时任务
 // 引用全局脚本
-require('./common/sql');
+import db from './common/sql.js'; // 数据库连接模块
 // 创建服务器
 const app = express();
 
@@ -24,11 +23,16 @@ app.all('/*', async function (req, res, next) {
     next();
 });
 
-app.use(`/v1/search`, require('./routes/search')); // 搜索
-app.use(`/v1/view`, require('./routes/view')); // 播放量
-app.use(`/v1/index`, require('./routes/index')); // 索引页
-app.use(`/v1/zth`, require('./routes/zth')); // Zth API，和番剧库无关
-app.use(`/v1/anime`, require('./routes/anime')); // 动画信息
+import search from './routes/search.js';
+import view from './routes/view.js';
+import index from './routes/index.js';
+import zth from './routes/zth.js';
+import anime from './routes/anime.js';
+app.use(`/v1/search`, search); // 搜索
+app.use(`/v1/view`, view); // 播放量
+app.use(`/v1/index`, index); // 索引页
+app.use(`/v1/zth`, zth); // Zth API，和番剧库无关
+app.use(`/v1/anime`, anime); // 动画信息
 
 const server = app.listen(8090, function () {
     console.log("[启动信息] 服务器已启动, 访问端口为: " + server.address().port)

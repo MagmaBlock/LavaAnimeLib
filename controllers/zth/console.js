@@ -1,8 +1,8 @@
-const axios = require('axios')
+import axios from "axios";
 
 const MCSMApi = 'http://plus.magma.ink/api/protected_instance/command'
 
-function runConmand(req, res) {
+export function runConmand(req, res) {
 
     let ip = req.ip
     if (req.headers['x-real-ip']) { // 兼容nginx代理
@@ -117,6 +117,3 @@ function inGameLog(logMessage) {
     })
 }
 
-module.exports = {
-    runConmand
-}

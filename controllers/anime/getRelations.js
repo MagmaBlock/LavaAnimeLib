@@ -1,4 +1,4 @@
-function getRelations(req, res) {
+export function getRelations(req, res) {
     let reqBgmId = req.params[0];
     if (reqBgmId) {
         if (isNaN(reqBgmId)) {
@@ -27,10 +27,4 @@ function getRelations(req, res) {
         let response = { code: 500, message: '未提供 ID' }
         res.send(JSON.stringify(response));
     }
-}
-
-
-
-module.exports = {
-    getRelations
 }

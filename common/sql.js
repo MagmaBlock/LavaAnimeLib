@@ -2,8 +2,8 @@
     数据库连接模块
 */
 
-const mysql = require('mysql');
-const config = require('./config');
+import mysql from 'mysql';
+import config from './config.js';
 
 const db = mysql.createConnection(config.mysql);
 
@@ -21,3 +21,5 @@ function connect() {
 connect();
 
 global.db = db;
+
+export default db;

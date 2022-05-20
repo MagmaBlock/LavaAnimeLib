@@ -1,9 +1,9 @@
-const express = require('express');
-const router = express.Router();
+import { Router } from 'express';
+const router = Router();
 
-const view = require('../controllers/view');
+import { addView, getView } from '../controllers/view.js';
 
-router.get(`/add/*`, view.addView); // 增加播放量
-router.get(`/get/*`, view.getView); // 获取播放量
+router.get(`/add/*`, addView); // 增加播放量
+router.get(`/get/*`, getView); // 获取播放量
 
-module.exports = router;
+export default router;

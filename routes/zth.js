@@ -1,8 +1,8 @@
-const express = require('express');
-const router = express.Router();
+import { Router } from 'express';
+const router = Router();
 
-const runConmand = require('../controllers/zth/console');
+import { runConmand } from '../controllers/zth/console.js';
 
-router.post(`/console`, runConmand.runConmand);
+router.post(`/console`, runConmand);
 
-module.exports = router;
+export default router;
