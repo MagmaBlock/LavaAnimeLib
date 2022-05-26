@@ -18,5 +18,11 @@ export default {
     },
     bangumi: {
         host: "https://bgm-api.5t5.top"
+    },
+    qqBotApi: {
+        host: "https://bot-api.5t5.top",
+        group: {
+            "main": 1054724367, "dev": 651353738
+        }
     }
 }
