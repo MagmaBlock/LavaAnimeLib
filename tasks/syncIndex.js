@@ -154,12 +154,16 @@ function updateIndex() { // 更新索引
                 // console.log(`[同步] ${thisYear}/${thisType} 数据库中已有 ${dbResult.length} 个番剧`);
             }
         }
-        let qqBotMessage = '【发现新入库番剧】(自动发送)\n————————\n';
-        for (let i in newAnime) {
-            qqBotMessage += `【${newAnime[i].year}${newAnime[i].type}】${(newAnime[i].name).replaceAll('NSFW', "N***")}\n`;
+        if (newAnime.length != 0) {
+            let qqBotMessage = '【发现新入库番剧】(自动发送)\n————————\n';
+            for (let i in newAnime) {
+                qqBotMessage += `【${newAnime[i].year}${newAnime[i].type}】${(newAnime[i].name).replace(/NSFW/g, "N***")}\n`;
+            }
+            qqBotMessage += `————————\n番剧库新入库上述 ${newAnime.length} 部番剧！`;
+            qqBot.sendGroupMessage('main', qqBotMessage);
+            console.log('发送 QQ 消息：')
+            console.log(qqBotMessage);
         }
-        qqBotMessage += `————————\n番剧库新入库上述 ${newAnime.length} 部番剧！`;
-        qqBot.sendGroupMessage('main', qqBotMessage);
         console.log(`[同步] 同步完成`);
         resolve('success');
     })
