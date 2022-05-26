@@ -7,6 +7,7 @@ import config from '../common/config.js';
 
 import { getPathAsync } from '../controllers/tools/alistGetPath.js';
 import { dbQueryAsync } from '../controllers/tools/dbQuery.js';
+import qqBot from '../controllers/tools/qqBot.js';
 
 function getIndexByDir(path) { // 异步获取文件夹列表并返回
     return new Promise(async (resolve, reject) => {
@@ -36,6 +37,8 @@ async function doEverything() {
 function updateIndex() { // 更新索引
 
     return new Promise(async (resolve, reject) => {
+
+        let newAnime = new Array(); // 创建一个数组，用于存储异步获取到的新番剧
 
         // 获取年份列表
         let yearIndex = await getIndexByDir('/');
@@ -99,8 +102,14 @@ function updateIndex() { // 更新索引
                                     console.error(error);
                                 }
                                 console.log(`[同步][新番剧] ${thisAlistAnime.name} 已插入数据库`);
+                                newAnime.push({
+                                    year: thisYear,
+                                    type: thisType,
+                                    name: thisAlistAnime.name
+                                })
                             }
                         )
+
                     }
 
                 }
@@ -145,6 +154,12 @@ function updateIndex() { // 更新索引
                 // console.log(`[同步] ${thisYear}/${thisType} 数据库中已有 ${dbResult.length} 个番剧`);
             }
         }
+        let qqBotMessage = '【发现新入库番剧】(自动发送)\n————————\n';
+        for (let i in newAnime) {
+            qqBotMessage += `【${newAnime[i].year}${newAnime[i].type}】${(newAnime[i].name).replaceAll('NSFW', "N***")}\n`;
+        }
+        qqBotMessage += `————————\n番剧库新入库上述 ${newAnime.length} 部番剧！`;
+        qqBot.sendGroupMessage('main', qqBotMessage);
         console.log(`[同步] 同步完成`);
         resolve('success');
     })
@@ -262,7 +277,7 @@ function updateBgmSubjectsData() { // 升级 bangumi_data 表的 Bangumi 主题�
                     [JSON.stringify(subjectData.data), bgmId]
                 )
             })();
-            await Delay(100);
+            await Delay(200);
         }
 
         resolve('success');
