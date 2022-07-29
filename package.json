@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "熔岩番剧库后端，私有",
   "main": "main.js",
-  "type":"module",
+  "type": "module",
   "scripts": {
     "start": "node main.js",
-    "dev" : "nodemon main.js",
+    "dev": "nodemon main.js",
     "sync": "node ./tasks/syncIndex.js"
   },
   "repository": {
@@ -21,6 +21,7 @@
     "express": "^4.17.3",
     "fs": "^0.0.1-security",
     "mysql": "^2.18.1",
-    "node-cron": "^3.0.0"
+    "node-cron": "^3.0.0",
+    "nodemon": "^2.0.19"
   }
 }

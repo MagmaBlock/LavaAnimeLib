@@ -4,6 +4,7 @@ import config from '../../common/config.js';
 import { getPathAsync } from '../tools/alistGetPath.js';
 import { dbQueryAsync } from '../tools/dbQuery.js';
 
+import { fileNameToTagedName, dict } from './fileNameToTagedName.js'
 
 export async function getVideoList(req, res) {
     let reqId = req.params[0];
@@ -29,7 +30,8 @@ export async function getVideoList(req, res) {
             time: files[i].updated_time,
             type: files[i].type == 1 ? 'dir' : 'file', // 1为目录
             url: config.alist.host + encodeURI('/d' + config.alist.root + '/' + dbData.year + '/' + dbData.type + '/' + dbData.name + '/' + files[i].name),
-            tempUrl: files[i].url
+            tempUrl: files[i].url,
+            tagedName: fileNameToTagedName(files[i].name, dict),
         }
         videoList.push(thisFile);
     }
@@ -37,3 +39,4 @@ export async function getVideoList(req, res) {
     res.send(JSON.stringify(response));
     console.info('[返回视频列表]', dbData.name);
 }
+
