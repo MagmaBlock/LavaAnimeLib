@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import config from '../../common/config.js';
+import config from '../../../common/config.js';
 const pathApi = config.alist.host + "/api/public/path"; // 请求路径的API
 
 export function getPath(path, callback, debug) { // 传入路径和回调，获取路径下的文件夹和文件

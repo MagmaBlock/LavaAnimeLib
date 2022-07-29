@@ -1,3 +1,5 @@
+import db from '../../common/sql.js'
+
 export function searchByBgmId(req, res) {
     let id = req.params[0]; // 请求的ID
     db.query(

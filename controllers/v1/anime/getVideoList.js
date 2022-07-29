@@ -1,6 +1,6 @@
 // 获取一个动画目录下的所有文件列表
 
-import config from '../../common/config.js';
+import config from '../../../common/config.js';
 import { getPathAsync } from '../tools/alistGetPath.js';
 import { dbQueryAsync } from '../tools/dbQuery.js';
 

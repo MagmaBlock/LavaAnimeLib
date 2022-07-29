@@ -1,7 +1,7 @@
 import { Router } from 'express';
 const router = Router();
 
-import { getYearList, getTypeList, getAllTypeList, getAnimeList } from '../controllers/index.js'; 
+import { getYearList, getTypeList, getAllTypeList, getAnimeList } from '../../controllers/v1/index.js'; 
 
 router.get(`/list/year/`, getYearList); // 获取年份列表
 router.get(`/list/type/*`, getTypeList); // 获取类型列表

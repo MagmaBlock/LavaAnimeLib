@@ -2,7 +2,8 @@
     索引页 API
 */
 
-import { dbQueryAsync } from './tools/dbQuery.js';
+import db from '../../common/sql.js';
+import { dbQueryAsync } from '../v1/tools/dbQuery.js';
 import { orderType } from './tools/orderType.js';  // 引入排序器
 
 export async function getYearList(req, res) { // 获取年份列表

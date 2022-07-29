@@ -1,4 +1,4 @@
-import { dbQueryAsync } from "../tools/dbQuery.js";
+import { dbQueryAsync } from "../../v1/tools/dbQuery.js";
 import { createHash } from 'crypto';
 
 export async function userRegister(req, res) { // 注册用户

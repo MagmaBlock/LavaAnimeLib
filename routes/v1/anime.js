@@ -1,11 +1,11 @@
 import { Router } from 'express';
 const router = Router();
 
-import { getAnimeById, getAnimesByIds, getAnimeByBgmID } from '../controllers/anime/getAnime.js';
-import { getVideoList } from '../controllers/anime/getVideoList.js';
-import { getBangumiRelations } from '../controllers/anime/bangumi/getRelations.js';
+import { getAnimeById, getAnimesByIds, getAnimeByBgmID } from '../../controllers/v1/anime/getAnime.js';
+import { getVideoList } from '../../controllers/v1/anime/getVideoList.js';
+import { getBangumiRelations } from '../../controllers/v1/anime/bangumi/getRelations.js';
 
-import { getBangumiSubjects } from '../controllers/anime/bangumi/getBangumiSubject.js';
+import { getBangumiSubjects } from '../../controllers/v1/anime/bangumi/getBangumiSubject.js';
 
 // 番剧库动画信息相关 API
 router.get(`/id/*`, getAnimeById); // 根据 id 获取动画信息

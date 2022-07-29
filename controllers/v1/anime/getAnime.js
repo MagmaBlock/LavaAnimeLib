@@ -1,3 +1,5 @@
+import db from "../../../common/sql.js";
+
 export function getAnimeById(req, res) { // 根据id获取动画信息
     let reqId = req.params[0];
     if (isNaN(reqId)) {

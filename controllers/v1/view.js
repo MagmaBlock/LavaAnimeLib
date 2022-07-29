@@ -1,4 +1,4 @@
-import { dbQueryAsync } from "./tools/dbQuery.js";
+import { dbQueryAsync } from '../v1/tools/dbQuery.js';
 
 export function getView(req, res) { // 查询播放量
     viewsHandler(req, res, false);
