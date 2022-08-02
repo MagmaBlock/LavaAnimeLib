@@ -5,9 +5,9 @@ import axios from 'axios';
 import db from '../common/sql.js'; // 数据库连接模块
 import config from '../common/config.js';
 
-import { getPathAsync } from '../controllers/tools/alistGetPath.js';
-import { dbQueryAsync } from '../controllers/tools/dbQuery.js';
-import qqBot from '../controllers/tools/qqBot.js';
+import { getPathAsync } from '../controllers/v1/tools/alistGetPath.js';
+import { dbQueryAsync } from '../controllers/v1/tools/dbQuery.js';
+import qqBot from '../controllers/v1/tools/qqBot.js';
 
 const sendQQMessage = false;
 
