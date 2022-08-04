@@ -1,13 +1,14 @@
-import alistGetter from "./tools/alistGetter.js";
 import _ from "lodash";
+import alistGetter from "./tools/alistGetter.js";
 import { promiseDB } from "../../common/sql.js";
+import { sendQQGroupMessage } from "../../controllers/v2/notice/qqBot.js";
 
 
 export default async function updateAnimes() {
 
-    // 用于存储本次入库的番剧列表
+    // 用于存储本次入库和删除的的番剧列表
     let allNewAnimes = new Array();
-
+    let allDeletedAnimes = new Array();
     // 获取年列表
     let allYears = await getYears();
     console.log(`[番剧更新] 获取到 ${allYears.length} 个年份`);
@@ -20,37 +21,54 @@ export default async function updateAnimes() {
         // 获取每个分类下的番剧
         for (let j in allTypes) {
             let thisType = allTypes[j]
-            let allAnimes = await getAnimes(thisYear, thisType);
+
+            let allAnimes = await getAnimes(thisYear, thisType); // Alist
             console.log(`[番剧更新] 成功获取 ${thisYear} ${thisType}`);
+            let allDBAnimes = await getThisTypeDB(thisYear, thisType); // DB deleted = 0
 
-            // 获取数据库中本分类的番剧
-            let allDBAnimes = await getThisTypeDB(thisYear, thisType);
+            // 查找 Alist 多出来的番剧 -----------------------------------------------------
             let newAnimes = _.difference(allAnimes, allDBAnimes) // 获取左边数组比右边数组多出的部分，即找 Alist 新增
-            allNewAnimes = _.concat(allNewAnimes, newAnimes)
-
-            // console.log(newAnimes);
 
             for (let k in newAnimes) {
                 let thisAnime = newAnimes[k]
                 let isNew = await isNewInDB(thisYear, thisType, thisAnime);
                 let isDeleted = await isDeletedInDB(thisYear, thisType, thisAnime);
 
-                if (isNew, !isDeleted) { // 新资源
+                if (isNew, !isDeleted) { // 如果是新资源 (并未在 DB 中 deleted)
                     insertAnimeToDB(thisYear, thisType, thisAnime)
                     console.log(`[番剧更新] 新入库 ${thisYear, thisType, thisAnime}`);
                 }
-                if (!isNew, isDeleted) { // 被删除的资源
-
+                if (!isNew, isDeleted) { // 被删除的资源 (在 DB 中被 deleted)
+                    changeDelete(thisYear, thisType, thisAnime, false)
+                    console.log(`[番剧更新] 移除删除标记 ${thisYear, thisType, thisAnime}`);
                 }
+                allNewAnimes.push({ year: thisYear, type: thisType, name: thisAnime }) // 新增番剧加入本次刷新新增记录
             }
+
+            // 查找数据库多出来的番剧 (Alist 删除的番剧) -------------------------------------
+            let deletedAnimes = _.difference(allDBAnimes, allAnimes)
+
+            for (let k in deletedAnimes) {
+                let thisAnime = deletedAnimes[k]
+                changeDelete(thisYear, thisType, thisAnime, true)
+                console.log(`[番剧更新] 发现番剧被删除! 增加删除标记 ${thisYear, thisType, thisAnime}`);
+                allDeletedAnimes.push({ year: thisYear, type: thisType, name: thisAnime })
+            }
+
 
         }
 
     }
 
-    console.log(allNewAnimes);
+    console.log('[番剧更新] 发现的 Alist 新番剧: ', allNewAnimes);
+    console.log('[番剧更新] 发现的 Alist 被删除的番剧: ', allDeletedAnimes);
 
 
+    let message = '【发现新作品收录 / 计划】(自动发送)\n——————\n'
+    allNewAnimes.forEach(anime => { message = message + `【${anime.year}${anime.type}】${anime.name.replace('NSFW', 'N***')}\n` })
+    message = message + `——————\n新收录 / 计划以上 ${allNewAnimes.length} 部作品`
+    sendQQGroupMessage(message, 'dev')
+    console.log(`[番剧更新] 发送 QQ 群消息: \n\n${message}\n`);
 }
 
 updateAnimes()
@@ -146,5 +164,13 @@ async function insertBgmIDToDB(bgmID) {
     if (isExist.length == 0) {
         promiseDB.query('INSERT INTO bangumi_data (`bgmid`) VALUES (?)', [bgmID])
     }
+
+}
+
+async function changeDelete(year, type, name, deleted) {
+
+    if (!year || !type || !name) throw new Error('No anime provided')
+    if (deleted === undefined || typeof deleted !== 'boolean') throw new Error('No delete state provided')
+    promiseDB.query('UPDATE anime SET deleted = ? WHERE `year` = ? AND `type` = ? AND `name` = ?', [deleted, year, type, name])
 
 }

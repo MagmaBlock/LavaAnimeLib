@@ -6,5 +6,10 @@ export const AlistAPI = axios.create({
 })
 
 export const bangumiAPI = axios.create({
-    baseURL: config.bangumi.host
+    baseURL: config.bangumi.host,
+    headers: { 'User-Agent': 'LavaAnimeLib/2.0' }
+})
+
+export const qqBotAPI = axios.create({
+    baseURL: config.qqBotApi.host
 })
