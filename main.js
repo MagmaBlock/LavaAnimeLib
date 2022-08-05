@@ -35,8 +35,10 @@ app.use(`/v1/anime`, anime1); // 动画信息
 
 import index2 from './routes/v2/index.js'
 import user2 from './routes/v2/user.js';
+import anime2 from './routes/v2/anime.js'
 app.use(`/v2/index`, index2); // 索引
-app.use(`/v2/user`, user2); // 用户相关
+app.use(`/v2/user`, user2); // 用户
+app.use('/v2/anime', anime2) // 动画
 
 
 

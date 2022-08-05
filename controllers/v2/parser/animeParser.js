@@ -1,30 +1,25 @@
+import _ from "lodash";
 import config from "../../../common/config.js";
 import { promiseDB } from "../../../common/sql.js";
 
 
-export async function simpleAnimeData(data) { // 解析为简单番剧数据
+export async function simpleAnimeData(data) {
+    /*
+        传入 anime 表查询结果，自动解析为简单数据结构
+        注意，返回的数据始终为数组
+    */
     if (!data) throw new Error('No data provide')
-    if (typeof data == 'object') { // 判断是否为对象
+    if (typeof data !== 'object') throw new Error('Data is not a Object')
 
-        let bgmData = await getAllBangumiSubject(data);
-        let simpleAnimeDataResult // 结果
+    data = _.castArray(data) // 强制转为数组
+    let bgmData = await getAllBangumiSubject(data); // 拿到 bgmID 和 BangumiData 的键值对
+    let simpleAnimeDataResult = new Array() // 存储结果
+    for (let i in data) {
+        simpleAnimeDataResult.push(parseSingleAnimeData(data[i], bgmData))
+    }
 
-        // 生成新结构
-        if (Array.isArray(data)) { // 判断是否为数组
-            // Array
-            simpleAnimeDataResult = new Array()
-            for (let i in data) {
-                simpleAnimeDataResult.push(parseSingleAnimeData(data[i], bgmData))
-            }
-            return simpleAnimeDataResult
-        } else {
-            // Object (只有一个)
-            simpleAnimeDataResult = parseSingleAnimeData(data[i], bgmData)
-            return simpleAnimeDataResult
-        }
+    return simpleAnimeDataResult
 
-
-    } else { throw new Error('Data is not a Object') }
 }
 
 function parseSingleAnimeData(data, bgmData) {
@@ -104,22 +99,14 @@ function parseSingleAnimeData(data, bgmData) {
 }
 
 
-// 将从数据库内查询的含有 bgmid 的数组+对象 / 对象传入，返回每个对象所对应的 subject 数据合集
 async function getAllBangumiSubject(data) {
-    // 收集 data 中的 Bangumi ID
-    let bgmIdList = new Array(); // 缓存全部 Bangumi ID 一次性批量查询数据库
-    if (Array.isArray(data)) { // 判断是否为数组
-        // Array
-        for (let i in data) {
-            let thisBgmId = parseInt(data[i].bgmid);
-            if (thisBgmId) bgmIdList.push(thisBgmId)
-        }
-    } else {
-        // Object (只有一个)
-        let thisBgmId = parseInt(data.bgmid);
+    // 将从数据库的原始数据传入，返回 bgmID 所对应的 subject 数据键值对
+
+    let bgmIdList = new Array(); // 本次传入的 bgmID 列表
+    for (let i in data) {
+        let thisBgmId = parseInt(data[i].bgmid);
         if (thisBgmId) bgmIdList.push(thisBgmId)
     }
-
 
     // 查询上方收集的 Bangumi 对应的 Subject 数据
     let bgmData = {} // 存储 Bangumi Subject 数据的对象，使用 BgmID 为 Key 就能拿到

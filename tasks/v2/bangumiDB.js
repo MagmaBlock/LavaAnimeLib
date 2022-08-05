@@ -30,6 +30,7 @@ function isExpired(ts) {
 
 export async function getAllBgmIDInAnimeTable() {
     // 获取 anime 表所有未删除番剧的 BgmID, 用于关联番剧的查找
+    // 不会返回非 Bangumi 番剧
 
     let allBgmID = await promiseDB.query('SELECT bgmid FROM anime WHERE deleted = 0')
     let idList = new Array()
