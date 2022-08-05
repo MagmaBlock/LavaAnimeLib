@@ -2,6 +2,7 @@ import _ from "lodash";
 import alistGetter from "./tools/alistGetter.js";
 import { promiseDB } from "../../common/sql.js";
 import { sendQQGroupMessage } from "../../controllers/v2/notice/qqBot.js";
+import { updateBangumiData, repairBangumiDataID } from "./updateBangumiData.js";
 
 
 export default async function updateAnimes() {
@@ -33,6 +34,7 @@ export default async function updateAnimes() {
                 let thisAnime = newAnimes[k]
                 let isNew = await isNewInDB(thisYear, thisType, thisAnime);
                 let isDeleted = await isDeletedInDB(thisYear, thisType, thisAnime);
+                let bgmID = thisAnime.match("\\d+$")[0];
 
                 if (isNew, !isDeleted) { // 如果是新资源 (并未在 DB 中 deleted)
                     insertAnimeToDB(thisYear, thisType, thisAnime)
@@ -55,10 +57,9 @@ export default async function updateAnimes() {
                 allDeletedAnimes.push({ year: thisYear, type: thisType, name: thisAnime })
             }
 
-
         }
-
     }
+    await repairBangumiDataID()
 
     console.log('[番剧更新] 发现的 Alist 新番剧: ', allNewAnimes);
     console.log('[番剧更新] 发现的 Alist 被删除的番剧: ', allDeletedAnimes);
@@ -153,19 +154,8 @@ async function insertAnimeToDB(year, type, name) {
     let title = name.replace(bgmID, '').trim()
     promiseDB.query('INSERT INTO anime (`year`, `type`, `name`, `bgmid`, `title`) VALUES (?, ?, ?, ?, ?)', [year, type, name, bgmID, title])
 
-    insertBgmIDToDB(bgmID)
-
 }
 
-async function insertBgmIDToDB(bgmID) {
-
-    let isExist = await promiseDB.query('SELECT bgmid FROM bangumi_data WHERE bgmid = ?', [bgmID])
-    isExist = isExist[0]
-    if (isExist.length == 0) {
-        promiseDB.query('INSERT INTO bangumi_data (`bgmid`) VALUES (?)', [bgmID])
-    }
-
-}
 
 async function changeDelete(year, type, name, deleted) {
 

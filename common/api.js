@@ -7,7 +7,8 @@ export const AlistAPI = axios.create({
 
 export const bangumiAPI = axios.create({
     baseURL: config.bangumi.host,
-    headers: { 'User-Agent': 'LavaAnimeLib/2.0' }
+    headers: { 'User-Agent': 'LavaAnimeLib/2.0' },
+    timeout: 10000
 })
 
 export const qqBotAPI = axios.create({
