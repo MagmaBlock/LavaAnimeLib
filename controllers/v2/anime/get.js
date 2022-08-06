@@ -13,7 +13,7 @@ export async function getAnimeByID(req, res) {
 
         let anime = await promiseDB.query('SELECT * FROM anime WHERE id = ? AND deleted = 0', [laID])
         if (anime[0].length == 0) return notFound(res)
-        let thisAnimeData = await animeParser(anime[0], full)
+        let thisAnimeData = (await animeParser(anime[0], full))[0]
 
         res.send({ code: 200, message: '', data: thisAnimeData })
     } catch (error) {
