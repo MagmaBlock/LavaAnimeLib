@@ -3,77 +3,82 @@ import config from "../../../common/config.js";
 import { promiseDB } from "../../../common/sql.js";
 
 
-export async function simpleAnimeData(data) {
+export async function animeParser(rawData, full = false) {
     /*
-        传入 anime 表查询结果，自动解析为简单数据结构
+        传入 anime 表查询结果的数组，自动解析为比较完美的数据结构
         注意，返回的数据始终为数组
     */
-    if (!data) throw new Error('No data provide')
-    if (typeof data !== 'object') throw new Error('Data is not a Object')
+    if (!rawData) throw new Error('No data provide')
+    if (typeof rawData !== 'object') throw new Error('Data is not a Object')
 
-    data = _.castArray(data) // 强制转为数组
-    let bgmData = await getAllBangumiSubject(data); // 拿到 bgmID 和 BangumiData 的键值对
-    let simpleAnimeDataResult = new Array() // 存储结果
-    for (let i in data) {
-        simpleAnimeDataResult.push(parseSingleAnimeData(data[i], bgmData))
+    rawData = _.castArray(rawData) // 强制转为数组
+    let bgmIDList = parseAllBgmID(rawData) // 获取 rawData 里面的所有 bgmID
+    let bgmData = await getAllBangumiData(bgmIDList); // 拿到 bgmID 和 BangumiData 的键值对
+    let parseResults = new Array() // 存储结果
+
+    for (let i in rawData) {
+        parseResults.push(parseSingleAnimeData(rawData[i], bgmData, full))
     }
 
-    return simpleAnimeDataResult
+    return parseResults
 
 }
 
-function parseSingleAnimeData(data, bgmData) {
-    if (parseInt(data.bgmid)) {
-        let thisSubject = bgmData[data.bgmid]
-        for (let i in thisSubject.images) {
-            thisSubject.images[i] = thisSubject.images[i].replace('https://lain.bgm.tv', config.bangumiImage.host)
-        }
+function parseSingleAnimeData(rawData, bgmData, full = false) {
+    if (parseInt(rawData.bgmid)) {
+        let thisbgmData = bgmData[rawData.bgmid]
 
         let thisAnimeData = {
-            id: parseInt(data.id),
+            id: parseInt(rawData.id),
             index: {
-                year: data.year,
-                type: data.type,
-                name: data.name,
+                year: rawData.year,
+                type: rawData.type,
+                name: rawData.name,
             },
-            views: data.views,
-            bgmId: parseInt(data.bgmid),
-            title: data.title.replace(/\[BDRip\]|\[NSFW\]/gi, ''),
+            views: rawData.views,
+            bgmId: parseInt(rawData.bgmid),
+            title: rawData.title.replace(/\[BDRip\]|\[NSFW\]/gi, ''),
             tags: {
-                bdrip: data.title.match(/\[BDRip\]/i) ? true : false,
-                nsfw: data.title.match(/\[NSFW\]/i) ? true : false
+                bdrip: rawData.title.match(/\[BDRip\]/i) ? true : false,
+                nsfw: rawData.title.match(/\[NSFW\]/i) ? true : false
             },
             images: {
-                ...thisSubject.images,
-                poster: thisSubject.images.large + '/poster'
+                ...thisbgmData.subjects.images,
+                poster: thisbgmData.subjects.images.large + '/poster'
             },
-            rating: thisSubject.rating
+            rating: thisbgmData.subjects.rating
         }
-
+        if (full) {
+            thisAnimeData = {
+                ...thisAnimeData,
+                relations: thisbgmData.relations_anime,
+                characters: thisbgmData.characters
+            }
+        }
         return thisAnimeData
     }
-    if (!parseInt(data.bgmid)) { // 非 Bangumi 番剧
+    if (!parseInt(rawData.bgmid)) { // 非 Bangumi 番剧
         let thisAnimeData = {
-            id: parseInt(data.id),
+            id: parseInt(rawData.id),
             index: {
-                year: data.year,
-                type: data.type,
-                name: data.name,
+                year: rawData.year,
+                type: rawData.type,
+                name: rawData.name,
             },
-            views: data.views,
-            bgmId: parseInt(data.bgmid),
-            title: data.title.replace(/\[BDRip\]|\[NSFW\]/gi, ''),
+            views: rawData.views,
+            bgmId: parseInt(rawData.bgmid),
+            title: rawData.title.replace(/\[BDRip\]|\[NSFW\]/gi, ''),
             tags: {
-                bdrip: data.title.match(/\[BDRip\]/i) ? true : false,
-                nsfw: data.title.match(/\[NSFW\]/i) ? true : false
+                bdrip: rawData.title.match(/\[BDRip\]/i) ? true : false,
+                nsfw: rawData.title.match(/\[NSFW\]/i) ? true : false
             },
             images: {
-                small: data.poster,
-                grid: data.poster,
-                large: data.poster,
-                medium: data.poster,
-                common: data.poster,
-                poster: data.poster
+                small: rawData.poster,
+                grid: rawData.poster,
+                large: rawData.poster,
+                medium: rawData.poster,
+                common: rawData.poster,
+                poster: rawData.poster
             },
             rating: {
                 "rank": -1,
@@ -99,26 +104,38 @@ function parseSingleAnimeData(data, bgmData) {
 }
 
 
-async function getAllBangumiSubject(data) {
+function parseAllBgmID(data) {
     // 将从数据库的原始数据传入，返回 bgmID 所对应的 subject 数据键值对
-
     let bgmIdList = new Array(); // 本次传入的 bgmID 列表
     for (let i in data) {
         let thisBgmId = parseInt(data[i].bgmid);
         if (thisBgmId) bgmIdList.push(thisBgmId)
     }
+    return bgmIdList
+}
 
-    // 查询上方收集的 Bangumi 对应的 Subject 数据
-    let bgmData = {} // 存储 Bangumi Subject 数据的对象，使用 BgmID 为 Key 就能拿到
+async function getAllBangumiData(bgmIdList) {
+    // 查询上方收集的 Bangumi 对应的数据
+    let bgmData = {} // 存储 Bangumi 数据的对象，使用 BgmID 为 Key 就能拿到
     if (bgmIdList.length > 0) {
         let queryResult = await promiseDB.query(
-            'SELECT subjects FROM bangumi_data WHERE bgmid IN (?)',
+            'SELECT * FROM bangumi_data WHERE bgmid IN (?)',
             [bgmIdList]
         )
-        queryResult = queryResult[0]
-        for (let i in queryResult) {
-            let thisSubjectData = JSON.parse(queryResult[i].subjects)
-            bgmData[thisSubjectData.id] = thisSubjectData
+        let queryBgmData = queryResult[0]
+
+        for (let i in queryBgmData) { // 遍历每个来自数据库的 bgmData
+            for (let j in queryBgmData[i]) { // 遍历对象的每个元素
+                if (typeof queryBgmData[i][j] == 'string') { // 如果是字符串，替换 CDN 链接
+                    queryBgmData[i][j] = queryBgmData[i][j].replace(/https\:\/\/lain\.bgm\.tv/gi, config.bangumiImage.host)
+                    // console.log(queryBgmData[i][j] + '\n\n');
+                }
+            }
+            bgmData[queryBgmData[i].bgmid] = {
+                relations: JSON.parse(queryBgmData[i].relations_anime),
+                subjects: JSON.parse(queryBgmData[i].subjects),
+                characters: JSON.parse(queryBgmData[i].characters)
+            }
         }
     }
     return bgmData

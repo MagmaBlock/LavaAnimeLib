@@ -1,7 +1,7 @@
 import { promiseDB } from "../../../common/sql.js";
 import wrongQuery from "../error/wrongQuery.js";
 
-import { simpleAnimeData } from "../parser/animeParser.js";
+import { animeParser } from "../parser/animeParser.js";
 
 export default async function queryAnimeByIndex(req, res) {
 
@@ -16,6 +16,6 @@ export default async function queryAnimeByIndex(req, res) {
         queryPlaceholder
     )
 
-    res.send({ code: 200, message: 'success', data: await simpleAnimeData(queryResult[0]) })
+    res.send({ code: 200, message: 'success', data: await animeParser(queryResult[0]) })
 }
 
