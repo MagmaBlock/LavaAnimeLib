@@ -4,7 +4,6 @@ import { promiseDB } from "../../common/sql.js";
 import { sendQQGroupMessage } from "../../controllers/v2/notice/qqBot.js";
 import { updateBangumiData, repairBangumiDataID } from "./updateBangumiData.js";
 
-
 export default async function updateAnimes() {
 
     // 用于存储本次入库和删除的的番剧列表
@@ -65,18 +64,17 @@ export default async function updateAnimes() {
     console.log('[番剧更新] 发现的 Alist 被删除的番剧: ', allDeletedAnimes);
 
 
-    let message = '【发现新作品收录 / 计划】(自动发送)\n——————\n'
-    allNewAnimes.forEach(anime => { message = message + `【${anime.year}${anime.type}】${anime.name.replace('NSFW', 'N***')}\n` })
-    message = message + `——————\n新收录 / 计划以上 ${allNewAnimes.length} 部作品`
-    sendQQGroupMessage(message, 'dev')
-    console.log(`[番剧更新] 发送 QQ 群消息: \n\n${message}\n`);
+    if (allNewAnimes.length) {
+        let message = createMessage(allNewAnimes)
+        sendQQGroupMessage(message, 'dev')
+        console.log(`[番剧更新] 发送 QQ 群消息: \n\n${message}\n`);
+    }
 }
 
-updateAnimes()
 
 async function getYears() {
+    // Alist 获取所有年份
 
-    // 获取根目录
     let rootDir = await alistGetter()
     if (rootDir.code == 200) rootDir = rootDir.data.files
     else throw new Error('Alist API 异常')
@@ -90,8 +88,8 @@ async function getYears() {
 }
 
 async function getTypes(year) {
+    // Alist 获取年份下的月份
 
-    // 获取年的目录
     let yearDir = await alistGetter('/1A/LavaAnimeLib/' + year)
     if (yearDir.code == 200) yearDir = yearDir.data.files
     else throw new Error('Alist API 异常')
@@ -105,8 +103,8 @@ async function getTypes(year) {
 }
 
 async function getAnimes(year, type) {
+    // Alist 获取指定分类的动画列表
 
-    // 获取相应年和分类目录
     let typeDir = await alistGetter('/1A/LavaAnimeLib/' + year + '/' + type)
     if (typeDir.code == 200) typeDir = typeDir.data.files
     else throw new Error('Alist API 异常')
@@ -120,8 +118,8 @@ async function getAnimes(year, type) {
 }
 
 async function getThisTypeDB(year, type) {
-
     // 从数据库查询此分类有什么番剧
+
     let thisTypeAnimes = await promiseDB.query('SELECT name FROM anime WHERE `year` LIKE ? AND `type` LIKE ? AND deleted = \'0\'', [year, type])
     let allDBAnimes = new Array();
     thisTypeAnimes[0].forEach(anime => allDBAnimes.push(anime.name))
@@ -131,6 +129,7 @@ async function getThisTypeDB(year, type) {
 }
 
 async function isNewInDB(year, type, name) {
+    // 从数据库查询此番剧是否已经存在
 
     let isNew = await promiseDB.query('SELECT * FROM anime WHERE `year` LIKE ? AND `type` LIKE ? AND `name` LIKE ?', [year, type, name])
     isNew = isNew[0]
@@ -140,6 +139,7 @@ async function isNewInDB(year, type, name) {
 }
 
 async function isDeletedInDB(year, type, name) {
+    // 从数据库查询此番剧是否被标记为删除
 
     let isDeleted = await promiseDB.query('SELECT * FROM anime WHERE `year` LIKE ? AND `type` LIKE ? AND `name` LIKE ? AND deleted = 1', [year, type, name])
     isDeleted = isDeleted[0]
@@ -149,6 +149,7 @@ async function isDeletedInDB(year, type, name) {
 }
 
 async function insertAnimeToDB(year, type, name) {
+    // 插入番剧到数据库
 
     let bgmID = name.match("\\d+$")[0];
     let title = name.replace(bgmID, '').trim()
@@ -158,9 +159,20 @@ async function insertAnimeToDB(year, type, name) {
 
 
 async function changeDelete(year, type, name, deleted) {
+    // 修改数据库中指定年分类名称的番剧的删除状态
 
     if (!year || !type || !name) throw new Error('No anime provided')
     if (deleted === undefined || typeof deleted !== 'boolean') throw new Error('No delete state provided')
     promiseDB.query('UPDATE anime SET deleted = ? WHERE `year` = ? AND `type` = ? AND `name` = ?', [deleted, year, type, name])
+
+}
+
+function createMessage(allNewAnimes) {
+    // 传入新入库番剧列表，返回消息
+
+    let message = '【发现新作品收录 / 计划】(自动发送)\n——————\n'
+    allNewAnimes.forEach(anime => { message = message + `【${anime.year}${anime.type}】${anime.name.replace('NSFW', 'N***')}\n` })
+    message = message + `——————\n新收录 / 计划以上 ${allNewAnimes.length} 部作品`
+    return message
 
 }
