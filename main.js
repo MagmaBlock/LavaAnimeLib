@@ -1,24 +1,22 @@
-// 引用库
 import express from 'express';
-// 引用全局脚本
-import db from './common/sql.js'; // 数据库连接模块
-// 创建服务器
+
+import config from './common/config.js';
+import db from './common/sql.js';
+
 const app = express();
+app.use(express.json()); // 使用 Express 4.16 自带的 .json() 中间件 , 使得全局的 req.body 自动解析为 JSON
+app.use(express.urlencoded({ extended: true })) // 使用 Express 自带的 URLEncoded 中间件，使得全局的 URl 参数可以被自动解析
+app.set('trust proxy', config.trustProxy) // 允许 Express 信任上级代理提供的 IP 地址
 
-app.use(express.json()); // 使用 Express 4 自带的 .json() , 使得全局可以使用 req.body
-app.use(express.urlencoded({ extended: true }))
-
-app.all('/*', async (req, res, next) => {
-    res.header('Content-Type', 'application/json'); // 指定客户端请求的属性
-    res.header('Access-Control-Allow-Origin', '*'); // 允许跨域
-    res.header('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, DELETE, PUT'); // 允许跨域
+app.all('*', async (req, res, next) => {
+    res.set({
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE, PUT'
+    })
     let nowTime = new Date().toLocaleString(); // 获取当前时间
-    let ip = req.ip
-    if (req.headers['x-real-ip']) { // 兼容nginx代理
-        ip = req.headers['x-real-ip']
-    }
-    console.log(`[传入请求] [${ip}] ${req.method} ${req.url} [${nowTime}]`);
+    console.log(`[传入请求] [${req.ip}] ${req.method} ${req.url} [${nowTime}]`);
     next();
 });
 
