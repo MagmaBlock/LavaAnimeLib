@@ -1,7 +1,7 @@
 {
   "name": "lavaanime",
-  "version": "1.0.0",
-  "description": "熔岩番剧库后端，私有",
+  "version": "2.0.0",
+  "description": "熔岩番剧库后端",
   "main": "main.js",
   "type": "module",
   "scripts": {
