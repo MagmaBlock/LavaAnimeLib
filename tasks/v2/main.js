@@ -12,5 +12,5 @@ async function doAll() {
     console.log('[定时刷新] 开始刷新 Poster...');
     await updatePosters()
     console.log('[定时刷新] 所有刷新任务已经完成! 将在 10 秒后关闭...');
-    setTimeout(promiseDB.end(), 10000);
+    setTimeout(() => { promiseDB.end() }, 10000);
 }
