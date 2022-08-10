@@ -3,6 +3,7 @@ import notFound from "../error/notFound.js"
 import serverError from "../error/serverError.js"
 import wrongQuery from "../error/wrongQuery.js"
 import { animeParser } from "../parser/animeParser.js"
+import { getFilesByID } from "./file.js"
 import { getAnimeByID } from "./get.js"
 import { addAnimeView, getAnimeView } from "./view.js"
 
@@ -18,6 +19,23 @@ export async function getAnimeByIDAPI(req, res) {
         let thisAnimeData = (await animeParser(anime, full))[0]
 
         res.send({ code: 200, message: '成功', data: thisAnimeData })
+    } catch (error) {
+        console.error(error);
+        return serverError(res)
+    }
+}
+
+export async function getFilesByIDAPI(req, res) {
+    let laID = req.query.id
+    if (!isFinite(laID)) return wrongQuery(res)
+
+    try {
+        let files = await getFilesByID(laID)
+        if (!files) {
+            return notFound(res)
+        } else {
+            res.send({ code: 200, message: '成功', data: files })
+        }
     } catch (error) {
         console.error(error);
         return serverError(res)
