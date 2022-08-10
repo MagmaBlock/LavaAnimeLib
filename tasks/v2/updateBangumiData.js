@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { promiseDB } from "../../common/sql.js"
 import { getBangumiCharacters, getBangumiRelations, getBangumiSubjects } from "./bangumiAPI.js";
-import { findExpiredBangumiData, getAllBgmIDInAnimeTable, getAllBgmIdInBangumiDataTable, insertBgmIDToDB } from "./bangumiDB.js";
+import { findExpiredBangumiData, getAllBgmIDInAnimeTable, getAllBgmIdInBangumiDataTable, insertBgmIDBlankToDB } from "./bangumiDB.js";
 
 let reTry = {}
 
@@ -34,7 +34,7 @@ export async function repairBangumiDataID() {
     let diff = _.difference(bgmIdInAnime, bgmIDInData)
 
     console.log(`[Bangumi Data] 修复缺失 BgmID: ${diff}`);
-    for (let i in diff) await insertBgmIDToDB(diff[i]) // 会自动新建并填入数据
+    for (let i in diff) await insertBgmIDBlankToDB(diff[i]) // 会自动新建并填入数据
 
 }
 

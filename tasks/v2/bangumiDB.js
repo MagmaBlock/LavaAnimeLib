@@ -60,9 +60,25 @@ export async function insertBgmIDToDB(bgmID) {
     let isExist = await promiseDB.query('SELECT bgmid FROM bangumi_data WHERE bgmid = ?', [bgmID])
     isExist = isExist[0]
     if (isExist.length == 0) {
-        promiseDB.query('INSERT INTO bangumi_data (`bgmid`) VALUES (?)', [bgmID])
+        await promiseDB.query('INSERT INTO bangumi_data (`bgmid`) VALUES (?)', [bgmID])
         console.log(`[Bangumi Data] 插入 bgm${bgmID} 到 Bangumi Data`);
         await updateBangumiData(bgmID)
+    }
+
+}
+
+
+export async function insertBgmIDBlankToDB(bgmID) {
+    /*
+        插入 bgmID 到 bangumi_data，会判断是否存在，若不存在会自动插入但不会更新数据
+        会将时间戳插入为数年前，以保证其一定过期
+    */
+
+    let isExist = await promiseDB.query('SELECT bgmid FROM bangumi_data WHERE bgmid = ?', [bgmID])
+    isExist = isExist[0]
+    if (isExist.length == 0) {
+        await promiseDB.query('INSERT INTO bangumi_data (`bgmid`,update_time) VALUES (?,?)', [bgmID, new Date(100000000)])
+        console.log(`[Bangumi Data] 插入Blank bgm${bgmID} 到 Bangumi Data`);
     }
 
 }
