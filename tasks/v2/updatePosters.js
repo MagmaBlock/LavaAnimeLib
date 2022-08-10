@@ -2,7 +2,6 @@ import config from "../../common/config.js";
 import { promiseDB } from "../../common/sql.js";
 import { getAllBgmIDInAnimeTable } from "./bangumiDB.js";
 
-updatePosters()
 export async function updatePosters() {
     let allBgmIDInAnime = await getAllBgmIDInAnimeTable()
     let allSubjectsData = await promiseDB.query('SELECT bgmid,subjects FROM bangumi_data WHERE bgmid IN (?)', [allBgmIDInAnime])

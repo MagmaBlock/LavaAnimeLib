@@ -11,8 +11,8 @@ export async function updateAllBangumiData() {
     await repairBangumiDataID()
     let bgmIDListExpired = await findExpiredBangumiData() // 查找过期
     let bgmIDListInAnimeTable = await getAllBgmIDInAnimeTable() // Anime 表的 BgmID 用于查找关联番剧
-    let chunkedbgmIDList = _.chunk(bgmIDListExpired, 3) // 把大数组拆成含有 n 个对象的小数组
-    console.log('[Bangumi Data] 需要刷新的 BgmID 列表', chunkedbgmIDList);
+    let chunkedbgmIDList = _.chunk(bgmIDListExpired, 9) // 把大数组拆成含有 n 个对象的小数组
+    console.log('[Bangumi Data] 需要刷新的 BgmID 列表', JSON.stringify(chunkedbgmIDList));
 
     for (let i in chunkedbgmIDList) {
         let task = []
