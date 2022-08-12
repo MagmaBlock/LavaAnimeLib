@@ -13,19 +13,23 @@ export async function updatePosters() {
     allSubjectsData = newArray
 
     for (let i in allBgmIDInAnime) {
-        if (allSubjectsData[allBgmIDInAnime[i]].images && allSubjectsData[allBgmIDInAnime[i]]) {
-            let thisPoster = allSubjectsData[allBgmIDInAnime[i]].images.large.replace('https://lain.bgm.tv', config.bangumiImage.host) + '/poster' || ''
-            promiseDB.query(
-                'UPDATE anime SET poster = ? WHERE bgmid = ?',
-                [thisPoster, allBgmIDInAnime[i]]
-            )
-            console.log(`[Poster 更新] ${allBgmIDInAnime[i]} => ${thisPoster}`);
-        } else {
-            promiseDB.query(
-                'UPDATE anime SET poster = ? WHERE bgmid = ?',
-                ['https://anime-img.5t5.top/assets/noposter.png', allBgmIDInAnime[i]]
-            )
-            console.log(`[Poster 更新] 无图片的 ${allBgmIDInAnime[i]} => https://anime-img.5t5.top/assets/noposter.png`);
+        try {
+            if (allSubjectsData[allBgmIDInAnime[i]].images && allSubjectsData[allBgmIDInAnime[i]]) {
+                let thisPoster = allSubjectsData[allBgmIDInAnime[i]].images.large.replace('https://lain.bgm.tv', config.bangumiImage.host) + '/poster' || ''
+                promiseDB.query(
+                    'UPDATE anime SET poster = ? WHERE bgmid = ?',
+                    [thisPoster, allBgmIDInAnime[i]]
+                )
+                console.log(`[Poster 更新] ${allBgmIDInAnime[i]} => ${thisPoster}`);
+            } else {
+                promiseDB.query(
+                    'UPDATE anime SET poster = ? WHERE bgmid = ?',
+                    ['https://anime-img.5t5.top/assets/noposter.png', allBgmIDInAnime[i]]
+                )
+                console.log(`[Poster 更新] 无图片的 ${allBgmIDInAnime[i]} => https://anime-img.5t5.top/assets/noposter.png`);
+            }
+        } catch (error) {
+            console.error(error)
         }
     }
 }
