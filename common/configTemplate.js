@@ -26,7 +26,8 @@ export default {
         group: {
             // 群号
             "main": 0, "dev": 0
-        }
+        },
+        usedGroup: ['main']
     },
     // 缓存天数，管理 Bangumi Data 数据会被缓存多少天后刷新
     cache: 1,

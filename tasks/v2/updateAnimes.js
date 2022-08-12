@@ -3,6 +3,7 @@ import alistGetter from "./tools/alistGetter.js";
 import { promiseDB } from "../../common/sql.js";
 import { sendQQGroupMessage } from "../../controllers/v2/notice/qqBot.js";
 import { updateBangumiData, repairBangumiDataID } from "./updateBangumiData.js";
+import config from "../../common/config.js";
 
 export default async function updateAnimes() {
 
@@ -66,7 +67,8 @@ export default async function updateAnimes() {
 
     if (allNewAnimes.length) {
         let message = createMessage(allNewAnimes)
-        sendQQGroupMessage(message, 'dev')
+        let usedGroup = config.qqBotApi.usedGroup
+        for (let i in usedGroup) sendQQGroupMessage(message, usedGroup[i])
         console.log(`[番剧更新] 发送 QQ 群消息: \n\n${message}\n`);
     }
 }
