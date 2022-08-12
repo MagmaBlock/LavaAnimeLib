@@ -14,12 +14,13 @@ export default async function queryAnimeByIndex(req, res) {
 
     try {
         let queryResult = await promiseDB.query(
-            'SELECT * FROM anime WHERE year LIKE ? AND `type` LIKE ?',
+            'SELECT * FROM anime WHERE year LIKE ? AND `type` LIKE ? AND deleted = 0',
             queryPlaceholder
         )
 
         res.send({ code: 200, message: 'success', data: await animeParser(queryResult[0]) })
     } catch (error) {
+        console.error(error);
         return serverError(res)
     }
 }
