@@ -7,6 +7,7 @@ import { getFilesByID } from "./file.js"
 import { getAnimeByID } from "./get.js"
 import { addAnimeView, getAnimeView } from "./view.js"
 
+// /v2/anime/get
 export async function getAnimeByIDAPI(req, res) {
     let laID = req.query.id
     if (!isFinite(laID)) return wrongQuery(res)
@@ -25,6 +26,7 @@ export async function getAnimeByIDAPI(req, res) {
     }
 }
 
+// /v2/anime/file
 export async function getFilesByIDAPI(req, res) {
     let laID = req.query.id
     if (!isFinite(laID)) return wrongQuery(res)
@@ -42,6 +44,7 @@ export async function getFilesByIDAPI(req, res) {
     }
 }
 
+// /v2/anime/view/get
 export async function getAnimeViewAPI(req, res) {
     let laID = req.query.id
     if (!isFinite(laID)) return wrongQuery(res)
@@ -67,7 +70,7 @@ export async function getAnimeViewAPI(req, res) {
 }
 
 
-
+// /v2/anime/view/add
 export async function addAnimeViewAPI(req, res) {
     let laID = req.body.id
     let ep = req.body.ep
