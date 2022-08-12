@@ -1,6 +1,7 @@
 import { AlistAPI } from "../../../common/api.js"
 import config from "../../../common/config.js"
 import { getAnimeByID } from "./get.js"
+import { parseFileName } from "./tag.js"
 
 export async function getFilesByID(laID) {
     // 根据 ID 获取某番剧目录下的文件和文件夹名
@@ -33,6 +34,7 @@ export async function getFilesByID(laID) {
             } else {
                 thisDir.push({
                     ...thisFileInfo,
+                    ...parseFileName(thisFile.name),
                     type: 'file'
                 })
             }
