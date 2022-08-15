@@ -12,9 +12,15 @@ export default async function queryAnimeByIndex(req, res) {
         req.body.year || '%', req.body.type || '%'
     ]
 
+    let allEmpty = true
+    for (let i in queryPlaceholder) {
+        if (queryPlaceholder[i] !== '%') allEmpty = false
+    }
+    if (allEmpty) return wrongQuery(res)
+
     try {
         let queryResult = await promiseDB.query(
-            'SELECT * FROM anime WHERE year LIKE ? AND `type` LIKE ? AND deleted = 0',
+            'SELECT * FROM anime WHERE year LIKE ? AND `type` LIKE ? AND deleted = 0 ORDER BY views DESC',
             queryPlaceholder
         )
 

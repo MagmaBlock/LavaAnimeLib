@@ -29,16 +29,17 @@ function parseSingleAnimeData(rawData, bgmData, full = false) {
         let thisbgmData = bgmData[rawData.bgmid]
 
         let thisAnimeData = {
+            ...thisbgmData.subjects,
             id: parseInt(rawData.id),
+            bgmId: parseInt(rawData.bgmid),
             index: {
                 year: rawData.year,
                 type: rawData.type,
                 name: rawData.name,
             },
             views: rawData.views,
-            bgmId: parseInt(rawData.bgmid),
             title: rawData.title.replace(/\[BDRip\]|\[NSFW\]/gi, ''),
-            tags: {
+            type: {
                 bdrip: rawData.title.match(/\[BDRip\]/i) ? true : false,
                 nsfw: rawData.title.match(/\[NSFW\]/i) ? true : false
             },
@@ -46,7 +47,6 @@ function parseSingleAnimeData(rawData, bgmData, full = false) {
                 ...thisbgmData.subjects.images,
                 poster: thisbgmData.subjects.images.large + '/poster'
             },
-            rating: thisbgmData.subjects.rating
         }
         if (full) {
             thisAnimeData = {
@@ -68,7 +68,7 @@ function parseSingleAnimeData(rawData, bgmData, full = false) {
             views: rawData.views,
             bgmId: parseInt(rawData.bgmid),
             title: rawData.title.replace(/\[BDRip\]|\[NSFW\]/gi, ''),
-            tags: {
+            type: {
                 bdrip: rawData.title.match(/\[BDRip\]/i) ? true : false,
                 nsfw: rawData.title.match(/\[NSFW\]/i) ? true : false
             },
