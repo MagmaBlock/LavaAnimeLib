@@ -57,7 +57,7 @@ export function parseFileName(fileName) {
             if (!isSeason) continue // 忽略季度名
             let isEpisode = thisWord.replace(/(EP|E|P|)\d{1,2}(END|v2|v3|\.5|)/i, '')
             if (!isEpisode) {
-                thisEpisode = thisWord.replace(/E|P|END|v2|v3/gi, '')
+                thisEpisode = thisWord.replace(/END|P|E|v2|v3/gi, '')
                 break
             }
         }
