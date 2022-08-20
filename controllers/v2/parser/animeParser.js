@@ -51,7 +51,7 @@ function parseSingleAnimeData(rawData, bgmData, full = false) {
         if (full) {
             thisAnimeData = {
                 ...thisAnimeData,
-                relations: thisbgmData.relations_anime,
+                relations: thisbgmData.relations,
                 characters: thisbgmData.characters
             }
         }
