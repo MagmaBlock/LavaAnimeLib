@@ -21,7 +21,6 @@ export async function getFilesByID(laID) {
             let thisFileInfo = { // 当前文件的信息
                 name: thisFile.name,
                 size: thisFile.size,
-                url: thisFile.url,
                 updated: thisFile.updated_at,
                 driver: thisFile.driver,
                 thumbnail: thisFile.thumbnail,
@@ -35,6 +34,8 @@ export async function getFilesByID(laID) {
                 thisDir.push({
                     ...thisFileInfo,
                     ...parseFileName(thisFile.name),
+                    url: `${config.alist.host}${encodeURI(`/d${config.alist.root}/${anime.year}/${anime.type}/${anime.name}/${thisFile.name}`)}`,
+                    tempUrl: thisFile.url,
                     type: 'file'
                 })
             }
