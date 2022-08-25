@@ -1,7 +1,7 @@
 import _ from "lodash";
 import alistGetter from "./tools/alistGetter.js";
 import { promiseDB } from "../../common/sql.js";
-import { sendQQGroupMessage } from "../../controllers/v2/notice/qqBot.js";
+import { sendQQGroupMessage } from "../../controllers/v2/notifier/qqBot.js";
 import { updateBangumiData, repairBangumiDataID } from "./updateBangumiData.js";
 import config from "../../common/config.js";
 
