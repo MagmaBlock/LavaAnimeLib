@@ -1,3 +1,4 @@
+import { promiseDB } from '../../common/sql.js';
 import { dbQueryAsync } from '../v1/tools/dbQuery.js';
 
 export function getView(req, res) { // 查询播放量
@@ -31,6 +32,12 @@ async function viewsHandler(req, res, update) { // 处理播放量请求
         let newViews = parseInt(thisAnime.views) + 1;
         await dbQueryAsync('UPDATE anime SET views = ? WHERE id = ? AND deleted = 0', [newViews, id])
         console.log(`[新增播放] 新增了播放量 [${thisAnime.id}] ${thisAnime.name} => ${newViews} !`);
+        try {
+            promiseDB.query('INSERT INTO views (id,ep,file,ip,`user`,`type`) VALUES (?,?,?,?,?,?)', [id, undefined, thisAnime.name, req.ip, undefined, 'V1 API'])
+        } catch (error) {
+            console.error(error);
+            console.log('成功添加播放量后插入 view log 失败');
+        }
         res.send({ code: 200, message: 'success', data: newViews });
     }
 }
