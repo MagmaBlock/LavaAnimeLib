@@ -76,11 +76,12 @@ export async function addAnimeViewAPI(req, res) {
     let ep = req.body.ep
     let file = req.body.file
     let ip = req.ip
+    let type = req.body.type
 
     if (!isFinite(laID)) return wrongQuery(res)
 
     try {
-        let addResult = await addAnimeView(laID, ep, file, ip)
+        let addResult = await addAnimeView(laID, ep, file, ip, null, type)
         if (addResult) {
             res.send({
                 code: 200, message: '成功',

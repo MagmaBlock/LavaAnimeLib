@@ -18,14 +18,14 @@ export async function getAnimeView(laID) {
     }
 }
 
-export async function addAnimeView(laID, ep, file, ip, userID) {
+export async function addAnimeView(laID, ep, file, ip, userID, type) {
     if (!isFinite(laID)) throw new Error('ID 无法解析为数字或不存在')
 
     let addQuery = await promiseDB.query('UPDATE anime SET views = views + 1 WHERE id = ? AND deleted = 0', [laID])
     if (addQuery[0].changedRows == 0) return false // 如果是 0 说明找不到此作品
 
     try {
-        promiseDB.query('INSERT INTO views (id,ep,file,ip,`user`) VALUES (?,?,?,?,?)', [laID, ep, file, ip, userID])
+        promiseDB.query('INSERT INTO views (id,ep,file,ip,`user`,`type`) VALUES (?,?,?,?,?,?)', [laID, ep, file, ip, userID, type])
     } catch (error) {
         console.error(error);
         console.log('成功添加播放量后插入 view log 失败');
