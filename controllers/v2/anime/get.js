@@ -16,7 +16,7 @@ export async function getAnimeByID(laID) {
 export async function getAnimesByID(array) {
     // 传入 ID 数组返回结果
     let task = []
-    for (let i in array) task.push(await getAnimeByID(array[i]))
+    for (let i in array) task.push((await getAnimeByID(array[i]))[0])
     return task
 }
 
