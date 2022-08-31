@@ -62,6 +62,10 @@ const dict = {
         { from: /Meowskers/ig, to: "喵鲁字幕组" },
         { from: /Amor字幕组/ig, to: "Amor 字幕组" },
         { from: /POPGO/ig, to: "漫游字幕组" },
+        { from: /Moozzi2/ig, to: "Moozzi2 压制组" },
+        { from: /mawen1250/ig, to: "mawen1250 压制组" },
+        { from: /ANK-Raws/ig, to: "ANK-Raws 压制组" },
+        { from: /Snow-Raws/ig, to: "花園壓制組" },
     ],
     source: [
         { from: /TVRip|TV/ig, to: "TV放送源" },
