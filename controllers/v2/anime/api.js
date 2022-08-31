@@ -31,7 +31,9 @@ export async function getAnimesByIDAPI(req, res) {
     let ids = req.body.ids
     if (!Array.isArray(ids) || ids.length >= 80) return wrongQuery(res)
     try {
-        res.send({ code: 200, message: '成功', data: await getAnimesByID(ids) })
+        let result = await getAnimesByID(ids)
+        result = await animeParser(result)
+        res.send({ code: 200, message: '成功', data: result })
     } catch (error) {
         return serverError(res)
     }
