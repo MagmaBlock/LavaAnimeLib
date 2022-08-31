@@ -13,6 +13,13 @@ export async function getAnimeByID(laID) {
     }
 }
 
+export async function getAnimesByID(array) {
+    // 传入 ID 数组返回结果
+    let task = []
+    for (let i in array) task.push(await getAnimeByID(array[i]))
+    return task
+}
+
 export async function getAnimeByBgmID(bgmID) {
     // 传入 ID 返回数据库查询结果
     if (!isFinite(bgmID)) throw new Error('ID 无法解析为数字或不存在')

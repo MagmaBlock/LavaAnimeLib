@@ -4,10 +4,10 @@ import serverError from "../error/serverError.js"
 import wrongQuery from "../error/wrongQuery.js"
 import { animeParser } from "../parser/animeParser.js"
 import { getFilesByID } from "./file.js"
-import { getAnimeByID } from "./get.js"
+import { getAnimeByID, getAnimesByID } from "./get.js"
 import { addAnimeView, getAnimeView } from "./view.js"
 
-// /v2/anime/get
+// GET /v2/anime/get
 export async function getAnimeByIDAPI(req, res) {
     let laID = req.query.id
     if (!isFinite(laID)) return wrongQuery(res)
@@ -22,6 +22,17 @@ export async function getAnimeByIDAPI(req, res) {
         res.send({ code: 200, message: '成功', data: thisAnimeData })
     } catch (error) {
         console.error(error);
+        return serverError(res)
+    }
+}
+
+// POST /v2/anime/get
+export async function getAnimesByIDAPI(req, res) {
+    let ids = req.body.ids
+    if (!Array.isArray(ids) || ids.length >= 80) return wrongQuery(res)
+    try {
+        res.send({ code: 200, message: '成功', data: await getAnimesByID(ids) })
+    } catch (error) {
         return serverError(res)
     }
 }
