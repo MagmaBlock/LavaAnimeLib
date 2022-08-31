@@ -20,13 +20,13 @@ export async function updatePosters() {
                     'UPDATE anime SET poster = ? WHERE bgmid = ?',
                     [thisPoster, allBgmIDInAnime[i]]
                 )
-                console.log(`[Poster 更新] ${allBgmIDInAnime[i]} => ${thisPoster}`);
+                // console.log(`[Poster 更新] ${allBgmIDInAnime[i]} => ${thisPoster}`);
             } else {
                 promiseDB.query(
                     'UPDATE anime SET poster = ? WHERE bgmid = ?',
                     ['https://anime-img.5t5.top/assets/noposter.png', allBgmIDInAnime[i]]
                 )
-                console.log(`[Poster 更新] 无图片的 ${allBgmIDInAnime[i]} => https://anime-img.5t5.top/assets/noposter.png`);
+                // console.log(`[Poster 更新] 无图片的 ${allBgmIDInAnime[i]} => https://anime-img.5t5.top/assets/noposter.png`);
             }
         } catch (error) {
             console.error(error)
