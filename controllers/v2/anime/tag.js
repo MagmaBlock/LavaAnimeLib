@@ -53,11 +53,10 @@ export function parseFileName(fileName) {
     for (let i = reformedFileName.length; i > 0; i--) { // 习惯情况下均为集数在后，所以从后往前匹配
         let thisWord = reformedFileName[i]
         if (typeof thisWord == 'string') {
-            let isSeason = thisWord.replace(/S\d{1,2}/i, '').trim()
-            if (!isSeason) continue // 忽略季度名
-            let isEpisode = thisWord.replace(/(EP|E|P|)\d{1,2}(END|v2|v3|\.5|)/i, '')
+            let isSeason = thisWord.replace(/S\d{1,2}/i, '').trim() // 直接删除季度名
+            let isEpisode = isSeason.replace(/(EP|E|P|)\d{1,2}(END|v2|v3|\.5|)/i, '')
             if (!isEpisode) {
-                thisEpisode = thisWord.replace(/END|P|E|v2|v3/gi, '')
+                thisEpisode = isSeason.replace(/END|P|E|v2|v3/gi, '')
                 break
             }
         }
