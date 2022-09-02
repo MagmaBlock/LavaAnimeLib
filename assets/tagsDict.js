@@ -79,6 +79,7 @@ const dict = {
         { from: /Sentai/ig, to: "Hidive" },
         { from: /BiliBili|BL/ig, to: "哔哩哔哩动画" },
         { from: /(Acfun|AC)/ig, to: "Acfun" },
+        { from: /(netflix|NF)/ig, to: "Netflix" },
     ],
     quality: [
         { from: /(1080P|1920(X|×)(1080|816))/ig, to: "1080P" },
