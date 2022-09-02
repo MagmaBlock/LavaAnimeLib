@@ -51,7 +51,7 @@ export async function updateBangumiData(bgmID, bgmIDListInAnimeTable) {
         thisSubject.relations = await getBangumiRelations(bgmID, bgmIDListInAnimeTable);
         thisSubject.characters = await getBangumiCharacters(bgmID);
     } catch (error) {
-        errorHanding(error, bgmID, bgmIDListInAnimeTable)
+        await errorHanding(error, bgmID, bgmIDListInAnimeTable)
         return
     }
 
