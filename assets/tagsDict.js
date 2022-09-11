@@ -67,6 +67,7 @@ const dict = {
         { from: /ANK-Raws/ig, to: "ANK-Raws 压制组" },
         { from: /Snow-Raws/ig, to: "花園壓制組" },
         { from: /Haruhana/ig, to: "拨雪寻春字幕组" },
+        { from: /RATH/ig, to: "拉斯观测组" },
     ],
     source: [
         { from: /TVRip|TV/ig, to: "TV放送源" },
@@ -96,7 +97,8 @@ const dict = {
         { from: /Main10/ig, to: "Main10" },
         { from: /8Bits|8Bit/ig, to: "8bit 色深" },
         { from: /Hi10p|10Bits|10Bit/ig, to: "10位色" },
-        { from: /yuv420p10/ig, to: "YUV-4:2:0 10bit" },
+        { from: /yuv420p10/ig, to: "YUV-4:2:0 10位色" },
+        { from: /yuv420p8/ig, to: "YUV-4:2:0 8位色" },
         { from: /(\d(AAC|ACC))|((AAC|ACC)(x|×)\d)|(ACC|AAC)/ig, to: "AAC" },
         { from: /FLAC(x|×)\d|\dFLAC|FLAC/ig, to: "Flac" },
         { from: /OPUS(x|×)\d|\dOPUS|OPUS/ig, to: "OPUS" },

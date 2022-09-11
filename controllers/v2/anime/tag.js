@@ -8,7 +8,7 @@ export function parseFileName(fileName) {
     let trueName = extensionName.trueName || fileName
 
     // 先进行简单拆分，只用 [ ] & + 拆开文件名
-    let splitedFileName = trueName.split(/\[|\]|&|\+/); // 拆分
+    let splitedFileName = trueName.split(/\[|\]|&|＆|\+/); // 拆分
     splitedFileName = tidyStringArray(splitedFileName)
 
 
