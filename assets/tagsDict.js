@@ -66,6 +66,7 @@ const dict = {
         { from: /mawen1250/ig, to: "mawen1250 压制组" },
         { from: /ANK-Raws/ig, to: "ANK-Raws 压制组" },
         { from: /Snow-Raws/ig, to: "花園壓制組" },
+        { from: /Haruhana/ig, to: "拨雪寻春字幕组" },
     ],
     source: [
         { from: /TVRip|TV/ig, to: "TV放送源" },
@@ -107,8 +108,9 @@ const dict = {
         { from: /LavaASS/ig, to: "番剧库内封(已弃用技术)" },
         { from: /(GB_CN|GB|SC|CHS|CH(?=[^T])|简体中文|简体|简中)/ig, to: "简中" },
         { from: /(BIG5|TC|CHT)/ig, to: "繁中" },
-        { from: /JPSC|CHS_JP|简体双语/ig, to: "简日双语" },
+        { from: /JPSC|CHS_JP|Chs,Jap|简体双语/ig, to: "简日双语" },
         { from: /JSTC|CHT_JP/ig, to: "繁日双语" },
+        { from: /Chs,Cht,Jap/ig, to: "简繁日多语" },
         { from: /CN/ig, to: "中文" },
         { from: /ENG/ig, to: "英语" },
         { from: /(JPN|JAP|JP)/ig, to: "日语" },
