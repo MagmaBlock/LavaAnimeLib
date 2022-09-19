@@ -14,7 +14,7 @@ export default {
     },
     // Bangumi API 域名，用于抓取 Bangumi 番组计划的番剧资料
     bangumi: {
-        host: "https://bgm-api.5t5.top"
+        host: "https://api.bgm.tv"
     },
     // Bangumi Image 地址
     bangumiImage: {
