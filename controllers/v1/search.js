@@ -1,6 +1,26 @@
 import db from '../../common/sql.js'
 
 export function searchByBgmId(req, res) {
+    res.send({
+        code: 0, message: 'API 过时', data: [
+            {
+                "id": 1,
+                "year": "year",
+                "type": "type",
+                "name": "当前客户端的 API 过期",
+                "views": -1,
+                "bgmid": "000000",
+                "nsfw": 0,
+                "title": "当前客户端的 API 过期",
+                "deleted": 0,
+                "poster": "https://anime-img.5t5.top/assets/noposter.png"
+            }
+        ]
+    })
+    console.warn('');
+    console.warn('[V1 API] 意料之外的前端请求了 V1 View.', `\nReferer: ${req.get('Referer')}\nUA: ${req.get('user-agent')}`);
+    console.warn('');
+    return
     let id = req.params[0]; // 请求的ID
     db.query(
         `SELECT * FROM anime WHERE bgmid = ? AND deleted = 0 ORDER BY views DESC`,
@@ -22,6 +42,26 @@ export function searchByBgmId(req, res) {
 }
 
 export function searchByName(req, res) {
+    res.send({
+        code: 0, message: 'API 过时', data: [
+            {
+                "id": 1,
+                "year": "year",
+                "type": "type",
+                "name": "当前客户端的 API 过期",
+                "views": -1,
+                "bgmid": "000000",
+                "nsfw": 0,
+                "title": "当前客户端的 API 过期",
+                "deleted": 0,
+                "poster": "https://anime-img.5t5.top/assets/noposter.png"
+            }
+        ]
+    })
+    console.warn('');
+    console.warn('[V1 API] 意料之外的前端请求了 V1 View.', `\nReferer: ${req.get('Referer')}\nUA: ${req.get('user-agent')}`);
+    console.warn('');
+    return
     let text = decodeURIComponent(req.params[0]); // 获取搜索内容
     if (text != '') {
         let splitTextList = text.split(' '); // 分割搜索内容
