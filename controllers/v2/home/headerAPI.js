@@ -1,7 +1,7 @@
 import config from "../../../common/config.js";
 import { promiseDB } from "../../../common/sql.js";
 import serverError from "../error/serverError.js";
-import unauthorized from "../error/Unauthorized.js";
+import unauthorized from "../error/unauthorized.js";
 import wrongQuery from "../error/wrongQuery.js";
 
 export async function getHeaderAPI(req, res) {
