@@ -16,8 +16,9 @@ app.all('*', async (req, res, next) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE, PUT'
     })
     let nowTime = new Date().toLocaleString(); // 获取当前时间
-    let ref = `[${req.get('Referer')}]` || ''
-    console.log(`[传入请求] [${req.ip}] ${req.method} ${req.url} [${nowTime}]`);
+    let ref = req.get('Referer') || ''
+    if (ref) ref = `[${ref}]`
+    console.log(`[传入请求] [${req.ip}] ${req.method} ${req.url} [${nowTime}] ${ref}`);
     next();
 });
 
