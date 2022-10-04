@@ -68,6 +68,8 @@ const dict = {
         { from: /Snow-Raws/ig, to: "花園壓制組" },
         { from: /Haruhana/ig, to: "拨雪寻春字幕组" },
         { from: /RATH/ig, to: "拉斯观测组" },
+        { from: /SBSUB/ig, to: "银色子弹字幕组" },
+        { from: /织梦字幕组/ig, to: "织梦字幕组" },
     ],
     source: [
         { from: /TVRip|TV/ig, to: "TV放送源" },
