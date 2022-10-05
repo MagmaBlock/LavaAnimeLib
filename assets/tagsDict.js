@@ -77,7 +77,7 @@ const dict = {
         { from: /BDRip|BD/ig, to: "蓝光盘源" },
         { from: /DVDRip|DVD/ig, to: "DVD 源" },
         { from: /AT-X/ig, to: "AT-X" },
-        { from: /Baha/ig, to: "巴哈姆特动漫疯" },
+        { from: /Baha/ig, to: "巴哈姆特动画疯" },
         { from: /B-Global/ig, to: "哔哩哔哩国际" },
         { from: /CR/ig, to: "Crunchyroll" },
         { from: /Sentai/ig, to: "Hidive" },
