@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node main.js",
     "dev": "nodemon main.js",
-    "sync": "node ./tasks/syncIndex.js"
+    "sync": "node ./tasks/v2/main.js",
+    "update": "git pull&&node main.js"
   },
   "repository": {
     "type": "git",
