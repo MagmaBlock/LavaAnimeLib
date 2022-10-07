@@ -54,9 +54,9 @@ export function parseFileName(fileName) {
         let thisWord = reformedFileName[i]
         if (typeof thisWord == 'string') {
             let isSeason = thisWord.replace(/S\d{1,2}/i, '').trim() // 直接删除季度名
-            let isEpisode = isSeason.replace(/(EP|E|P|)\d{1,2}(END|v2|v3|\.5|)/i, '')
+            let isEpisode = isSeason.replace(/(EP|E|P|)\d{1,2}(END|v2|v3|\.5|集|)/i, '')
             if (!isEpisode) {
-                thisEpisode = isSeason.replace(/END|P|E|v2|v3/gi, '')
+                thisEpisode = isSeason.replace(/END|P|E|v2|v3|集/gi, '')
                 break
             }
         }
