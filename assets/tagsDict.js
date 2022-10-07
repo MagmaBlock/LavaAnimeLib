@@ -70,6 +70,7 @@ const dict = {
         { from: /RATH/ig, to: "拉斯观测组" },
         { from: /SBSUB/ig, to: "银色子弹字幕组" },
         { from: /织梦字幕组/ig, to: "织梦字幕组" },
+        { from: /Billion Meta Lab/ig, to: "亿次研同好会" },
     ],
     source: [
         { from: /TVRip|TV/ig, to: "TV放送源" },
