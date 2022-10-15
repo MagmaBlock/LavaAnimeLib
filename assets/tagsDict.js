@@ -156,10 +156,11 @@ const dict = {
         { from: /mp4/ig, to: "MP4视频", type: 'video' },
         { from: /mkv/ig, to: "MKV视频", type: 'video' },
         { from: /(png|jpg|jpeg|gif|bmp|tif|svg)/ig, to: "图片", type: 'image' },
-        { from: /torrent/ig, to: "种子", type: 'torrent' },
+        { from: /torrent/ig, to: "种子文件", type: 'torrent' },
         { from: /txt/ig, to: "TXT文档", type: 'document' },
         { from: /(pdf|docx|doc)/ig, to: "文档", type: 'document' },
-        { from: /(mp3|flac)/ig, to: "音乐文件", type: 'music' },
+        { from: /(mp3)/ig, to: "MP3音乐", type: 'music' },
+        { from: /(flac)/ig, to: "FLAC无损音乐", type: 'music' },
         { from: /(zip|rar|7z)/ig, to: "压缩文件", type: 'archive' },
     ],
     delete: [
