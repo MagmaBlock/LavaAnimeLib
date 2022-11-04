@@ -78,12 +78,12 @@ async function getYears() {
     // Alist 获取所有年份
 
     let rootDir = await alistGetter()
-    if (rootDir.code == 200) rootDir = rootDir.data.files
+    if (rootDir.code == 200) rootDir = rootDir.data.content
     else throw new Error('Alist API 异常')
 
     let allYears = new Array()
     for (let i in rootDir) {
-        if (rootDir[i].type == 1) allYears.push(rootDir[i].name)
+        if (rootDir[i].is_dir == true) allYears.push(rootDir[i].name)
     }
 
     return allYears
@@ -92,13 +92,13 @@ async function getYears() {
 async function getTypes(year) {
     // Alist 获取年份下的月份
 
-    let yearDir = await alistGetter('/1A/LavaAnimeLib/' + year)
-    if (yearDir.code == 200) yearDir = yearDir.data.files
+    let yearDir = await alistGetter(config.alist.root + '/' + year)
+    if (yearDir.code == 200) yearDir = yearDir.data.content
     else throw new Error('Alist API 异常')
 
     let thisYearTypes = new Array()
     for (let i in yearDir) {
-        if (yearDir[i].type == 1) thisYearTypes.push(yearDir[i].name)
+        if (yearDir[i].is_dir == true) thisYearTypes.push(yearDir[i].name)
     }
 
     return thisYearTypes
@@ -107,13 +107,13 @@ async function getTypes(year) {
 async function getAnimes(year, type) {
     // Alist 获取指定分类的动画列表
 
-    let typeDir = await alistGetter('/1A/LavaAnimeLib/' + year + '/' + type)
-    if (typeDir.code == 200) typeDir = typeDir.data.files
+    let typeDir = await alistGetter(config.alist.root + '/' + year + '/' + type)
+    if (typeDir.code == 200) typeDir = typeDir.data.content
     else throw new Error('Alist API 异常')
 
     let thisTypeAnimes = new Array()
     for (let i in typeDir) {
-        if (typeDir[i].type == 1) thisTypeAnimes.push(typeDir[i].name)
+        if (typeDir[i].is_dir == true) thisTypeAnimes.push(typeDir[i].name)
     }
 
     return thisTypeAnimes

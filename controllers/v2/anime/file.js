@@ -9,33 +9,34 @@ export async function getFilesByID(laID) {
     let anime = (await getAnimeByID(laID))[0]
     if (!anime) return false // 404
 
-    let alistAPIResult = (await AlistAPI.post('/api/public/path', {
+    let alistAPIResult = (await AlistAPI.post('/api/fs/list', {
         path: config.alist.root + '/' + anime.year + '/' + anime.type + '/' + anime.name
     })).data
 
     if (alistAPIResult.code == 200) {
         let thisDir = new Array() // 存储解析后的文件列表结果
-        let files = alistAPIResult.data.files
+        let files = alistAPIResult.data.content
         for (let i in files) {
             let thisFile = files[i]
             let thisFileInfo = { // 当前文件的信息
                 name: thisFile.name,
                 size: thisFile.size,
-                updated: thisFile.updated_at,
-                driver: thisFile.driver,
-                thumbnail: thisFile.thumbnail,
+                updated: thisFile.modified,
+                driver: alistAPIResult.data.provider,
+                thumbnail: thisFile.thumb,
             }
-            if (thisFile.type == 1) { // 文件夹处理
+            if (thisFile.is_dir == true) { // 文件夹处理
                 thisDir.push({
                     ...thisFileInfo,
                     type: 'dir'
                 })
-            } else {
+            } else { // 普通文件
+                let fileUrl = `${config.alist.host}${encodeURI(`/d${config.alist.root}/${anime.year}/${anime.type}/${anime.name}/${thisFile.name}`)}`
                 thisDir.push({
                     ...thisFileInfo,
                     ...parseFileName(thisFile.name),
-                    url: `${config.alist.host}${encodeURI(`/d${config.alist.root}/${anime.year}/${anime.type}/${anime.name}/${thisFile.name}`)}`,
-                    tempUrl: thisFile.url,
+                    url: fileUrl,
+                    tempUrl: fileUrl,
                     type: 'file'
                 })
             }
