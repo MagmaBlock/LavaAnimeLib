@@ -14,6 +14,7 @@ export async function getHeaderAPI(req, res) {
       return res.send({ code: 200, message: '', data: JSON.parse(dbResult[0][0].value) })
     }
   } catch (error) {
+    console.error(error);
     return serverError(res)
   }
 }
@@ -40,6 +41,7 @@ export async function updateHeaderAPI(req, res) {
 
     res.send({ code: 200, message: 'success' })
   } catch (error) {
+    console.error(error);
     return serverError(res)
   }
 

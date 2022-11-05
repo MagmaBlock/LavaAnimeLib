@@ -35,6 +35,7 @@ export async function getAnimesByIDAPI(req, res) {
         result = await animeParser(result)
         res.send({ code: 200, message: '成功', data: result })
     } catch (error) {
+        console.error(error);
         return serverError(res)
     }
 }

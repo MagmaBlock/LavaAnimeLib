@@ -25,6 +25,7 @@ export default async function getIndexInfo(req, res) {
 
         res.send({ code: 200, message: 'success', data: indexData })
     } catch (error) {
+        console.error(error);
         return serverError(res)
     }
 

@@ -13,6 +13,7 @@ export async function animeParser(rawData, full = false) {
     if (typeof rawData !== 'object') throw new Error('Data is not a Object')
 
     rawData = _.castArray(rawData) // 强制转为数组
+    rawData = _.compact(rawData)
     let bgmIDList = parseAllBgmID(rawData) // 获取 rawData 里面的所有 bgmID
     let bgmData = await getAllBangumiData(bgmIDList); // 拿到 bgmID 和 BangumiData 的键值对
     let parseResults = new Array() // 存储结果
