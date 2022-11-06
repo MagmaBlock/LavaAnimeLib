@@ -31,7 +31,7 @@ export async function getFilesByID(laID) {
                     type: 'dir'
                 })
             } else { // 普通文件
-                let fileUrl = `${config.alist.host}${encodeURI(`/d${config.alist.root}/${anime.year}/${anime.type}/${anime.name}/${thisFile.name}`)}`
+                let fileUrl = `${config.alist.host}${encodeURIComponent(`/d${config.alist.root}/${anime.year}/${anime.type}/${anime.name}/${thisFile.name}`)}`
                 thisDir.push({
                     ...thisFileInfo,
                     ...parseFileName(thisFile.name),
