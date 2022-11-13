@@ -1,16 +1,19 @@
 import { AlistAPI } from "../../../common/api.js"
 import config from "../../../common/config.js"
+import { getDrivePath } from "../drive/main.js"
 import { getAnimeByID } from "./get.js"
 import { parseFileName } from "./tag.js"
 
-export async function getFilesByID(laID) {
+export async function getFilesByID(laID, drive) {
     // 根据 ID 获取某番剧目录下的文件和文件夹名
 
     let anime = (await getAnimeByID(laID))[0]
     if (!anime) return false // 404
 
+    let drivePath = getDrivePath(drive)
+
     let alistAPIResult = (await AlistAPI.post('/api/fs/list', {
-        path: config.alist.root + '/' + anime.year + '/' + anime.type + '/' + anime.name
+        path: drivePath + '/' + anime.year + '/' + anime.type + '/' + anime.name
     })).data
 
     if (alistAPIResult.code == 200) {
@@ -32,7 +35,7 @@ export async function getFilesByID(laID) {
                 })
             } else { // 普通文件
                 let fileUrl = config.alist.host
-                    + '/d' + encodeURIComponent(config.alist.root)
+                    + '/d' + encodeURIComponent(drivePath)
                     + '/' + encodeURIComponent(anime.year)
                     + '/' + encodeURIComponent(anime.type)
                     + '/' + encodeURIComponent(anime.name)

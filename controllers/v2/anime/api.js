@@ -1,4 +1,5 @@
 
+import config from "../../../common/config.js"
 import notFound from "../error/notFound.js"
 import serverError from "../error/serverError.js"
 import wrongQuery from "../error/wrongQuery.js"
@@ -43,10 +44,11 @@ export async function getAnimesByIDAPI(req, res) {
 // /v2/anime/file
 export async function getFilesByIDAPI(req, res) {
     let laID = req.query.id
+    let drive = req.query.drive || config.drive.default
     if (!isFinite(laID)) return wrongQuery(res)
 
     try {
-        let files = await getFilesByID(laID)
+        let files = await getFilesByID(laID, drive)
         if (!files) {
             return notFound(res)
         } else {
