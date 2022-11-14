@@ -12,6 +12,18 @@ export default {
         password: "password",
         root: "/1A/LavaAnimeLib"
     },
+    drive: {
+        default: "1A",
+        list: [
+            {
+                id: "1A",
+                name: "存储节点名称",
+                host: "https://alist.com",
+                path: "/1A/LavaAnimeLib",
+                password: ""
+            }
+        ]
+    },
     // Bangumi API 域名，用于抓取 Bangumi 番组计划的番剧资料
     bangumi: {
         host: "https://api.bgm.tv"
