@@ -18,7 +18,7 @@ app.all('*', async (req, res, next) => {
     let nowTime = new Date().toLocaleString(); // 获取当前时间
     let ref = req.get('Referer') || ''
     if (ref) ref = `[${ref}]`
-    console.log(`[传入请求] [${req.ip}] ${req.method} ${req.url} [${nowTime}] ${ref}`);
+    console.log(`[传入请求] [${req.ip}] ${req.method} ${decodeURIComponent(req.url)} [${nowTime}] ${ref}`);
     next();
 });
 
