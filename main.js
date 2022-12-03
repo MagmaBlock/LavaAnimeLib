@@ -1,4 +1,6 @@
 import express from 'express';
+import chalk from 'chalk';
+import dayjs from 'dayjs';
 
 import config from './common/config.js';
 import db from './common/sql.js';
@@ -17,13 +19,23 @@ app.all('*', async (req, res, next) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE, PUT'
     })
     // 打印 Log
-    let nowTime = new Date().toLocaleString(); // 获取当前时间
-    let ref = req.get('Referer') || 'Referer 获取失败'
-    console.log(`[传入请求] [${req.ip}] ${req.method} ${decodeURIComponent(req.url)} [${nowTime}] [${ref}]`);
+    let nowTime = dayjs().format('M/D h:m:s A'); // 获取当前时间
+    let ref = req.get('Referer') || '无 Referer'
+    console.log(
+        chalk.bgBlueBright(' ' + nowTime + ' '),
+        chalk.gray(req.ip),
+        chalk.bgGreenBright(' ' + req.method + ' '),
+        decodeURIComponent(req.url),
+        chalk.gray(ref)
+    );
     // 判断 Referer 限制
     if (config.refererWhiteList.length && config.refererWhiteList.indexOf(ref) == -1) {
         // 如果 Referer 白名单启用, 同时访问的 referer 又不在白名单中
-        console.log('[安全提示] 非白名单中的来源访问了 API: ', req.get('user-agent'));
+        console.log(
+            chalk.bgBlueBright(' ' + nowTime + ' '),
+            '未知 Referer, 来自客户端 UA: ',
+            chalk.gray(req.get('user-agent'))
+        );
         return res.status(403).send({ code: 403, message: '' })
     }
     // 进行下一步
