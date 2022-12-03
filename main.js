@@ -30,30 +30,18 @@ app.all('*', async (req, res, next) => {
     next();
 });
 
-import search1 from './routes/v1/search.js';
-import view1 from './routes/v1/view.js';
-import index1 from './routes/v1/index.js';
-import zth1 from './routes/v1/zth.js';
-import anime1 from './routes/v1/anime.js';
-app.use(`/v1/search`, search1); // 搜索
-app.use(`/v1/view`, view1); // 播放量
-app.use(`/v1/index`, index1); // 索引页
-app.use(`/v1/zth`, zth1); // Zth API，和番剧库无关
-app.use(`/v1/anime`, anime1); // 动画信息
-
-import index2 from './routes/v2/index.js'
-import user2 from './routes/v2/user.js';
-import anime2 from './routes/v2/anime.js'
-import search2 from './routes/v2/search.js'
-import home2 from './routes/v2/home.js'
-import drive2 from './routes/v2/drive.js'
-import _ from 'lodash';
-app.use(`/v2/index`, index2); // 索引
-app.use(`/v2/user`, user2); // 用户
-app.use('/v2/anime', anime2) // 动画
-app.use('/v2/search', search2) // 搜索
-app.use('/v2/home', home2) // 主页相关
-app.use('/v2/drive', drive2) // 存储
+import index from './routes/v2/index.js'
+import user from './routes/v2/user.js';
+import anime from './routes/v2/anime.js'
+import search from './routes/v2/search.js'
+import home from './routes/v2/home.js'
+import drive from './routes/v2/drive.js'
+app.use(`/v2/index`, index); // 索引
+app.use(`/v2/user`, user); // 用户
+app.use('/v2/anime', anime) // 动画
+app.use('/v2/search', search) // 搜索
+app.use('/v2/home', home) // 主页相关
+app.use('/v2/drive', drive) // 存储
 
 
 
