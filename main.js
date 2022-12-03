@@ -9,16 +9,24 @@ app.use(express.urlencoded({ extended: true })) // 使用 Express 自带的 URLE
 app.set('trust proxy', config.trustProxy) // 允许 Express 信任上级代理提供的 IP 地址
 
 app.all('*', async (req, res, next) => {
+    // 设置 Headers
     res.set({
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE, PUT'
     })
+    // 打印 Log
     let nowTime = new Date().toLocaleString(); // 获取当前时间
-    let ref = req.get('Referer') || ''
-    if (ref) ref = `[${ref}]`
-    console.log(`[传入请求] [${req.ip}] ${req.method} ${decodeURIComponent(req.url)} [${nowTime}] ${ref}`);
+    let ref = req.get('Referer') || 'Referer 获取失败'
+    console.log(`[传入请求] [${req.ip}] ${req.method} ${decodeURIComponent(req.url)} [${nowTime}] [${ref}]`);
+    // 判断 Referer 限制
+    if (config.refererWhiteList.length && config.refererWhiteList.indexOf(ref) == -1) {
+        console.log(ref);
+        // 如果 Referer 白名单启用, 同时访问的 referer 又不在白名单中
+        return res.status(403).send({ code: 403, message: '' })
+    }
+    // 进行下一步
     next();
 });
 
@@ -38,7 +46,8 @@ import user2 from './routes/v2/user.js';
 import anime2 from './routes/v2/anime.js'
 import search2 from './routes/v2/search.js'
 import home2 from './routes/v2/home.js'
-import drive2 from  './routes/v2/drive.js'
+import drive2 from './routes/v2/drive.js'
+import _ from 'lodash';
 app.use(`/v2/index`, index2); // 索引
 app.use(`/v2/user`, user2); // 用户
 app.use('/v2/anime', anime2) // 动画
