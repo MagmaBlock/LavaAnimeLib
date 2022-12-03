@@ -22,8 +22,8 @@ app.all('*', async (req, res, next) => {
     console.log(`[传入请求] [${req.ip}] ${req.method} ${decodeURIComponent(req.url)} [${nowTime}] [${ref}]`);
     // 判断 Referer 限制
     if (config.refererWhiteList.length && config.refererWhiteList.indexOf(ref) == -1) {
-        console.log(ref);
         // 如果 Referer 白名单启用, 同时访问的 referer 又不在白名单中
+        console.log('[安全提示] 非白名单中的来源访问了 API: ', req.get('user-agent'));
         return res.status(403).send({ code: 403, message: '' })
     }
     // 进行下一步
