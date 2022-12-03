@@ -23,10 +23,10 @@ app.all('*', async (req, res, next) => {
     let ref = req.get('Referer') || '无 Referer'
     console.log(
         chalk.bgBlueBright(' ' + nowTime + ' '),
-        chalk.gray(req.ip),
+        chalk.dim(req.ip),
         chalk.bgGreenBright(' ' + req.method + ' '),
         decodeURIComponent(req.url),
-        chalk.gray(ref)
+        chalk.dim(ref)
     );
     // 判断 Referer 限制
     if (config.refererWhiteList.length && config.refererWhiteList.indexOf(ref) == -1) {
@@ -34,7 +34,7 @@ app.all('*', async (req, res, next) => {
         console.log(
             chalk.bgBlueBright(' ' + nowTime + ' '),
             '未知 Referer, 来自客户端 UA: ',
-            chalk.gray(req.get('user-agent'))
+            chalk.dim(req.get('user-agent'))
         );
         return res.status(403).send({ code: 403, message: '' })
     }
