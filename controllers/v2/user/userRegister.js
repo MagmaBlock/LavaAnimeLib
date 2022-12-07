@@ -1,5 +1,5 @@
-import { dbQueryAsync } from "../../v1/tools/dbQuery.js";
 import { createHash } from 'crypto';
+import { promiseDB } from "../../../common/sql.js";
 
 export async function userRegister(req, res) { // 注册用户
     let bodyData = req.body;
@@ -11,7 +11,8 @@ export async function userRegister(req, res) { // 注册用户
     }
 
     // 查询数据库中是否有相同的邮箱
-    let sameEmail = await dbQueryAsync(
+
+    let sameEmail = await promiseDB(
         `SELECT * FROM user WHERE email = ?`,
         [bodyData.email]
     );
@@ -27,7 +28,7 @@ export async function userRegister(req, res) { // 注册用户
     }
 
     // 查询数据库中是否有相同的用户名，以及校验
-    let sameNick = await dbQueryAsync(
+    let sameNick = await promiseDB(
         `SELECT * FROM user WHERE nick = ?`,
         [bodyData.nick]
     )
@@ -45,7 +46,7 @@ export async function userRegister(req, res) { // 注册用户
         'SHA256:' + createHash('sha256')
             .update(bodyData.password)
             .digest('hex');
-    let registerResult = await dbQueryAsync(
+    let registerResult = await promiseDB(
         `INSERT INTO user (email, password, nick) VALUES (?, ?, ?)`,
         [bodyData.email, sha256Password, bodyData.nick]
     )

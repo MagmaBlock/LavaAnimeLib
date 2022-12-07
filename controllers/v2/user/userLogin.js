@@ -1,5 +1,5 @@
-import { dbQueryAsync } from "../../v1/tools/dbQuery.js";
 import { createHash } from 'crypto';
+import { promiseDB } from "../../../common/sql.js";
 
 let errorPasswordCounter = new Object(); // 密码错误计数器
 
@@ -11,7 +11,7 @@ export async function userLogin(req, res) {
     }
 
     // 查询此邮箱是否已经注册
-    let thisEmailUser = await dbQueryAsync(
+    let thisEmailUser = await promiseDB(
         'SELECT * FROM user WHERE email = ?',
         [bodyData.email]
     )
