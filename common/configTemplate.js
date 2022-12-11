@@ -46,8 +46,15 @@ export default {
     // 是否信任上层代理，开启后，程序获取到的 IP 将会是由上层代理 (如 nginx) 在 HTTP Header 中提供的客户端 IP
     // 若未经任何程序代理，请不要启用此选项，否则客户端将可伪造 IP 地址
     trustProxy: true,
-    // 是否使用 Referer 限制. 开启后，程序将根据请求中的 Referer 进行判断，若不在此列表，将回复 403.
-    // 留空不启用
-    refererWhiteList: [],
+    // 是否使用 Referer 限制. 开启后，程序将根据请求中的 Referer 进行判断
+    enableRefererWhiteList: false,
+    // 需要下方的内容能对客户端的 Referer 匹配到结果, 若不在此列表，将回复 403.
+    // 留空不启用, 支持字符串和正则表达式
+    refererWhiteList: [
+        'https://lavani.me/',
+        /http(s){0,1}:\/\/localhost(:\d{4,5}|){0,1}/gi, // 本机
+        /http(s){0,1}:\/\/127\.0\.0\.1(:\d{4,5}|){0,1}/gi, // 本机
+        /http(s){0,1}:\/\/192\.168\.\d{1,3}\.\d{1,3}(:\d{4,5}|){0,1}/gi, // 普通数字内网
+    ],
     adminPassword: 'password'
 }

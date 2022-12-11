@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 
 import config from './common/config.js';
 import db from './common/sql.js';
+import { inRefererWhiteList } from './common/tools/referer.js';
 
 const app = express();
 app.use(express.json()); // 使用 Express 4.16 自带的 .json() 中间件 , 使得全局的 req.body 自动解析为 JSON
@@ -19,7 +20,7 @@ app.all('*', async (req, res, next) => {
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE, PUT'
     })
     // 打印 Log
-    let nowTime = dayjs().format('M/D h:m:s A'); // 获取当前时间
+    let nowTime = dayjs().format('h:mm:ss A'); // 获取当前时间
     let ref = req.get('Referer') || '无 Referer'
     console.log(
         chalk.bgBlueBright(' ' + nowTime + ' '),
@@ -28,9 +29,8 @@ app.all('*', async (req, res, next) => {
         decodeURIComponent(req.url),
         chalk.dim(ref)
     );
-    // 判断 Referer 限制
-    if (config.refererWhiteList.length && config.refererWhiteList.indexOf(ref) == -1) {
-        // 如果 Referer 白名单启用, 同时访问的 referer 又不在白名单中
+    // 如果不在 Referer 白名单中
+    if (!inRefererWhiteList(ref)) {
         console.log(
             chalk.bgBlueBright(' ' + nowTime + ' '),
             '未知 Referer, 来自客户端 UA: ',
