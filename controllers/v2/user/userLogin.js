@@ -1,56 +1,83 @@
-import { createHash } from 'crypto';
 import { promiseDB } from "../../../common/sql.js";
+import { testPassword } from './password.js';
 
-let errorPasswordCounter = new Object(); // 密码错误计数器
+// 密码错误计数器
+let countStore = {
+    ip: {},
+    user: {}
+};
+let maxTry = 10
+function errorPasswordCounter(key, type) {
+    if (countStore[type][key]) { // 如果已经错过一次以上
+        if (countStore[type][key].count >= maxTry - 1) { // 如果错误次数超限，上锁
+            countStore[type][key].lock = true
+            setTimeout(() => {
+                delete countStore[type][key]
+            }, 1000 * 60 * 10); // 十分钟后再试吧
+        } else { // 如果错的还不够多
+            countStore[type][key].count++
+        }
+    } else { // 如果第一次出错
+        countStore[type][key] = {
+            count: 1,
+            lock: false
+        }
+    }
+}
 
-export async function userLogin(req, res) {
-    let bodyData = req.body;
-    if (!bodyData.email || !bodyData.password) { // 错误请求
-        res.send({ code: 400, msg: 'bad request' });
-        return
+export async function userLoginAPI(req, res) {
+    let { account, password } = req.body
+    // account 可以是邮箱、用户名 
+
+
+    // 错误请求
+    if (!account || !password) {
+        return res.send({ code: 400, msg: '缺失参数' });
     }
 
-    // 查询此邮箱是否已经注册
-    let thisEmailUser = await promiseDB(
+    // 找用户
+    let user = await findUser(account)
+    if (!user) {
+        return res.send({ code: 404, message: '用户不存在' })
+    }
+
+    // 检查此请求是否错误次数过多
+    if (countStore.ip[req.ip]?.lock) {
+        return res.send({ code: 403, message: '请求错误次数过多' })
+    }
+    if (countStore.user[user.id]?.lock) {
+        return res.send({ code: 403, message: '请求错误次数过多' })
+    }
+
+    let testPWResult = testPassword(password, user.password)
+    if (testPWResult) { // 密码正确
+        res.send({ code: 200, message: `登录成功, 欢迎回来, ${user.name}` })
+
+    } else { // 错误
+        res.send({ code: 403, message: '密码错误' })
+        errorPasswordCounter(user.id, 'user')
+        errorPasswordCounter(req.ip, 'ip')
+    }
+
+
+}
+
+
+// 使用邮箱、用户名来找到可能的用户
+async function findUser(account) {
+    let resultByEmail = await promiseDB.query(
         'SELECT * FROM user WHERE email = ?',
-        [bodyData.email]
+        [account]
     )
-    if (thisEmailUser.length == 0) {
-        res.send({ code: 400, msg: '此邮箱并未注册' });
-        return
+    if (resultByEmail[0].length) {
+        return resultByEmail[0][0]
     }
-    thisEmailUser = thisEmailUser[0];
-
-    // 开始校验密码
-    // 若数据库中的值使用的是 SHA256
-    if (thisEmailUser.password.startsWith('SHA256:')) {
-        let sha256Password = // 前端提交的密码
-            'SHA256:' + createHash('sha256')
-                .update(bodyData.password)
-                .digest('hex');
-
-        // 登录锁判断逻辑
-        if (errorPasswordCounter[bodyData.email] >= 10 || errorPasswordCounter[bodyData.email] == -1) {
-            res.send({ code: 400, msg: '密码错误次数过多，请稍后再试' });
-            if (errorPasswordCounter[bodyData.email] >= 10) { // 如果超过10次，将账号内存锁定，并且在半小时后解锁
-                console.log(`[错误密码] 用户 ${thisEmailUser.nick}(${bodyData.email}) 密码错误 ${errorPasswordCounter[bodyData.email]} 次，已加锁，半小时或重启后回复`);
-                errorPasswordCounter[bodyData.email] = -1; // -1 意为锁定
-                setTimeout(() => { delete errorPasswordCounter[bodyData.email] }, 1800000)
-                return
-            }
-            if (errorPasswordCounter[bodyData.email] == -1) {
-                console.log(`[错误密码] 用户 ${thisEmailUser.nick}(${bodyData.email}) 密码锁定后尝试登录`);
-                return
-            }
-        }
-        if (sha256Password != thisEmailUser.password) {
-            res.send({ code: 400, msg: '密码错误' });
-            errorPasswordCounter[bodyData.email] = (errorPasswordCounter[bodyData.email] || 0) + 1;
-            console.log(`[错误密码] 用户 ${thisEmailUser.nick}(${bodyData.email}) 密码错误 ${errorPasswordCounter[bodyData.email]} 次`);
-            return
-        }
-        if (sha256Password == thisEmailUser.password) {
-            res.send({ code: 200, msg: '登录成功' });
-        }
+    let resultByName = await promiseDB.query(
+        'SELECT * FROM user WHERE name = ?',
+        [account]
+    )
+    if (resultByName[0].length) {
+        return resultByName[0][0]
     }
+    return false
 }

@@ -1,10 +1,10 @@
 import { Router } from 'express';
 const router = Router();
 
-import { userRegister } from '../../controllers/v2/user/userRegister.js';
-import { userLogin } from '../../controllers/v2/user/userLogin.js';
+import { userRegisterAPI } from '../../controllers/v2/user/userRegister.js';
+import { userLoginAPI } from '../../controllers/v2/user/userLogin.js';
 
-router.post('/register', userRegister);
-router.post('/login', userLogin);
+router.post('/register', userRegisterAPI);
+router.post('/login', userLoginAPI);
 
 export default router;
