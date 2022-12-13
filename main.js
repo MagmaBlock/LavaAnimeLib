@@ -55,7 +55,6 @@ app.all('*', async (req, res, next) => {
     // 进行下一步
     next();
     res.once('finish', () => {
-        console.log(req.user);
         // 打印 Log
         logger(
             chalk.dim(req.ip),

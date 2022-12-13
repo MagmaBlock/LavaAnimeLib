@@ -11,13 +11,13 @@ export async function updateUserPermissionAPI(req, res) {
   let { permission, userID } = req.body
   if (!permission || !userID) return wrongQuery(res)
   // 权限检查
-  let user = findUserByID(userID)
+  let user = await findUserByID(userID)
   if (!user?.data?.permission?.admin) {
     return forbidden(res)
   }
 
   try {
-    await updateUserData(permission, userID)
+    await updateUserData({ permission }, userID)
     res.send({ code: 200, message: '成功' })
   } catch (error) {
     return serverError(res)
