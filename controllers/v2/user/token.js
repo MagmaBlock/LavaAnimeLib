@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import { promiseDB } from '../../../common/sql.js'
+import cache from '../../../common/cache.js';
 
 export function createToken() {
   let createTime = new Date()
@@ -26,14 +27,7 @@ export async function saveToken(token, userID, expirationTime) {
 
 // token 的缓存，避免频繁查询数据库
 // 当 token 注销被触发后，此处的缓存也会同时删除
-let tokenCache = {
-  /*
-  'token': {
-    user: ...,
-    expirationTime: ...
-  } 
-  */
-}
+let tokenCache = cache.token
 
 // 使用 token 找到用户 ID
 export async function useToken(token) {
@@ -67,5 +61,35 @@ export async function useToken(token) {
     }
   } else { // 数据库中无
     return false
+  }
+}
+
+
+// 注销 token，可选注销同用户的所有 token，同时缓存也会被清理
+export async function removeToken(token, all = false) {
+  if (!token) throw '缺失参数'
+
+  let userID = await useToken(token)
+  if (userID) {
+    if (all) { // 如果要求在所有设备登出
+      // 删除缓存
+      Object.keys(tokenCache).forEach(cache => {
+        if (tokenCache[cache].user == userID) {
+          delete tokenCache[cache]
+        }
+      })
+      // 删除数据库
+      await promiseDB.query('UPDATE token SET status = 0 WHERE user = ?', [userID])
+      return true
+    } else { // 仅注销当前 token
+      // 删除缓存
+      delete tokenCache[token]
+      // 删除数据库
+      await promiseDB.query('UPDATE token SET status = 0 WHERE user = ? AND token = ?', [userID, token])
+      return true
+    }
+  }
+  else {
+    return false // 此 Token 本就不合法 / 失效, 无法删除以及用作登出的凭据
   }
 }
