@@ -26,6 +26,7 @@ app.set('trust proxy', config.security.trustProxy) // 允许 Express 信任上�
 app.use(cookieParser()) // cookie 处理器
 // 全局请求前置
 app.all('*', async (req, res, next) => {
+    let queryStart = new Date()
     // 设置 Headers
     res.set({
         'Content-Type': 'application/json',
@@ -42,15 +43,7 @@ app.all('*', async (req, res, next) => {
         }
     }
 
-    // 打印 Log
     let ref = req.get('Referer') || '无 Referer'
-    logger(
-        chalk.dim(req.ip),
-        req.user ? chalk.dim(req.user.name) : '',
-        chalk.bgGreenBright(' ' + req.method + ' '),
-        decodeURIComponent(req.url),
-        chalk.dim(ref)
-    );
     // 如果不在 Referer 白名单中
     if (!inRefererWhiteList(ref)) {
         logger(
@@ -61,6 +54,18 @@ app.all('*', async (req, res, next) => {
     }
     // 进行下一步
     next();
+    res.once('finish', () => {
+        console.log(req.user);
+        // 打印 Log
+        logger(
+            chalk.dim(req.ip),
+            req.user ? chalk.dim(req.user.name) : chalk.cyan('访客'),
+            chalk.bgGreenBright(' ' + req.method + ' '),
+            decodeURIComponent(req.originalUrl),
+            chalk.dim(ref),
+            chalk.dim(new Date - queryStart, 'ms')
+        );
+    })
 });
 
 // use routers
