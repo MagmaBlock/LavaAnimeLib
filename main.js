@@ -1,11 +1,7 @@
 // npm
 import express from 'express';
 import chalk from 'chalk';
-// modules
-import config from './common/config.js';
-import db from './common/sql.js';
-import { inRefererWhiteList } from './common/tools/referer.js';
-import { logger } from './common/tools/logger.js';
+import cookieParser from 'cookie-parser';
 // routers
 import index from './routes/v2/index.js'
 import user from './routes/v2/user.js';
@@ -13,13 +9,21 @@ import anime from './routes/v2/anime.js'
 import search from './routes/v2/search.js'
 import home from './routes/v2/home.js'
 import drive from './routes/v2/drive.js'
+// modules
+import config from './common/config.js';
+import db from './common/sql.js';
+import { inRefererWhiteList } from './common/tools/referer.js';
+import { logger } from './common/tools/logger.js';
+import { useToken } from './controllers/v2/user/token.js';
+import { findUserByID } from './controllers/v2/user/findUser.js';
 
 // 创建 app
 const app = express();
 // 中间件和设置
 app.use(express.json()); // 使用 Express 4.16 自带的 .json() 中间件 , 使得全局的 req.body 自动解析为 JSON
 app.use(express.urlencoded({ extended: true })) // 使用 Express 自带的 URLEncoded 中间件，使得全局的 URl 参数可以被自动解析
-app.set('trust proxy', config.trustProxy) // 允许 Express 信任上级代理提供的 IP 地址
+app.set('trust proxy', config.security.trustProxy) // 允许 Express 信任上级代理提供的 IP 地址
+app.use(cookieParser()) // cookie 处理器
 // 全局请求前置
 app.all('*', async (req, res, next) => {
     // 设置 Headers
@@ -29,10 +33,20 @@ app.all('*', async (req, res, next) => {
         'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE, PUT'
     })
+
+    // 尝试验证登录
+    if (req.cookies?.token) {
+        let userID = await useToken(req.cookies.token)
+        if (userID) {
+            req.user = await findUserByID(userID)
+        }
+    }
+
     // 打印 Log
     let ref = req.get('Referer') || '无 Referer'
     logger(
         chalk.dim(req.ip),
+        req.user ? chalk.dim(req.user.name) : '',
         chalk.bgGreenBright(' ' + req.method + ' '),
         decodeURIComponent(req.url),
         chalk.dim(ref)

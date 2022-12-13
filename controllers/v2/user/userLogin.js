@@ -1,19 +1,26 @@
+import config from "../../../common/config.js";
 import { promiseDB } from "../../../common/sql.js";
 import { testPassword } from './password.js';
+import { createToken, saveToken } from "./token.js";
+
+const maxTry = config.security.loginMaxTry
+const waitTime = config.security.banWaitTime
+
+const tokenExpirationTime = config.security.tokenExpirationTime
 
 // 密码错误计数器
 let countStore = {
     ip: {},
     user: {}
 };
-let maxTry = 10
+
 function errorPasswordCounter(key, type) {
     if (countStore[type][key]) { // 如果已经错过一次以上
         if (countStore[type][key].count >= maxTry - 1) { // 如果错误次数超限，上锁
             countStore[type][key].lock = true
             setTimeout(() => {
                 delete countStore[type][key]
-            }, 1000 * 60 * 10); // 十分钟后再试吧
+            }, 1000 * 60 * waitTime); // x 分钟后再试吧
         } else { // 如果错的还不够多
             countStore[type][key].count++
         }
@@ -28,7 +35,6 @@ function errorPasswordCounter(key, type) {
 export async function userLoginAPI(req, res) {
     let { account, password } = req.body
     // account 可以是邮箱、用户名 
-
 
     // 错误请求
     if (!account || !password) {
@@ -49,10 +55,18 @@ export async function userLoginAPI(req, res) {
         return res.send({ code: 403, message: '请求错误次数过多' })
     }
 
+    // 检查密码
     let testPWResult = testPassword(password, user.password)
     if (testPWResult) { // 密码正确
+        // 创建 Token，保存
+        let token = createToken()
+        let expirationTime = new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * tokenExpirationTime)
+        await saveToken(token, user.id, expirationTime)
+        // 并以 Cookie 发送
+        res.cookie('token', token, {
+            httpOnly: true, expires: expirationTime
+        })
         res.send({ code: 200, message: `登录成功, 欢迎回来, ${user.name}` })
-
     } else { // 错误
         res.send({ code: 403, message: '密码错误' })
         errorPasswordCounter(user.id, 'user')
