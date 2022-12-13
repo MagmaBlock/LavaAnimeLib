@@ -43,7 +43,6 @@ export default {
     },
     // 缓存天数，管理 Bangumi Data 数据会被缓存多少天后刷新
     cache: 1,
-    adminPassword: 'password',
     security: {
         // 是否信任上层代理，开启后，程序获取到的 IP 将会是由上层代理 (如 nginx) 在 HTTP Header 中提供的客户端 IP
         // 若未经任何程序代理，请不要启用此选项，否则客户端将可伪造 IP 地址
