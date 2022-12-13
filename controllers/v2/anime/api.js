@@ -1,12 +1,13 @@
 
 import config from "../../../common/config.js"
-import notFound from "../error/notFound.js"
-import serverError from "../error/serverError.js"
-import wrongQuery from "../error/wrongQuery.js"
+import notFound from "../response/4xx/notFound.js"
+import serverError from "../response/5xx/serverError.js"
+import wrongQuery from "../response/4xx/wrongQuery.js"
 import { animeParser } from "../parser/animeParser.js"
 import { getFilesByID } from "./file.js"
 import { getAnimeByID, getAnimesByID } from "./get.js"
 import { addAnimeView, getAnimeView } from "./view.js"
+import success from "../response/2xx/success.js"
 
 // GET /v2/anime/get
 export async function getAnimeByIDAPI(req, res) {
@@ -20,7 +21,7 @@ export async function getAnimeByIDAPI(req, res) {
         if (anime.length == 0) return notFound(res)
         let thisAnimeData = (await animeParser(anime, full))[0]
 
-        res.send({ code: 200, message: '成功', data: thisAnimeData })
+        success(res, thisAnimeData)
     } catch (error) {
         console.error(error);
         return serverError(res)
@@ -34,7 +35,7 @@ export async function getAnimesByIDAPI(req, res) {
     try {
         let result = await getAnimesByID(ids)
         result = await animeParser(result)
-        res.send({ code: 200, message: '成功', data: result })
+        success(res, result)
     } catch (error) {
         console.error(error);
         return serverError(res)
@@ -52,7 +53,7 @@ export async function getFilesByIDAPI(req, res) {
         if (!files) {
             return notFound(res)
         } else {
-            res.send({ code: 200, message: '成功', data: files })
+            success(res, files)
         }
     } catch (error) {
         console.error(error);
@@ -68,11 +69,7 @@ export async function getAnimeViewAPI(req, res) {
     try {
         let animeView = await getAnimeView(laID)
         if (animeView >= 0) {
-            res.send({
-                code: 200,
-                message: '成功',
-                data: { views: animeView, id: laID }
-            })
+            return success(res, { views: animeView, id: laID })
         } else if (animeView === false) {
             return notFound(res)
         } else {
@@ -99,12 +96,9 @@ export async function addAnimeViewAPI(req, res) {
     try {
         let addResult = await addAnimeView(laID, ep, file, ip, null, type)
         if (addResult) {
-            res.send({
-                code: 200, message: '成功',
-                data: {
-                    views: await getAnimeView(laID),
-                    id: laID
-                }
+            success(res, {
+                views: await getAnimeView(laID),
+                id: laID
             })
         }
         else {

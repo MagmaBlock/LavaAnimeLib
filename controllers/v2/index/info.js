@@ -1,5 +1,6 @@
 import { promiseDB } from "../../../common/sql.js"
-import serverError from "../error/serverError.js"
+import success from "../response/2xx/success.js"
+import serverError from "../response/5xx/serverError.js"
 
 export default async function getIndexInfo(req, res) {
 
@@ -23,7 +24,7 @@ export default async function getIndexInfo(req, res) {
             return a.match(/\d{1,2}|./)[0] - b.match(/\d{1,2}|./)[0] // 匹配1-2位数字，如果没有，则按第一个字符
         })
 
-        res.send({ code: 200, message: 'success', data: indexData })
+        success(res, indexData)
     } catch (error) {
         console.error(error);
         return serverError(res)

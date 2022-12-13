@@ -1,6 +1,7 @@
-import serverError from "../error/serverError.js"
-import wrongQuery from "../error/wrongQuery.js"
+import serverError from "../response/5xx/serverError.js"
+import wrongQuery from "../response/4xx/wrongQuery.js"
 import { quickSearch, searchAnimes } from "./search.js"
+import success from "../response/2xx/success.js"
 
 export async function searchAnimesAPI(req, res) {
     let value = req.query.value
@@ -8,7 +9,7 @@ export async function searchAnimesAPI(req, res) {
 
     try {
         let searchResults = await searchAnimes(value)
-        res.send({ code: 200, message: '成功', data: searchResults })
+        success(res, searchResults)
     } catch (error) {
         console.error(error);
         return serverError(res)
@@ -21,7 +22,7 @@ export async function quickSearchAPI(req, res) {
 
     try {
         let searchResults = await quickSearch(value)
-        res.send({ code: 200, message: '成功', data: searchResults })
+        success(res, searchResults)
     } catch (error) {
         console.error(error);
         return serverError(res)

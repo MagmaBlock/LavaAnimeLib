@@ -1,8 +1,9 @@
 import config from "../../../common/config.js";
 import { promiseDB } from "../../../common/sql.js";
-import serverError from "../error/serverError.js";
-import unauthorized from "../error/unauthorized.js";
-import wrongQuery from "../error/wrongQuery.js";
+import serverError from "../response/5xx/serverError.js";
+import unauthorized from "../response/4xx/unauthorized.js";
+import wrongQuery from "../response/4xx/wrongQuery.js";
+import success from "../response/2xx/success.js";
 
 // 获取头图相关数据
 export async function getHeaderAPI(req, res) {
@@ -11,13 +12,10 @@ export async function getHeaderAPI(req, res) {
       'SELECT * FROM settings WHERE `key` = \'headerData\''
     )
     if (dbResult[0].length == 0) {
-      return res.send({ code: 200, message: '', data: [] })
+      return success(res, [])
     }
     else {
-      res.send({
-        code: 200, message: '',
-        data: JSON.parse(dbResult[0][0].value)
-      })
+      success(res, JSON.parse(dbResult[0][0].value))
     }
   } catch (error) {
     console.error(error);
@@ -55,7 +53,7 @@ export async function updateHeaderAPI(req, res) {
       )
     }
 
-    res.send({ code: 200, message: 'success' })
+    success(res)
   } catch (error) {
     console.error(error);
     return serverError(res)

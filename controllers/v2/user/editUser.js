@@ -1,9 +1,10 @@
 import cache from "../../../common/cache.js"
 import { promiseDB } from "../../../common/sql.js"
-import forbidden from "../error/forbidden.js"
-import serverError from "../error/serverError.js"
-import wrongQuery from "../error/wrongQuery.js"
+import forbidden from "../response/4xx/forbidden.js"
+import serverError from "../response/5xx/serverError.js"
+import wrongQuery from "../response/4xx/wrongQuery.js"
 import { findUserByID } from "./findUser.js"
+import success from "../response/2xx/success.js"
 
 // 修改用户的权限
 // 暂时没啥用
@@ -18,7 +19,7 @@ export async function updateUserPermissionAPI(req, res) {
 
   try {
     await updateUserData({ permission }, userID)
-    res.send({ code: 200, message: '成功' })
+    success(res)
   } catch (error) {
     return serverError(res)
   }

@@ -1,5 +1,6 @@
 import { promiseDB } from "../../../common/sql.js";
-import serverError from "../error/serverError.js";
+import success from "../response/2xx/success.js";
+import serverError from "../response/5xx/serverError.js";
 import { testInviteCode, useInviteCode } from "./inviteCode.js";
 import { getFormattedPassword } from "./password.js";
 
@@ -66,7 +67,7 @@ export async function userRegisterAPI(req, res) { // 注册用户
             [email, saltyPassword, name]
         )
         if (registerResult.affectedRows != 0) {
-            res.send({ code: 200, message: '注册成功' });
+            success(res, undefined, '注册成功')
         }
         else {
             res.send({ code: 500, message: '服务器错误，注册失败' });

@@ -1,5 +1,6 @@
 import config from "../../../common/config.js";
 import { promiseDB } from "../../../common/sql.js";
+import success from "../response/2xx/success.js";
 import { testPassword } from './password.js';
 import { createToken, saveToken } from "./token.js";
 
@@ -66,7 +67,7 @@ export async function userLoginAPI(req, res) {
         res.cookie('token', token, {
             httpOnly: true, expires: expirationTime
         })
-        res.send({ code: 200, message: `登录成功, 欢迎回来, ${user.name}` })
+        success(res, undefined, `登录成功, 欢迎回来, ${user.name}`)
     } else { // 错误
         res.send({ code: 403, message: '密码错误' })
         errorPasswordCounter(user.id, 'user')
