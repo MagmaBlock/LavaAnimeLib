@@ -40,6 +40,7 @@ export async function getFilesByID(laID, drive) {
                     + '/' + encodeURIComponent(anime.type)
                     + '/' + encodeURIComponent(anime.name)
                     + '/' + encodeURIComponent(thisFile.name)
+                    + '?sign=' + thisFile.sign
                 thisDir.push({
                     ...thisFileInfo,
                     ...parseFileName(thisFile.name),
