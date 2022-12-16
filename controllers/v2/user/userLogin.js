@@ -1,6 +1,10 @@
 import config from "../../../common/config.js";
 import { promiseDB } from "../../../common/sql.js";
 import success from "../response/2xx/success.js";
+import forbidden from "../response/4xx/forbidden.js";
+import notFound from "../response/4xx/notFound.js";
+import wrongQuery from "../response/4xx/wrongQuery.js";
+import { findUser } from "./findUser.js";
 import { testPassword } from './password.js';
 import { createToken, saveToken } from "./token.js";
 
@@ -39,21 +43,18 @@ export async function userLoginAPI(req, res) {
 
     // 错误请求
     if (!account || !password) {
-        return res.send({ code: 400, msg: '缺失参数' });
+        return wrongQuery(res, '缺失参数')
     }
 
     // 找用户
     let user = await findUser(account)
     if (!user) {
-        return res.send({ code: 404, message: '用户不存在' })
+        return notFound(res, '用户不存在')
     }
 
     // 检查此请求是否错误次数过多
-    if (countStore.ip[req.ip]?.lock) {
-        return res.send({ code: 403, message: '请求错误次数过多' })
-    }
-    if (countStore.user[user.id]?.lock) {
-        return res.send({ code: 403, message: '请求错误次数过多' })
+    if (countStore.ip[req.ip]?.lock || countStore.user[user.id]?.lock) {
+        return forbidden(res, '请求错误次数过多, 请等一段时间再试')
     }
 
     // 检查密码
@@ -63,36 +64,22 @@ export async function userLoginAPI(req, res) {
         let token = createToken()
         let expirationTime = new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * tokenExpirationTime)
         await saveToken(token, user.id, expirationTime)
-        // 并以 Cookie 发送
-        res.cookie('token', token, {
-            httpOnly: true, expires: expirationTime
-        })
-        success(res, undefined, `登录成功, 欢迎回来, ${user.name}`)
+        success(res,
+            { // response body
+                token: {
+                    value: token,
+                    expirationTime: expirationTime
+                },
+                user: {
+                    ...user,
+                    password: undefined,
+                }
+            },
+            `登录成功, 欢迎回来, ${user.name}`
+        )
     } else { // 错误
-        res.send({ code: 403, message: '密码错误' })
+        wrongQuery(res, '密码错误')
         errorPasswordCounter(user.id, 'user')
         errorPasswordCounter(req.ip, 'ip')
     }
-
-
-}
-
-
-// 使用邮箱、用户名来找到可能的用户
-async function findUser(account) {
-    let resultByEmail = await promiseDB.query(
-        'SELECT * FROM user WHERE email = ?',
-        [account]
-    )
-    if (resultByEmail[0].length) {
-        return resultByEmail[0][0]
-    }
-    let resultByName = await promiseDB.query(
-        'SELECT * FROM user WHERE name = ?',
-        [account]
-    )
-    if (resultByName[0].length) {
-        return resultByName[0][0]
-    }
-    return false
 }

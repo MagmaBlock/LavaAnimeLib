@@ -1,5 +1,6 @@
 import { promiseDB } from "../../../common/sql.js";
 import success from "../response/2xx/success.js";
+import wrongQuery from "../response/4xx/wrongQuery.js";
 import serverError from "../response/5xx/serverError.js";
 import { testInviteCode, useInviteCode } from "./inviteCode.js";
 import { getFormattedPassword } from "./password.js";
@@ -15,13 +16,13 @@ export async function userRegisterAPI(req, res) { // 注册用户
     try {
         // 错误请求
         if (!email || !password || !name || !inviteCode) {
-            return res.send({ code: 400, msg: '请求语法错误' });
+            return wrongQuery(res, '请求语法错误')
         }
 
         /// 邮箱
         // 校验邮箱
         if (!regExpDict.email.test(email)) {
-            return res.send({ code: 400, message: '邮箱不合法' })
+            return wrongQuery(res, '邮箱不合法')
         }
         // 查询数据库中是否有相同的邮箱
         let sameEmail = await promiseDB.query(
@@ -29,13 +30,13 @@ export async function userRegisterAPI(req, res) { // 注册用户
             [email]
         );
         if (sameEmail[0].length != 0) {
-            return res.send({ code: 400, message: '该邮箱已被注册' });
+            return wrongQuery(res, '该邮箱已被注册')
         }
 
         /// 密码
         // 校验密码是否合法
         if (!regExpDict.password.test(password)) {
-            return res.send({ code: 400, message: '密码不合法, 密码至少包含字母, 且长度为7-18' });
+            return wrongQuery(res, '密码不合法, 密码至少包含字母, 且长度为7-18')
         }
 
         /// 昵称
@@ -45,10 +46,10 @@ export async function userRegisterAPI(req, res) { // 注册用户
             [name]
         )
         if (sameName[0].length != 0) {
-            return res.send({ code: 400, message: '昵称已存在，请更换一个' });
+            return wrongQuery(res, '昵称已存在，请更换一个')
         }
         if (name.length > 30 || name.length == 0) {
-            return res.send({ code: 400, message: '昵称长度太长或为空' });
+            return wrongQuery(res, '昵称长度太长或为空')
         }
 
         /// 邀请码
@@ -57,7 +58,7 @@ export async function userRegisterAPI(req, res) { // 注册用户
             let nextUserID = await getNextUserID()
             await useInviteCode(inviteCode, nextUserID)
         } else {
-            return res.send({ code: 400, message: '邀请码不可用' })
+            return wrongQuery(res, '邀请码不可用')
         }
 
         // 一切正常，插入数据库
@@ -70,7 +71,7 @@ export async function userRegisterAPI(req, res) { // 注册用户
             success(res, undefined, '注册成功')
         }
         else {
-            res.send({ code: 500, message: '服务器错误，注册失败' });
+            serverError(res, '服务器错误，注册失败')
         }
 
     } catch (error) {

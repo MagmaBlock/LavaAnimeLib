@@ -6,7 +6,7 @@ import success from "../response/2xx/success.js"
 
 export async function userLogoutAPI(req, res) {
   let { all } = req.body
-  let { token } = req.cookies
+  let token = req.get('Authorization')
 
   // 请求中并未携带 token
   if (!token) return wrongQuery(res)

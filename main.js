@@ -31,13 +31,14 @@ app.all('*', async (req, res, next) => {
     res.set({
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
+        'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE, PUT'
     })
 
     // 尝试验证登录
-    if (req.cookies?.token) {
-        let userID = await useToken(req.cookies.token)
+    let authHeader = req.get('Authorization')
+    if (authHeader) {
+        let userID = await useToken(authHeader)
         if (userID) {
             req.user = await findUserByID(userID)
         }
@@ -55,6 +56,7 @@ app.all('*', async (req, res, next) => {
     // 进行下一步
     next();
     res.once('finish', () => {
+        if (req.method == 'OPTIONS') return // 不打印 OPTIONS 相关 log
         // 打印 Log
         logger(
             chalk.dim(req.ip),

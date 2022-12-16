@@ -1,9 +1,9 @@
 import config from "../../../common/config.js";
 import { promiseDB } from "../../../common/sql.js";
 import serverError from "../response/5xx/serverError.js";
-import unauthorized from "../response/4xx/unauthorized.js";
 import wrongQuery from "../response/4xx/wrongQuery.js";
 import success from "../response/2xx/success.js";
+import forbidden from "../response/4xx/forbidden.js";
 
 // 获取头图相关数据
 export async function getHeaderAPI(req, res) {
@@ -33,7 +33,7 @@ export async function updateHeaderAPI(req, res) {
     }
     // 验证权限
     if (!req.user?.data?.permission?.admin) {
-      return unauthorized(res)
+      return forbidden(res)
     }
 
     let dbResult = await promiseDB.query(
