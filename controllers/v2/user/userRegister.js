@@ -2,7 +2,7 @@ import { promiseDB } from "../../../common/sql.js";
 import success from "../response/2xx/success.js";
 import wrongQuery from "../response/4xx/wrongQuery.js";
 import serverError from "../response/5xx/serverError.js";
-import { testInviteCode, useInviteCode } from "./inviteCode.js";
+import { testInviteCode, useInviteCode } from "./inviteCode/inviteCode.js";
 import { getFormattedPassword } from "./password.js";
 
 const regExpDict = {
