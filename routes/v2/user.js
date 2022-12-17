@@ -6,7 +6,7 @@ import { userLoginAPI } from '../../controllers/v2/user/userLogin.js';
 import { userLogoutAPI } from '../../controllers/v2/user/userLogout.js';
 import { updateUserPermissionAPI } from '../../controllers/v2/user/editUser.js';
 import { getUserInfoAPI } from '../../controllers/v2/user/userInfo.js';
-import { userInviteCodeGetAPI, userInviteCodeNewAPI } from '../../controllers/v2/user/inviteCode/UserInviteCode.js';
+import { userInviteCodeGetAPI, userInviteCodeNewAPI } from '../../controllers/v2/user/inviteCode/userInviteCode.js';
 
 router.post('/register', userRegisterAPI);
 router.post('/login', userLoginAPI);
