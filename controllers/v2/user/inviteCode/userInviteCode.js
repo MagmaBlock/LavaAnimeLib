@@ -1,4 +1,5 @@
 import success from "../../response/2xx/success.js"
+import forbidden from "../../response/4xx/forbidden.js"
 import unauthorized from "../../response/4xx/unauthorized.js"
 import serverError from "../../response/5xx/serverError.js"
 import { generateInviteCode, getUserInviteCodes, saveInviteCode, testInviteCode } from "./inviteCode.js"
@@ -52,6 +53,6 @@ export async function userInviteCodeNewAPI(req, res) {
 
 
   } else { // 临时，未来开放普通用户创建邀请码
-    return unauthorized(res)
+    return forbidden(res)
   }
 }
