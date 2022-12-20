@@ -86,15 +86,16 @@ export async function getAnimeViewAPI(req, res) {
 // /v2/anime/view/add
 export async function addAnimeViewAPI(req, res) {
     let laID = req.body.id
-    let ep = req.body.ep
-    let file = req.body.file
+    let fileName = req.body.file
+    let playerType = req.body.type
+
     let ip = req.ip
-    let type = req.body.type
+    let userID = req.user?.id
 
     if (!isFinite(laID)) return wrongQuery(res)
 
     try {
-        let addResult = await addAnimeView(laID, ep, file, ip, null, type)
+        let addResult = await addAnimeView(laID, fileName, playerType, ip, userID)
         if (addResult) {
             success(res, {
                 views: await getAnimeView(laID),
