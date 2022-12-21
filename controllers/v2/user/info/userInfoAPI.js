@@ -1,6 +1,6 @@
-import success from "../response/2xx/success.js"
-import unauthorized from "../response/4xx/unauthorized.js"
-import { findUserByID } from "./findUser.js"
+import success from "../../response/2xx/success.js"
+import unauthorized from "../../response/4xx/unauthorized.js"
+import { findUserByID } from "../findUser.js"
 
 // 查询当前 Token 或别人的用户信息
 export async function getUserInfoAPI(req, res) {

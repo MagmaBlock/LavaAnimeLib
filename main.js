@@ -46,8 +46,8 @@ app.all('*', async (req, res, next) => {
                     id: Number, email: String,
                     name: String, password: String,
                     create_time: Date,
-                    data: { permission: { admin: Boolean } },
-                    settings: Object,
+                    data: Object || null,
+                    settings: Object || null ,
                     expirationTime: Date (如果是从缓存中读取，此项存在)
                 }
             */
