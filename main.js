@@ -41,6 +41,16 @@ app.all('*', async (req, res, next) => {
         let userID = await useToken(authHeader)
         if (userID) {
             req.user = await findUserByID(userID)
+            /*
+                req.user = {
+                    id: Number, email: String,
+                    name: String, password: String,
+                    create_time: Date,
+                    data: { permission: { admin: Boolean } },
+                    settings: Object,
+                    expirationTime: Date (如果是从缓存中读取，此项存在)
+                }
+            */
         }
     }
 

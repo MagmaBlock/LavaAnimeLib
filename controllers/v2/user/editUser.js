@@ -6,7 +6,7 @@ import wrongQuery from "../response/4xx/wrongQuery.js"
 import { findUserByID } from "./findUser.js"
 import success from "../response/2xx/success.js"
 
-// 修改用户的权限
+// 修改用户的权限 API
 // 暂时没啥用
 export async function updateUserPermissionAPI(req, res) {
   let { permission, userID } = req.body
