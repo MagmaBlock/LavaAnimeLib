@@ -52,7 +52,7 @@ export async function useToken(token) {
       // 存缓存
       tokenCache[findReult[0].token] = {
         user: findReult[0].user,
-        expirationTime: findReult[0].expiration_time
+        expirationTime: new Date(findReult[0].expiration_time)
       }
       // 返回 userID
       return findReult[0].user

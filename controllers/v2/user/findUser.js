@@ -31,7 +31,7 @@ export async function findUserByID(userID) {
     // cache
     if (!cache.user) cache.user = {}
     cache.user[userID] = findReult[0]
-    cache.user[userID].expirationTime = new Date().getTime() + 1000 * 60 * 5 // 五分钟后过期
+    cache.user[userID].expirationTime = new Date(new Date().getTime() + 1000 * 60 * 5) // 五分钟后过期
     return dbUserParser(findReult[0])
   } else {
     return false
