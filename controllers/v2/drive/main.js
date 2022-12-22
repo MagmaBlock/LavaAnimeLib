@@ -11,6 +11,7 @@ export function getDriveList() {
   }
 }
 
+// 获取指定的 Drive 的路径，如 /2AG_CF/LavaAnimeLib
 export function getDrivePath(drive) {
   let driveID = drive ? drive : config.drive.default
   let drivePath

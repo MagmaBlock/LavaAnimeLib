@@ -8,8 +8,8 @@ export async function getAnimeView(laID) {
 
     try {
         let anime = await getAnimeByID(laID)
-        if (anime.length) {
-            let view = parseInt(anime[0].views)
+        if (anime) {
+            let view = parseInt(anime.views)
             return view
         } else {
             return false

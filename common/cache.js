@@ -33,14 +33,15 @@ let cache = {
       ... user 数据
     }
     */
-  }
+  },
+  hot: [] // 热门动画获取
 }
 
 // GC
-setTimeout(() => {
+setInterval(() => {
   let now = new Date()
   Object.keys(cache).forEach(table => { // 遍历每个表
-    Object.keys(cache[table]).forEach(key => { // 遍历每个 Key
+    Object.keys(cache[table]).forEach(key => { // 遍历每个子对象
       if (_.isObject(cache[table][key]) && !_.isArray(cache[table][key])) { // 如果是真对象
         if (new Date(cache[table][key].expirationTime) <= now) { // 判断过期
           delete cache[table][key]

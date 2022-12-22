@@ -7,13 +7,13 @@ import { parseFileName } from "./tag.js"
 export async function getFilesByID(laID, drive) {
     // 根据 ID 获取某番剧目录下的文件和文件夹名
 
-    let anime = (await getAnimeByID(laID))[0]
+    let anime = await getAnimeByID(laID)
     if (!anime) return false // 404
 
     let drivePath = getDrivePath(drive)
 
     let alistAPIResult = (await AlistAPI.post('/api/fs/list', {
-        path: drivePath + '/' + anime.year + '/' + anime.type + '/' + anime.name
+        path: drivePath + '/' + anime.index.year + '/' + anime.index.type + '/' + anime.index.name
     })).data
 
     if (alistAPIResult.code == 200) {
@@ -36,9 +36,9 @@ export async function getFilesByID(laID, drive) {
             } else { // 普通文件
                 let fileUrl = config.alist.host
                     + '/d' + encodeURIComponent(drivePath)
-                    + '/' + encodeURIComponent(anime.year)
-                    + '/' + encodeURIComponent(anime.type)
-                    + '/' + encodeURIComponent(anime.name)
+                    + '/' + encodeURIComponent(anime.index.year)
+                    + '/' + encodeURIComponent(anime.index.type)
+                    + '/' + encodeURIComponent(anime.index.name)
                     + '/' + encodeURIComponent(thisFile.name)
                     + '?sign=' + thisFile.sign
                 thisDir.push({

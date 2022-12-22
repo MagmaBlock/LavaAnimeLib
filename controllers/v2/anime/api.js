@@ -17,11 +17,10 @@ export async function getAnimeByIDAPI(req, res) {
     if (full) full = JSON.parse(req.query.full)
 
     try {
-        let anime = await getAnimeByID(laID)
-        if (anime.length == 0) return notFound(res)
-        let thisAnimeData = (await animeParser(anime, full))[0]
+        let anime = await getAnimeByID(laID, full)
+        if (!anime) return notFound(res)
 
-        success(res, thisAnimeData)
+        success(res, anime)
     } catch (error) {
         console.error(error);
         return serverError(res)
@@ -29,12 +28,12 @@ export async function getAnimeByIDAPI(req, res) {
 }
 
 // POST /v2/anime/get
+// 批量根据 laID Array 获取动画
 export async function getAnimesByIDAPI(req, res) {
     let ids = req.body.ids
     if (!Array.isArray(ids) || ids.length >= 80) return wrongQuery(res)
     try {
         let result = await getAnimesByID(ids)
-        result = await animeParser(result)
         success(res, result)
     } catch (error) {
         console.error(error);
