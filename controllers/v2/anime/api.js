@@ -34,6 +34,9 @@ export async function getAnimesByIDAPI(req, res) {
     if (!Array.isArray(ids) || ids.length >= 80) return wrongQuery(res)
     try {
         let result = await getAnimesByID(ids)
+        result = result.filter(anime => { // 不回复不存在的动画
+            if (anime) return anime
+        })
         success(res, result)
     } catch (error) {
         console.error(error);
