@@ -25,15 +25,17 @@ app.use(express.urlencoded({ extended: true })) // 使用 Express 自带的 URLE
 app.set('trust proxy', config.security.trustProxy) // 允许 Express 信任上级代理提供的 IP 地址
 app.use(cookieParser()) // cookie 处理器
 // 全局请求前置
-app.all('*', async (req, res, next) => {
+app.use(async (req, res, next) => {
     let queryStart = new Date()
     // 设置 Headers
     res.set({
-        'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE, PUT'
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, DELETE, PUT',
+        'Access-Control-Max-Age': '3600' // 要求浏览器每一小时才发送一次 OPTIONS 进行跨域校验
     })
+    // 如果是 OPTIONS
+    if (req.method == 'OPTIONS') return res.status(200).end()
 
     // 尝试验证登录
     let authHeader = req.get('Authorization')
@@ -66,7 +68,6 @@ app.all('*', async (req, res, next) => {
     // 进行下一步
     next();
     res.once('finish', () => {
-        if (req.method == 'OPTIONS') return // 不打印 OPTIONS 相关 log
         // 打印 Log
         logger(
             chalk.dim(req.ip),
