@@ -71,6 +71,7 @@ const dict = {
         { from: /SBSUB/ig, to: "银色子弹字幕组" },
         { from: /织梦字幕组/ig, to: "织梦字幕组" },
         { from: /Billion Meta Lab/ig, to: "亿次研同好会" },
+        { from: /LavaAnimeSub/ig, to: "熔岩动画Sub" },
     ],
     source: [
         { from: /TVRip|TV/ig, to: "TV放送源" },
@@ -149,7 +150,6 @@ const dict = {
         { from: /NCED4/ig, to: "素材 - 无字 ED 4" },
         { from: /NCED5/ig, to: "素材 - 无字 ED 5" },
         { from: /NCED6/ig, to: "素材 - 无字 ED 6" },
-        { from: /LavaAnimeSub/ig, to: "熔岩动画Sub" },
     ],
     format: [ // 此中的正则会单独对整个文件名匹配一次，不会和其他的冲突
         { from: /ass/ig, to: "ASS外挂字幕", type: 'subtitle' },
