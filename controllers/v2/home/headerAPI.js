@@ -1,9 +1,7 @@
-import config from "../../../common/config.js";
 import { promiseDB } from "../../../common/sql.js";
 import serverError from "../response/5xx/serverError.js";
 import wrongQuery from "../response/4xx/wrongQuery.js";
 import success from "../response/2xx/success.js";
-import forbidden from "../response/4xx/forbidden.js";
 
 // 获取头图相关数据
 export async function getHeaderAPI(req, res) {
@@ -30,10 +28,6 @@ export async function updateHeaderAPI(req, res) {
     // 必须为数组
     if (!Array.isArray(newData)) {
       return wrongQuery(res)
-    }
-    // 验证权限
-    if (!req.user?.data?.permission?.admin) {
-      return forbidden(res)
     }
 
     let dbResult = await promiseDB.query(

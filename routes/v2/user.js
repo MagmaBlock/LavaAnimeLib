@@ -8,6 +8,7 @@ import { updatePermissionAPI } from '../../controllers/v2/user/info/updatePermis
 import { getUserInfoAPI } from '../../controllers/v2/user/info/userInfoAPI.js';
 import { userInviteCodeGetAPI, userInviteCodeNewAPI } from '../../controllers/v2/user/inviteCode/userInviteCode.js';
 import { updateAvatarAPI } from '../../controllers/v2/user/info/updateAvatarAPI.js';
+import { loginRequire } from '../../controllers/v2/globalAuth/auth.js';
 
 // basic
 router.post('/register', userRegisterAPI);
@@ -18,7 +19,8 @@ router.get('/invite/get', userInviteCodeGetAPI)
 router.post('/invite/new', userInviteCodeNewAPI)
 // info
 router.get('/info', getUserInfoAPI)
-router.post('/info/avatar', updateAvatarAPI)
+router.post('/info/avatar', [loginRequire, updateAvatarAPI])
+router.post('/info/name')
 router.post('/info/permission', updatePermissionAPI)
 
 export default router;

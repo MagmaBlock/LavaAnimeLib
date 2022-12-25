@@ -1,15 +1,12 @@
 // POST
 
 import success from "../../response/2xx/success.js"
-import unauthorized from "../../response/4xx/unauthorized.js"
 import wrongQuery from "../../response/4xx/wrongQuery.js"
 import serverError from "../../response/5xx/serverError.js"
 import { updateUserData } from "./updateUser.js"
 
 // 修改当前用户的头像
 export async function updateAvatarAPI(req, res) {
-  // 登录
-  if (!req.user) return unauthorized(res)
 
   // 校验 URL 合法
   let { url } = req.body
