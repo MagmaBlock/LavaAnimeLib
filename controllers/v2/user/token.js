@@ -2,6 +2,10 @@ import { createHash } from 'crypto';
 import { promiseDB } from '../../../common/sql.js'
 import cache from '../../../common/cache.js';
 
+/**
+ * 获取一个 token
+ * @returns token
+ */
 export function createToken() {
   let createTime = new Date()
 
@@ -14,6 +18,12 @@ export function createToken() {
   return token
 }
 
+/**
+ * 保存指定的 token 到数据库
+ * @param {String} token
+ * @param {Number} userID token 对应的用户 ID
+ * @param {Number} expirationTime token 的过期时间
+ */
 export async function saveToken(token, userID, expirationTime) {
   if (!token || !userID || !expirationTime) throw '参数错误'
 
@@ -29,7 +39,11 @@ export async function saveToken(token, userID, expirationTime) {
 // 当 token 注销被触发后，此处的缓存也会同时删除
 let tokenCache = cache.token
 
-// 使用 token 找到用户 ID
+/**
+ * 使用 token 找到用户 ID
+ * @param {String} token 
+ * @returns {(Number|false)} 找到用户则返回用户 ID，否则为假
+ */
 export async function useToken(token) {
   if (!token) return false
 
@@ -65,7 +79,13 @@ export async function useToken(token) {
 }
 
 
-// 注销 token，可选注销同用户的所有 token，同时缓存也会被清理
+/**
+ * 注销 token
+ * @description 可选注销同用户的所有 token，同时缓存也会被清理
+ * @param {String} token 
+ * @param {Boolean} all 为真时注销此用户的所有 token
+ * @returns 
+ */
 export async function removeToken(token, all = false) {
   if (!token) throw '缺失参数'
 
