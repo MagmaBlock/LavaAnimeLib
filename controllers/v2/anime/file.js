@@ -35,7 +35,7 @@ export async function getFilesByID(laID, drive) {
                 })
             } else { // 普通文件
                 let fileUrl = config.alist.host
-                    + '/d' + encodeURIComponent(drivePath)
+                    + '/d' + drivePath
                     + '/' + encodeURIComponent(anime.index.year)
                     + '/' + encodeURIComponent(anime.index.type)
                     + '/' + encodeURIComponent(anime.index.name)
