@@ -9,6 +9,7 @@ import { getUserInfoAPI } from '../../controllers/v2/user/info/userInfoAPI.js';
 import { userInviteCodeGetAPI, userInviteCodeNewAPI } from '../../controllers/v2/user/inviteCode/userInviteCode.js';
 import { updateAvatarAPI } from '../../controllers/v2/user/info/updateAvatarAPI.js';
 import { loginRequire } from '../../controllers/v2/globalAuth/auth.js';
+import { updateNameAPI } from '../../controllers/v2/user/info/updateNameAPI.js';
 
 // basic
 router.post('/register', userRegisterAPI);
@@ -20,7 +21,7 @@ router.post('/invite/new', userInviteCodeNewAPI)
 // info
 router.get('/info', getUserInfoAPI)
 router.post('/info/avatar', [loginRequire, updateAvatarAPI])
-router.post('/info/name')
+router.post('/info/name', [loginRequire, updateNameAPI])
 router.post('/info/permission', updatePermissionAPI)
 
 export default router;
