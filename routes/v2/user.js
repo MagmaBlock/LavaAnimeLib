@@ -10,11 +10,13 @@ import { userInviteCodeGetAPI, userInviteCodeNewAPI } from '../../controllers/v2
 import { updateAvatarAPI } from '../../controllers/v2/user/info/updateAvatarAPI.js';
 import { loginRequire } from '../../controllers/v2/globalAuth/auth.js';
 import { updateNameAPI } from '../../controllers/v2/user/info/updateNameAPI.js';
+import { changePasswordAPI } from '../../controllers/v2/user/password/changePasswordAPI.js';
 
 // basic
 router.post('/register', userRegisterAPI);
 router.post('/login', userLoginAPI);
 router.post('/logout', userLogoutAPI);
+router.post('/changepassword', [loginRequire, changePasswordAPI])
 // invite
 router.get('/invite/get', userInviteCodeGetAPI)
 router.post('/invite/new', userInviteCodeNewAPI)

@@ -1,11 +1,10 @@
 import config from "../../../common/config.js";
-import { promiseDB } from "../../../common/sql.js";
 import success from "../response/2xx/success.js";
 import forbidden from "../response/4xx/forbidden.js";
 import notFound from "../response/4xx/notFound.js";
 import wrongQuery from "../response/4xx/wrongQuery.js";
 import { findUser } from "./findUser.js";
-import { testPassword } from './password.js';
+import { testPassword } from './password/password.js';
 import { createToken, saveToken } from "./token.js";
 
 const maxTry = config.security.loginMaxTry

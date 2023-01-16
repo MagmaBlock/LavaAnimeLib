@@ -3,11 +3,10 @@ import success from "../response/2xx/success.js";
 import wrongQuery from "../response/4xx/wrongQuery.js";
 import serverError from "../response/5xx/serverError.js";
 import { testInviteCode, useInviteCode } from "./inviteCode/inviteCode.js";
-import { getFormattedPassword } from "./password.js";
+import { getFormattedPassword, isSecurePassword } from "./password/password.js";
 
 const regExpDict = {
-    email: /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/,
-    password: /^(?=.*[a-zA-Z]).{7,64}$/
+    email: /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/
 }
 
 export async function userRegisterAPI(req, res) { // 注册用户
@@ -35,7 +34,7 @@ export async function userRegisterAPI(req, res) { // 注册用户
 
         /// 密码
         // 校验密码是否合法
-        if (!regExpDict.password.test(password)) {
+        if (!isSecurePassword(password)) {
             return wrongQuery(res, '密码不合法, 密码至少包含字母, 且长度为7-64')
         }
 
