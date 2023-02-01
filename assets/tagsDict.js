@@ -72,6 +72,7 @@ const dict = {
         { from: /织梦字幕组/ig, to: "织梦字幕组" },
         { from: /Billion Meta Lab/ig, to: "亿次研同好会" },
         { from: /LavaAnimeSub/ig, to: "熔岩动画Sub" },
+        { from: /まひろ🍥/ig, to: "真寻🍥（原NC-Raws）" }
     ],
     source: [
         { from: /TVRip|TV/ig, to: "TV放送源" },
