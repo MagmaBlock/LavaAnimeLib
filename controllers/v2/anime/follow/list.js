@@ -4,7 +4,7 @@ import wrongQuery from "../../response/4xx/wrongQuery.js"
 import serverError from "../../response/5xx/serverError.js"
 import { getAnimeByID } from "../get.js"
 
-// 获取追番列表
+// 获取个人追番列表
 // /v2/anime/follow/list
 export async function getAnimeFollowListAPI(req, res) {
   let { status, page, pageSize } = req.body
