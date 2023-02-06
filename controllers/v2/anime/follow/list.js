@@ -11,6 +11,9 @@ export async function getAnimeFollowListAPI(req, res) {
   if (status == undefined || !status.length || page < 1 || pageSize < 1 || pageSize > 200) {
     return wrongQuery(res)
   }
+  for (let code of status) {
+    if (!Number.isInteger(code) || !(code >= 0 && code <= 2)) return wrongQuery(res)
+  }
   if (!page) { // page 从 1 开始 
     page = 1
   }
