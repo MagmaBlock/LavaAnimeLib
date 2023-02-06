@@ -2,8 +2,12 @@ import { promiseDB } from "../../../common/sql.js"
 import { animeParser } from "../parser/animeParser.js"
 
 
-// 返回响应 ID 的 animeData，是已经解析完成的结果
-// full 为真时将会同时提供 tag、关联番剧等详细信息
+/**
+ * 根据 laID 获取番剧的数据
+ * 是已经解析完成的结果
+ * @param {Number} laID 
+ * @param {Boolean} full 为真时将会同时提供 tag、关联番剧等详细信息
+ */
 export async function getAnimeByID(laID, full = false) {
     // 传入 ID 返回数据库查询结果
     if (!isFinite(laID)) throw new Error('ID 无法解析为数字或不存在')
