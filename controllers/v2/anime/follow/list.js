@@ -30,7 +30,6 @@ export async function getAnimeFollowListAPI(req, res) {
         [req.user.id, oneStatus, 0 + pageSize * (page - 1), pageSize]
       )
       for (let followRecord of result[0]) {
-        console.log(followRecord.anime_id);
         allRawResult.push({
           status: followRecord.status,
           editTime: followRecord.edit_time.getTime(),

@@ -3,6 +3,8 @@ import success from "../../response/2xx/success.js"
 import wrongQuery from "../../response/4xx/wrongQuery.js"
 import serverError from "../../response/5xx/serverError.js"
 
+// 编辑我的追番
+// /v2/anime/follow/edit
 export async function editAnimeFollowAPI(req, res) {
   let { id: laID, status, remove } = req.body
   if (!laID || !Number.isInteger(laID) || laID < 1) return wrongQuery(res)
