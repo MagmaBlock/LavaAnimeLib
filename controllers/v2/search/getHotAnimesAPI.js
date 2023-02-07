@@ -20,6 +20,7 @@ export async function getHotAnimesAPI(req, res) {
   let hot = [] // 相应的 AnimeData
   for (let laID of hotIDs) {
     let thisAnimeData = await getAnimeByID(laID)
+    if (!thisAnimeData?.deleted)
     hot.push(thisAnimeData)
   }
 

@@ -48,6 +48,7 @@ async function parseSingleAnimeData(rawData, bgmData, full = false) {
                 ...thisbgmData.subjects.images,
                 poster: thisbgmData.subjects.images.large + '/poster'
             },
+            deleted: false
         }
         if (full) {
             // 遍历每个 BgmData 解析其中的 relations，将 realations 变成比较好阅读的番剧库格式
@@ -100,7 +101,8 @@ async function parseSingleAnimeData(rawData, bgmData, full = false) {
                     "10": 0
                 },
                 "score": -1
-            }
+            },
+            deleted: false
         }
 
         return thisAnimeData

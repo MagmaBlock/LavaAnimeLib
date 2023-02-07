@@ -8,7 +8,7 @@ export async function getFilesByID(laID, drive) {
     // 根据 ID 获取某番剧目录下的文件和文件夹名
 
     let anime = await getAnimeByID(laID)
-    if (!anime) return false // 404
+    if (anime.deleted) return false // 404
 
     let drivePath = getDrivePath(drive)
 

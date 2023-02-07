@@ -3,7 +3,6 @@ import config from "../../../common/config.js"
 import notFound from "../response/4xx/notFound.js"
 import serverError from "../response/5xx/serverError.js"
 import wrongQuery from "../response/4xx/wrongQuery.js"
-import { animeParser } from "../parser/animeParser.js"
 import { getFilesByID } from "./file.js"
 import { getAnimeByID, getAnimesByID } from "./get.js"
 import { addAnimeView, getAnimeView } from "./view.js"
@@ -18,7 +17,7 @@ export async function getAnimeByIDAPI(req, res) {
 
     try {
         let anime = await getAnimeByID(laID, full)
-        if (!anime) return notFound(res)
+        if (anime.deleted) return notFound(res)
 
         success(res, anime)
     } catch (error) {
@@ -35,7 +34,7 @@ export async function getAnimesByIDAPI(req, res) {
     try {
         let result = await getAnimesByID(ids)
         result = result.filter(anime => { // 不回复不存在的动画
-            if (anime) return anime
+            if (!anime?.deleted) return anime
         })
         success(res, result)
     } catch (error) {

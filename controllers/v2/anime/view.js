@@ -8,7 +8,7 @@ export async function getAnimeView(laID) {
 
     try {
         let anime = await getAnimeByID(laID)
-        if (anime) {
+        if (!anime?.deleted) {
             let view = parseInt(anime.views)
             return view
         } else {

@@ -18,7 +18,7 @@ export async function getAnimeByID(laID, full = false) {
             let parsedAnime = await animeParser(queryResult[0][0], full)
             return parsedAnime[0]
         } else {
-            return false
+            return { id: laID, title: '已失效的番剧', deleted: true }
         }
     } catch (error) {
         throw error
