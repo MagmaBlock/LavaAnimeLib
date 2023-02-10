@@ -9,6 +9,7 @@ import anime from './routes/v2/anime.js'
 import search from './routes/v2/search.js'
 import home from './routes/v2/home.js'
 import drive from './routes/v2/drive.js'
+import admin from './routes/v2/admin.js'
 // modules
 import config from './common/config.js';
 import db from './common/sql.js';
@@ -87,6 +88,7 @@ app.use('/v2/anime', anime) // 动画
 app.use('/v2/search', search) // 搜索
 app.use('/v2/home', home) // 主页相关
 app.use('/v2/drive', drive) // 存储
+app.use('/v2/admin', admin) // 管理员 API
 
 // 启动服务器
 const server = app.listen(8090, () => {
