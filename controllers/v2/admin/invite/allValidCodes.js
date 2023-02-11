@@ -4,10 +4,13 @@ import serverError from "../../response/5xx/serverError.js";
 
 // 获取全部有效邀请码
 // /v2/admin/invite/all-valid-codes
-export async function allVaildCodes(req, res) {
+export async function allVaildCodesAPI(req, res) {
   try {
     let result = await promiseDB.query(
-      'SELECT * FROM invite_code WHERE code_user IS NULL AND expiration_time > current_time() OR code_user IS NULL AND expiration_time IS NULL'
+      `SELECT * FROM invite_code
+       WHERE code_user IS NULL AND expiration_time > current_time() 
+       OR code_user IS NULL AND expiration_time IS NULL
+       ORDER BY create_time DESC`
     )
     success(
       res,
