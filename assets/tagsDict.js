@@ -40,7 +40,7 @@ const dict = {
         { from: /SZW/ig, to: "森之屋动漫" },
         { from: /SAIO-Raws/ig, to: "SAIO-Raws 压制组" },
         { from: /VCB-Studio|VCB-S/ig, to: "VCB-Studio 压制组" },
-        { from: /熔岩番剧库|LavaAnimeLib/ig, to: "熔岩番剧库" },
+        { from: /熔岩番剧库|LavaAnimeLib/ig, to: "番剧库压制" },
         { from: /异域-11番小队/ig, to: "异域-11番小队" },
         { from: /XKSub/ig, to: "星空字幕组" },
         { from: /ZeroSub/ig, to: "ZeroSub" },
@@ -72,7 +72,8 @@ const dict = {
         { from: /织梦字幕组/ig, to: "织梦字幕组" },
         { from: /Billion Meta Lab/ig, to: "亿次研同好会" },
         { from: /LavaAnimeSub/ig, to: "熔岩动画Sub" },
-        { from: /まひろ🍥/ig, to: "真寻🍥（原NC-Raws）" }
+        { from: /まひろ🍥/ig, to: "真寻🍥（原NC-Raws）" },
+        { from: /Kitaujisub/ig, to: "北宇治字幕组"}
     ],
     source: [
         { from: /TVRip|TV/ig, to: "TV放送源" },
