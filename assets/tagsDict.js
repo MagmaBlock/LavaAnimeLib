@@ -73,6 +73,7 @@ const dict = {
         { from: /Billion Meta Lab/ig, to: "亿次研同好会" },
         { from: /LavaAnimeSub/ig, to: "熔岩动画Sub" },
         { from: /まひろ🍥/ig, to: "真寻🍥（原NC-Raws）" },
+        { from: /神楽坂 まひろ/ig, to: "神楽坂真寻（原NC-Raws）" },
         { from: /Kitaujisub/ig, to: "北宇治字幕组"}
     ],
     source: [
