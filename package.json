@@ -17,6 +17,7 @@
   "author": "MagmaBlock",
   "license": "ISC",
   "dependencies": {
+    "aniep": "^0.4.1",
     "axios": "^0.26.0",
     "chalk": "^5.1.2",
     "cookie-parser": "^1.4.6",
