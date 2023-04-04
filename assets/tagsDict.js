@@ -24,7 +24,7 @@ const dict = {
         { from: /FZsub/ig, to: "F宅字幕组" },
         { from: /Xrip/ig, to: "Xrip 压制组" },
         { from: /A\.I\.R\.nesSub/ig, to: "A.I.R.nesSub 字幕组" },
-        { from: /NC-Raws/ig, to: "NC-Raws 搬运组" },
+        { from: /NC-Raws|まひろ🍥|神楽坂 まひろ|【推しの子】/ig, to: "NC-Raws 搬运组" },
         { from: /NaN-Raws/ig, to: "NaN-Raws 搬运组" },
         { from: /Lilith-Raws/ig, to: "Lilith-Raws 搬运组" },
         { from: /云光字幕组/ig, to: "云光字幕组" },
@@ -72,8 +72,6 @@ const dict = {
         { from: /织梦字幕组/ig, to: "织梦字幕组" },
         { from: /Billion Meta Lab/ig, to: "亿次研同好会" },
         { from: /LavaAnimeSub/ig, to: "熔岩动画Sub" },
-        { from: /まひろ🍥/ig, to: "真寻🍥（原NC-Raws）" },
-        { from: /神楽坂 まひろ/ig, to: "神楽坂真寻（原NC-Raws）" },
         { from: /Kitaujisub/ig, to: "北宇治字幕组"}
     ],
     source: [
