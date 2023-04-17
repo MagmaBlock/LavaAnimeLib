@@ -54,7 +54,7 @@ export async function getFilesByID(laID, drive) {
       } else {
         // 普通文件
         let fileUrl =
-          config.alist.host +
+          driveHost +
           "/d" +
           drivePath +
           "/" +
