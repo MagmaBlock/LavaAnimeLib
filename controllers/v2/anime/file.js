@@ -1,18 +1,31 @@
 import axios from "axios";
-import config from "../../../common/config.js";
-import { getDriveHost, getDrivePath } from "../drive/main.js";
+import { getDefaultDrive, getDrive } from "../drive/main.js";
 import { getAnimeByID } from "./get.js";
 import { parseFileName } from "./tag.js";
 
+/**
+ * 获取指定动画指定节点文件列表的 API
+ * @param {Number} laID
+ * @param {String | undefined} drive
+ * @returns {Array | String} String 为报错
+ */
 export async function getFilesByID(laID, drive) {
   // 根据 ID 获取某番剧目录下的文件和文件夹名
 
+  // 获取动画信息
   let anime = await getAnimeByID(laID);
-  if (anime.deleted) return false; // 404
+  if (anime.deleted) return "此 laID 不存在"; // 404
 
-  let drivePath = getDrivePath(drive);
-  let driveHost = getDriveHost(drive);
+  // 获取 Drive 信息
+  let thisDrive = getDrive(drive ?? getDefaultDrive());
+  if (!thisDrive) return "存储节点不存在";
+  if (anime?.type?.nsfw && thisDrive?.banNSFW)
+    return "存储节点不支持当前类型动画"; // banNSFW
 
+  let drivePath = thisDrive.path;
+  let driveHost = thisDrive.host;
+
+  // 请求 AList API
   let alistAPIResult = (
     await axios.post(
       "/api/fs/list",
@@ -25,6 +38,7 @@ export async function getFilesByID(laID, drive) {
           anime.index.type +
           "/" +
           anime.index.name,
+        password: thisDrive?.password,
       },
       {
         baseURL: driveHost,
@@ -78,6 +92,7 @@ export async function getFilesByID(laID, drive) {
     }
     return thisDir;
   } else {
-    return false;
+    console.error(alistAPIResult, `\nError: 请求 ${thisDrive.id} 节点时, AList 返回了非 200.`);
+    return "请求存储节点时服务端发生意外错误";
   }
 }
