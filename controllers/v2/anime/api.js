@@ -1,10 +1,10 @@
-import config from "../../../common/config.js";
+import { getFilesByID } from "./file.js";
+import { getAnimeByID, getAnimesByBgmID, getAnimesByID } from "./get.js";
+import { addAnimeView, getAnimeView } from "./view.js";
+
 import notFound from "../response/4xx/notFound.js";
 import serverError from "../response/5xx/serverError.js";
 import wrongQuery from "../response/4xx/wrongQuery.js";
-import { getFilesByID } from "./file.js";
-import { getAnimeByID, getAnimesByID } from "./get.js";
-import { addAnimeView, getAnimeView } from "./view.js";
 import success from "../response/2xx/success.js";
 import forbidden from "../response/4xx/forbidden.js";
 
@@ -40,12 +40,24 @@ export async function getAnimesByIDAPI(req, res) {
   }
 }
 
+// GET /v2/anime/bangumi/get
+// 根据 Bangumi ID 获取动画
+export async function getAnimesByBgmIDAPI(req, res) {
+  let bgmID = parseInt(req.query.bgmid);
+  if (!Number.isInteger(bgmID) || bgmID <= 0) return wrongQuery(res);
+
+  let result = await getAnimesByBgmID(bgmID);
+
+  return success(res, result);
+}
+
 // GET /v2/anime/file
 // 提供 laID 和 drive 获取番剧内容的 API
 export async function getFilesByIDAPI(req, res) {
   let laID = req.query.id;
   let drive = req.query.drive;
-  if (!isFinite(laID)) return wrongQuery(res);
+  if (!Number.isInteger(laID) && laID <= 0) return wrongQuery(res);
+  if (!drive) return wrongQuery(res);
 
   try {
     let files = await getFilesByID(laID, drive);

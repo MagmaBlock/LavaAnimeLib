@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   addAnimeViewAPI,
   getAnimeByIDAPI,
+  getAnimesByBgmIDAPI,
   getAnimesByIDAPI,
   getAnimeViewAPI,
   getFilesByIDAPI,
@@ -16,6 +17,7 @@ const router = Router();
 
 router.get(`/get`, getAnimeByIDAPI);
 router.post(`/get`, getAnimesByIDAPI);
+router.get(`/bangumi/get`, getAnimesByBgmIDAPI);
 
 router.get("/file", [loginRequire, getFilesByIDAPI]); // 使用多个中间件
 

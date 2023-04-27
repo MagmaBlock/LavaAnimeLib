@@ -1,7 +1,7 @@
 import _ from "lodash";
 import config from "../../../common/config.js";
 import { promiseDB } from "../../../common/sql.js";
-import { getAnimeByBgmID } from "../anime/get.js";
+import { getAnimesByBgmID } from "../anime/get.js";
 
 
 export async function animeParser(rawData, full = false) {
@@ -151,11 +151,10 @@ async function parseBangumiRelations(relations) {
     // 传入数组形式的 relations，将其解析成番剧库格式
     let parsedRelations = new Array() // 结果
     for (let i in relations) { // 遍历的是某个 bgmID
-        let thisBgmIDAnimes = await getAnimeByBgmID(relations[i].id) // 获取的是此 bgmID 的番剧，!可能会有多个!
-        let parsedAnimes = await animeParser(thisBgmIDAnimes) // 解析出结果
-        for (let j in parsedAnimes) { // 解析出的结果可能会有多个相同 bgmID 的动画，每个都需要与 relation 合并
+        let thisBgmIDAnimes = await getAnimesByBgmID(relations[i].id) // 获取的是此 bgmID 的番剧，!可能会有多个!
+        for (let j in thisBgmIDAnimes) { // 解析出的结果可能会有多个相同 bgmID 的动画，每个都需要与 relation 合并
             parsedRelations.push({
-                ...parsedAnimes[j],
+                ...thisBgmIDAnimes[j],
                 relation: relations[i].relation,
             })
         }
