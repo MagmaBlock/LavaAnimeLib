@@ -6,12 +6,7 @@ export default {
     database: "lavaanime",
     password: "password",
   },
-  // AList 存储策略，提供统一资源管理 API 和资源直链功能
-  alist: {
-    host: "https://alist.com",
-    password: "password",
-    root: "/1A/LavaAnimeLib",
-  },
+  // 节点列表，播放视频和自动刷新番剧时会用到
   drive: {
     default: "1A",
     list: [
