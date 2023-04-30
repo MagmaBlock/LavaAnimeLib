@@ -28,9 +28,9 @@ export default {
   },
   // Bangumi Image 地址
   bangumiImage: {
-    host: "https://anime-img.5t5.top",
+    host: "https://lain.bgm.tv/",
   },
-  // CQ-HTTP QQ Bot API 域名和消息群号
+  // CQ-HTTP QQ Bot API 域名和消息群号 (可选)
   qqBotApi: {
     host: "https://bot.api.com",
     group: {
@@ -41,7 +41,7 @@ export default {
     usedGroup: ["main"],
   },
   // 缓存天数，管理 Bangumi Data 数据会被缓存多少天后刷新
-  cache: 1,
+  cache: 3,
   security: {
     // 是否信任上层代理，开启后，程序获取到的 IP 将会是由上层代理 (如 nginx) 在 HTTP Header 中提供的客户端 IP
     // 若未经任何程序代理，请不要启用此选项，否则客户端将可伪造 IP 地址
