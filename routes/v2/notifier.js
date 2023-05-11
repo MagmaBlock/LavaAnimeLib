@@ -1,8 +1,8 @@
-import { Router } from 'express';
+import { Router } from "express";
 const router = Router();
 
-import { sendUpdateMessageAPI } from '../../controllers/v2/notifier/api.js'
+import { sendUpdateMessageAPI } from "../../controllers/v2/notifier/api.js";
 
-router.post('/report', sendUpdateMessageAPI);
+router.post("/report", sendUpdateMessageAPI);
 
 export default router;

@@ -1,24 +1,24 @@
-import serverError from "../response/5xx/serverError.js"
-import unauthorized from "../response/4xx/unauthorized.js"
-import wrongQuery from "../response/4xx/wrongQuery.js"
-import { removeToken } from "./token.js"
-import success from "../response/2xx/success.js"
+import serverError from "../response/5xx/serverError.js";
+import unauthorized from "../response/4xx/unauthorized.js";
+import wrongQuery from "../response/4xx/wrongQuery.js";
+import { removeToken } from "./token.js";
+import success from "../response/2xx/success.js";
 
 export async function userLogoutAPI(req, res) {
-  let { all } = req.body
-  let token = req.get('Authorization')
+  let { all } = req.body;
+  let token = req.get("Authorization");
 
   // 请求中并未携带 token
-  if (!token) return wrongQuery(res)
+  if (!token) return wrongQuery(res);
 
   try {
-    let logout = await removeToken(token, all)
+    let logout = await removeToken(token, all);
     if (logout) {
-      success(res)
+      success(res);
     } else {
-      return unauthorized(res)
+      return unauthorized(res);
     }
   } catch (error) {
-    return serverError(res)
+    return serverError(res);
   }
 }

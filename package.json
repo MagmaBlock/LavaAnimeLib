@@ -25,5 +25,8 @@
     "express": "^4.17.3",
     "lodash": "^4.17.21",
     "mysql2": "^2.3.3"
+  },
+  "prettier": {
+    "singleQuote": false
   }
 }

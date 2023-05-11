@@ -92,7 +92,10 @@ export async function getFilesByID(laID, drive) {
     }
     return thisDir;
   } else {
-    console.error(alistAPIResult, `\nError: 请求 ${thisDrive.id} 节点时, AList 返回了非 200.`);
+    console.error(
+      alistAPIResult,
+      `\nError: 请求 ${thisDrive.id} 节点时, AList 返回了非 200.`
+    );
     return "请求存储节点时服务端发生意外错误";
   }
 }

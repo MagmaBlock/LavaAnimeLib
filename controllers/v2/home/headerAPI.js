@@ -7,49 +7,47 @@ import success from "../response/2xx/success.js";
 export async function getHeaderAPI(req, res) {
   try {
     let dbResult = await promiseDB.query(
-      'SELECT * FROM settings WHERE `key` = \'headerData\''
-    )
+      "SELECT * FROM settings WHERE `key` = 'headerData'"
+    );
     if (dbResult[0].length == 0) {
-      return success(res, [])
-    }
-    else {
-      success(res, JSON.parse(dbResult[0][0].value))
+      return success(res, []);
+    } else {
+      success(res, JSON.parse(dbResult[0][0].value));
     }
   } catch (error) {
     console.error(error);
-    return serverError(res)
+    return serverError(res);
   }
 }
 
 // 更新头图相关数据，需 permission.admin
 export async function updateHeaderAPI(req, res) {
   try {
-    let newData = req.body.data
+    let newData = req.body.data;
     // 必须为数组
     if (!Array.isArray(newData)) {
-      return wrongQuery(res)
+      return wrongQuery(res);
     }
 
     let dbResult = await promiseDB.query(
-      'SELECT * FROM settings WHERE `key` = ?',
-      ['headerData']
-    )
+      "SELECT * FROM settings WHERE `key` = ?",
+      ["headerData"]
+    );
     if (dbResult[0].length == 0) {
-      await promiseDB.query(
-        'INSERT INTO settings (`key`,value) VALUES (?,?)',
-        ['headerData', JSON.stringify(newData)]
-      )
-    }
-    else {
-      await promiseDB.query(
-        'UPDATE settings SET value=? WHERE `key`=?',
-        [JSON.stringify(newData), 'headerData']
-      )
+      await promiseDB.query("INSERT INTO settings (`key`,value) VALUES (?,?)", [
+        "headerData",
+        JSON.stringify(newData),
+      ]);
+    } else {
+      await promiseDB.query("UPDATE settings SET value=? WHERE `key`=?", [
+        JSON.stringify(newData),
+        "headerData",
+      ]);
     }
 
-    success(res)
+    success(res);
   } catch (error) {
     console.error(error);
-    return serverError(res)
+    return serverError(res);
   }
 }
