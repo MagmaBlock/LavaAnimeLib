@@ -6,11 +6,13 @@ export async function searchAnimes(value) {
     let splitedValue = value.split(' ')
     let query = 'SELECT * FROM anime WHERE '
     for (let i in splitedValue) {
+        splitedValue[i] = splitedValue[i].replace('%','\\%')
+        splitedValue[i] = splitedValue[i].replace('_','\\_')
         splitedValue[i] = '%' + splitedValue[i] + '%'
         query = query + `title LIKE ? AND `
     }
     query = query + 'deleted = 0 ORDER BY views DESC'
-
+    
     let searchResults = await promiseDB.query(query, splitedValue)
     searchResults = await animeParser(searchResults[0])
 
