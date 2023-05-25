@@ -30,7 +30,7 @@ async function parseSingleAnimeData(rawData, bgmData, full = false) {
 
     let thisAnimeData = {
       id: parseInt(rawData.id),
-      bgmId: parseInt(rawData.bgmid),
+      bgmID: parseInt(rawData.bgmid),
       index: {
         year: rawData.year,
         type: rawData.type,
@@ -70,7 +70,7 @@ async function parseSingleAnimeData(rawData, bgmData, full = false) {
         name: rawData.name,
       },
       views: rawData.views,
-      bgmId: parseInt(rawData.bgmid),
+      bgmID: parseInt(rawData.bgmid),
       title: rawData.title.replace(/\[BDRip\]|\[NSFW\]/gi, ""),
       type: {
         bdrip: rawData.title.match(/\[BDRip\]/i) ? true : false,
@@ -110,21 +110,21 @@ async function parseSingleAnimeData(rawData, bgmData, full = false) {
 
 function parseAllBgmID(data) {
   // 将从数据库的原始数据传入，返回 bgmID 所对应的 subject 数据键值对
-  let bgmIdList = new Array(); // 本次传入的 bgmID 列表
+  let bgmIDList = new Array(); // 本次传入的 bgmID 列表
   for (let i in data) {
     let thisBgmId = parseInt(data[i].bgmid);
-    if (thisBgmId) bgmIdList.push(thisBgmId);
+    if (thisBgmId) bgmIDList.push(thisBgmId);
   }
-  return bgmIdList;
+  return bgmIDList;
 }
 
-async function getAllBangumiData(bgmIdList) {
+async function getAllBangumiData(bgmIDList) {
   // 查询上方收集的 Bangumi 对应的数据
   let bgmData = {}; // 存储 Bangumi 数据的对象，使用 BgmID 为 Key 就能拿到
-  if (bgmIdList.length > 0) {
+  if (bgmIDList.length > 0) {
     let queryResult = await promiseDB.query(
       "SELECT * FROM bangumi_data WHERE bgmid IN (?)",
-      [bgmIdList]
+      [bgmIDList]
     );
     let queryBgmData = queryResult[0];
 

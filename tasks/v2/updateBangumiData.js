@@ -41,9 +41,9 @@ export async function updateAllBangumiData() {
 export async function repairBangumiDataID() {
   // 对比 anime 和 bangumi_data 表的差异后自动修复表的函数
 
-  let bgmIdInAnime = await getAllBgmIDInAnimeTable(); // Anime 表的 BgmID 用于查找关联番剧
+  let bgmIDInAnime = await getAllBgmIDInAnimeTable(); // Anime 表的 BgmID 用于查找关联番剧
   let bgmIDInData = await getAllBgmIdInBangumiDataTable(); // Bangumi Data 表的 BgmID 用于查找缺漏
-  let diff = _.difference(bgmIdInAnime, bgmIDInData);
+  let diff = _.difference(bgmIDInAnime, bgmIDInData);
 
   console.log(`[Bangumi Data] 修复缺失 BgmID: ${diff}`);
   for (let i in diff) await insertBgmIDBlankToDB(diff[i]); // 会自动新建并填入数据
