@@ -1,7 +1,8 @@
 import axios from "axios";
+import parseFileName from "anime-file-parser";
+
 import { getDefaultDrive, getDrive } from "../drive/main.js";
 import { getAnimeByID } from "./get.js";
-import { parseFileName } from "./tag.js";
 
 /**
  * 获取指定动画指定节点文件列表的 API
@@ -66,26 +67,22 @@ export async function getFilesByID(laID, drive) {
           type: "dir",
         });
       } else {
-        // 普通文件
-        let fileUrl =
-          driveHost +
-          "/d" +
-          drivePath +
-          "/" +
-          encodeURIComponent(anime.index.year) +
-          "/" +
-          encodeURIComponent(anime.index.type) +
-          "/" +
-          encodeURIComponent(anime.index.name) +
-          "/" +
-          encodeURIComponent(thisFile.name) +
-          "?sign=" +
-          thisFile.sign;
+        // 生成 URL
+        let fileUrl = new URL(driveHost);
+        fileUrl.pathname = joinPaths(
+          "/d",
+          drivePath,
+          encodeURIComponent(anime.index.year),
+          encodeURIComponent(anime.index.type),
+          encodeURIComponent(anime.index.name),
+          encodeURIComponent(thisFile.name)
+        );
+        fileUrl.searchParams.set("sign", thisFile.sign);
+
         thisDir.push({
           ...thisFileInfo,
-          ...parseFileName(thisFile.name),
+          parseResult: parseFileName(thisFile.name),
           url: fileUrl,
-          tempUrl: fileUrl,
           type: "file",
         });
       }
@@ -98,4 +95,16 @@ export async function getFilesByID(laID, drive) {
     );
     return "请求存储节点时服务端发生意外错误";
   }
+}
+
+/**
+ * 拼接路径段成一个路径字符串。
+ * @param {...string} paths - 要拼接的路径段。
+ * @returns {string} - 拼接后的路径字符串。
+ */
+function joinPaths(...paths) {
+  return paths
+    .map((path) => path.replace(/^\/|\/$/g, "")) // 移除开头和结尾的斜杠
+    .filter((path) => path.length > 0) // 过滤空路径段
+    .join("/"); // 使用斜杠拼接路径段
 }
