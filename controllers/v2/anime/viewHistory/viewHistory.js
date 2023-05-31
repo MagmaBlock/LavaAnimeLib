@@ -8,11 +8,12 @@
  * @param {Number} totalTime 播放视频的总长度（如果有）
  * @param {String} userIP 用户的播放 IP
  * @param {String} watchMethod 用户播放方式
+ * @param {String} useDrive 播放时的节点
  * @throws {Error}
  */
 
 import { promiseDB } from "../../../../common/sql.js";
-import { parseFileName } from "../tag.js";
+import parseFileName from "anime-file-parser";
 
 export async function recordViewHistory(
   userID,
@@ -21,37 +22,40 @@ export async function recordViewHistory(
   currentTime,
   totalTime,
   userIP,
-  watchMethod
+  watchMethod,
+  useDrive
 ) {
-  let isRecentWatch = await promiseDB.query(
-    "SELECT count(*) FROM view_history vh WHERE userID = ? AND animeID = ? AND fileName = ? AND watchMethod = ? AND lastReportTime >= NOW() - INTERVAL 1 DAY;",
-    [userID, animeID, fileName, watchMethod]
-  );
-  isRecentWatch = isRecentWatch[0][0]["count(*)"];
-
-  // 如果最近一天内看过
-  if (isRecentWatch) {
-    // 更新已有的记录
-    await promiseDB.query(
-      "UPDATE view_history SET currentTime = ?, totalTime = ?, userIP = ?, lastReportTime = NOW() WHERE userID = ? AND animeID = ? AND fileName = ? AND watchMethod = ? AND lastReportTime >= NOW() - INTERVAL 1 DAY ORDER BY lastReportTime DESC LIMIT 1;",
-      [currentTime, totalTime, userIP, userID, animeID, fileName, watchMethod]
-    );
-  } else {
-    // 插入新记录
-    await promiseDB.query(
-      "INSERT INTO view_history ( userID, animeID, fileName, episode, currentTime, totalTime, userIP, watchMethod ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ? )",
-      [
-        userID,
-        animeID,
-        fileName,
-        parseFileName(fileName).episode,
-        currentTime,
-        totalTime,
-        userIP,
-        watchMethod,
-      ]
-    );
+  let isNewViewResult = await isNewView(userID, animeID, fileName, watchMethod);
+  if (isNewViewResult) {
+    try {
+      promiseDB.query(
+        "UPDATE anime SET views = views + 1 WHERE id = ? AND deleted = 0",
+        [animeID]
+      );
+    } catch (error) {
+      console.error(error);
+    }
   }
+
+  await promiseDB.query(
+    "INSERT INTO view_history ( userID, animeID, fileName, episode, currentTime, totalTime, userIP, watchMethod, useDrive ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? ) ON DUPLICATE KEY UPDATE currentTime = ?, totalTime = ?, userIP = ?, lastReportTime = NOW(), useDrive = ?;",
+    [
+      userID,
+      animeID,
+      fileName,
+      parseFileName(fileName)?.episode,
+      currentTime,
+      totalTime,
+      userIP,
+      watchMethod,
+      useDrive,
+      // UPDATE
+      currentTime,
+      totalTime,
+      userIP,
+      useDrive,
+    ]
+  );
 }
 
 /**
@@ -90,4 +94,34 @@ export async function getUserViewHistory(
   });
 
   return history;
+}
+
+/**
+ * 提供唯一主键 (即本函数的四个参数)
+ * 判断是否是一个新鲜观看行为
+ *
+ * (同一个用户通过同一方式观看同一部番的同一部视频，72h 只能增加一次播放量)
+ * @param {Number} userID
+ * @param {Number} animeID
+ * @param {String} fileName
+ * @param {String} watchMethod
+ * @returns {Boolean} 是否是一个新观看
+ */
+export async function isNewView(userID, animeID, fileName, watchMethod) {
+  try {
+    let query = await promiseDB.execute(
+      "SELECT count(*) FROM view_history vh WHERE userID = ? AND animeID = ? AND fileName = ? AND watchMethod = ? AND lastReportTime > DATE_SUB(NOW(), INTERVAL 72 HOUR);",
+      [userID, animeID, fileName, watchMethod]
+    );
+    if (query[0][0]["count(*)"] == 0) {
+      return true;
+    } else if (query[0][0]["count(*)"] == 1) {
+      return false;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
 }

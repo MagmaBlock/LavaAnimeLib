@@ -19,7 +19,16 @@ export async function getAnimeView(laID) {
   }
 }
 
-// 增加播放量的工具函数
+/**
+ * 增加播放量的工具函数
+ * @deprecated
+ * @param {*} laID
+ * @param {*} file
+ * @param {*} type
+ * @param {*} ip
+ * @param {*} userID
+ * @returns
+ */
 export async function addAnimeView(laID, file, type, ip, userID) {
   if (!isFinite(laID)) throw new Error("ID 无法解析为数字或不存在");
 

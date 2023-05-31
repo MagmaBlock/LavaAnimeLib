@@ -7,18 +7,19 @@ import { getUserViewHistory, recordViewHistory } from "./viewHistory.js";
 // 上报播放状态
 export async function reportViewHistoryAPI(req, res) {
   let userID = req.user.id;
-  let { animeID, fileName, currentTime, totalTime, watchMethod } = req.body;
+  let { animeID, fileName, currentTime, totalTime, watchMethod, useDrive } =
+    req.body;
 
   if (
     !Number.isInteger(animeID) ||
-    !Number.isInteger(currentTime) ||
-    !Number.isInteger(totalTime) ||
     animeID < 1 ||
     currentTime < 0 ||
     totalTime < 0 ||
     currentTime > totalTime ||
     currentTime > 43200 ||
-    totalTime > 43200
+    totalTime > 43200 ||
+    !fileName ||
+    !watchMethod
   )
     return wrongQuery(res);
 
@@ -27,10 +28,11 @@ export async function reportViewHistoryAPI(req, res) {
       userID,
       animeID,
       fileName,
-      currentTime,
-      totalTime,
+      Math.round(currentTime),
+      Math.round(totalTime),
       req.ip,
-      watchMethod
+      watchMethod,
+      useDrive
     );
   } catch (error) {
     console.error(error);
