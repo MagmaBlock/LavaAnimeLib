@@ -23,6 +23,9 @@ export async function reportViewHistoryAPI(req, res) {
   )
     return wrongQuery(res);
 
+  if (typeof currentTime != "number") currentTime = null;
+  if (typeof totalTime != "number") totalTime = null;
+
   try {
     await recordViewHistory(
       userID,
