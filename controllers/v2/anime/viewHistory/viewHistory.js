@@ -46,14 +46,14 @@ export async function recordViewHistory(
       animeID,
       fileName,
       parseFileName(fileName)?.episode,
-      currentTime,
-      totalTime,
+      currentTime ? Math.round(currentTime) : null,
+      totalTime ? Math.round(totalTime) : null,
       userIP,
       watchMethod,
       useDrive,
       // UPDATE
-      currentTime,
-      totalTime,
+      currentTime ? Math.round(currentTime) : null,
+      totalTime ? Math.round(totalTime) : null,
       userIP,
       useDrive,
     ]

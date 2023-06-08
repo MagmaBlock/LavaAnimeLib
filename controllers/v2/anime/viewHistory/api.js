@@ -31,8 +31,8 @@ export async function reportViewHistoryAPI(req, res) {
       userID,
       animeID,
       fileName,
-      Math.round(currentTime),
-      Math.round(totalTime),
+      currentTime,
+      totalTime,
       req.ip,
       watchMethod,
       useDrive
