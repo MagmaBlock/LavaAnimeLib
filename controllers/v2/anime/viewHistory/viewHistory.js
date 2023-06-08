@@ -25,17 +25,19 @@ export async function recordViewHistory(
   watchMethod,
   useDrive
 ) {
-  let isNewViewResult = await isNewView(userID, animeID, fileName, watchMethod);
-  if (isNewViewResult) {
-    try {
-      promiseDB.query(
-        "UPDATE anime SET views = views + 1 WHERE id = ? AND deleted = 0",
-        [animeID]
-      );
-    } catch (error) {
-      console.error(error);
+  (async () => {
+    let isNewViewResult = await isNewView(userID, animeID, fileName);
+    if (isNewViewResult) {
+      try {
+        promiseDB.query(
+          "UPDATE anime SET views = views + 1 WHERE id = ? AND deleted = 0",
+          [animeID]
+        );
+      } catch (error) {
+        console.error(error);
+      }
     }
-  }
+  })();
 
   await promiseDB.query(
     "INSERT INTO view_history ( userID, animeID, fileName, episode, currentTime, totalTime, userIP, watchMethod, useDrive ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? ) ON DUPLICATE KEY UPDATE currentTime = ?, totalTime = ?, userIP = ?, lastReportTime = NOW(), useDrive = ?;",
@@ -107,11 +109,11 @@ export async function getUserViewHistory(
  * @param {String} watchMethod
  * @returns {Boolean} 是否是一个新观看
  */
-export async function isNewView(userID, animeID, fileName, watchMethod) {
+export async function isNewView(userID, animeID, fileName) {
   try {
     let query = await promiseDB.execute(
-      "SELECT count(*) FROM view_history vh WHERE userID = ? AND animeID = ? AND fileName = ? AND watchMethod = ? AND lastReportTime > DATE_SUB(NOW(), INTERVAL 72 HOUR);",
-      [userID, animeID, fileName, watchMethod]
+      "SELECT count(*) FROM view_history vh WHERE userID = ? AND animeID = ? AND fileName = ? AND lastReportTime > DATE_SUB(NOW(), INTERVAL 72 HOUR);",
+      [userID, animeID, fileName]
     );
     if (query[0][0]["count(*)"] == 0) {
       return true;
