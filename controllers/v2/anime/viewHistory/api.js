@@ -58,6 +58,12 @@ export async function getMyViewHistoryAPI(req, res) {
   ) {
     return wrongQuery(res);
   }
-
-  success(res, await getUserViewHistory(userID, page, pageSize, animeID));
+  try {
+    return success(
+      res,
+      await getUserViewHistory(userID, page, pageSize, animeID)
+    );
+  } catch (error) {
+    return serverError(res);
+  }
 }
