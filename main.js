@@ -59,13 +59,7 @@ app.use(async (req, res, next) => {
   }
 
   let ref = req.get("Referer") || "无 Referer";
-  // 如果不在 Referer 白名单中
-  if (!inRefererWhiteList(ref)) {
-    logger("未知 Referer, 来自客户端 UA: ", chalk.dim(req.get("user-agent")));
-    return res.status(403).send({ code: 403, message: "" });
-  }
-  // 进行下一步
-  next();
+
   res.once("finish", () => {
     // 打印 Log
     logger(
@@ -77,6 +71,14 @@ app.use(async (req, res, next) => {
       chalk.dim(new Date() - queryStart, "ms")
     );
   });
+  
+  // 如果不在 Referer 白名单中
+  if (!inRefererWhiteList(ref)) {
+    logger("未知 Referer, 来自客户端 UA: ", chalk.dim(req.get("user-agent")));
+    return res.status(403).send({ code: 403, message: "" });
+  }
+  // 进行下一步
+  next();
 });
 
 // use routers
