@@ -10,6 +10,7 @@ import search from "./routes/v2/search.js";
 import home from "./routes/v2/home.js";
 import drive from "./routes/v2/drive.js";
 import admin from "./routes/v2/admin.js";
+import site from "./routes/v2/site.js";
 // modules
 import config from "./common/config.js";
 import db from "./common/sql.js";
@@ -71,7 +72,7 @@ app.use(async (req, res, next) => {
       chalk.dim(new Date() - queryStart, "ms")
     );
   });
-  
+
   // 如果不在 Referer 白名单中
   if (!inRefererWhiteList(ref)) {
     logger("未知 Referer, 来自客户端 UA: ", chalk.dim(req.get("user-agent")));
@@ -89,6 +90,7 @@ app.use("/v2/search", search); // 搜索
 app.use("/v2/home", home); // 主页相关
 app.use("/v2/drive", drive); // 存储
 app.use("/v2/admin", admin); // 管理员 API
+app.use("/v2/site", site); // 站点
 
 // 启动服务器
 const server = app.listen(8090, () => {
