@@ -89,6 +89,14 @@ export async function getFilesByID(laID, drive) {
     }
     return thisDir;
   } else {
+    // 文件夹不存在
+    if (
+      alistAPIResult?.code == 500 &&
+      alistAPIResult?.message.match("not found")
+    ) {
+      return [];
+    }
+
     console.error(
       alistAPIResult,
       `\nError: 请求 ${thisDrive.id} 节点时, AList 返回了非 200.`
