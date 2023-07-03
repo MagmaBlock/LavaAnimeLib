@@ -70,7 +70,6 @@ async function parseSingleAnimeData(rawData, bgmData, full = false) {
         name: rawData.name,
       },
       views: rawData.views,
-      bgmID: parseInt(rawData.bgmid),
       title: rawData.title.replace(/\[BDRip\]|\[NSFW\]/gi, ""),
       type: {
         bdrip: rawData.title.match(/\[BDRip\]/i) ? true : false,
@@ -83,23 +82,6 @@ async function parseSingleAnimeData(rawData, bgmData, full = false) {
         medium: rawData.poster,
         common: rawData.poster,
         poster: rawData.poster,
-      },
-      rating: {
-        rank: -1,
-        total: -1,
-        count: {
-          1: 0,
-          2: 0,
-          3: 0,
-          4: 0,
-          5: 0,
-          6: 0,
-          7: 0,
-          8: 0,
-          9: 0,
-          10: 0,
-        },
-        score: -1,
       },
       deleted: false,
     };
