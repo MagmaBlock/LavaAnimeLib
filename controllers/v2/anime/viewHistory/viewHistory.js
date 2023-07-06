@@ -102,7 +102,7 @@ export async function getUserViewHistory(
  * 提供唯一主键 (即本函数的三个参数)
  * 判断是否是一个新鲜观看行为
  *
- * (同一个用户通过同一方式观看同一部番的同一部视频，72h 只能增加一次播放量)
+ * (同一个用户通过同一方式观看同一部番的同一部视频，1h 只能增加一次播放量)
  * @param {Number} userID
  * @param {Number} animeID
  * @param {String} fileName
@@ -111,7 +111,7 @@ export async function getUserViewHistory(
 export async function isNewView(userID, animeID, fileName) {
   try {
     let query = await promiseDB.execute(
-      "SELECT count(*) FROM view_history vh WHERE userID = ? AND animeID = ? AND fileName = ? AND lastReportTime > DATE_SUB(NOW(), INTERVAL 72 HOUR);",
+      "SELECT count(*) FROM view_history vh WHERE userID = ? AND animeID = ? AND fileName = ? AND lastReportTime > DATE_SUB(NOW(), INTERVAL 1 HOUR);",
       [userID, animeID, fileName]
     );
     if (query[0][0]["count(*)"] == 0) {
