@@ -34,7 +34,6 @@ export default async function updateAnimes() {
         let thisAnime = newAnimes[k];
         let isNew = await isNewInDB(thisYear, thisType, thisAnime);
         let isDeleted = await isDeletedInDB(thisYear, thisType, thisAnime);
-        let bgmID = thisAnime.match("\\d+$")[0];
 
         if ((isNew, !isDeleted)) {
           // 如果是新资源 (并未在 DB 中 deleted)
