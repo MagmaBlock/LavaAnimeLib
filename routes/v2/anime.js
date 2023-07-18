@@ -1,6 +1,5 @@
 import { Router } from "express";
 import {
-  addAnimeViewAPI,
   getAnimeByIDAPI,
   getAnimesByBgmIDAPI,
   getAnimesByIDAPI,
@@ -26,7 +25,6 @@ router.get(`/bangumi/get`, getAnimesByBgmIDAPI);
 router.get("/file", [loginRequire, getFilesByIDAPI]); // 使用多个中间件
 
 router.get("/view/get", getAnimeViewAPI);
-router.post("/view/add", [loginRequire, addAnimeViewAPI]);
 
 router.post("/follow/list", [loginRequire, getAnimeFollowListAPI]);
 router.post("/follow/edit", [loginRequire, editAnimeFollowAPI]);

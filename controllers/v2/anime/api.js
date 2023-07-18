@@ -1,6 +1,6 @@
 import { getFilesByID } from "./file.js";
 import { getAnimeByID, getAnimesByBgmID, getAnimesByID } from "./get.js";
-import { addAnimeView, getAnimeView } from "./view.js";
+import { getAnimeView } from "./view.js";
 
 import notFound from "../response/4xx/notFound.js";
 import serverError from "../response/5xx/serverError.js";
@@ -98,33 +98,6 @@ export async function getAnimeViewAPI(req, res) {
       return notFound(res);
     } else {
       return serverError(res);
-    }
-  } catch (error) {
-    console.error(error);
-    return serverError(res);
-  }
-}
-
-// /v2/anime/view/add
-export async function addAnimeViewAPI(req, res) {
-  let laID = req.body.id;
-  let fileName = req.body.file;
-  let playerType = req.body.type;
-
-  let ip = req.ip;
-  let userID = req.user?.id;
-
-  if (!isFinite(laID)) return wrongQuery(res);
-
-  try {
-    let addResult = await addAnimeView(laID, fileName, playerType, ip, userID);
-    if (addResult) {
-      success(res, {
-        views: await getAnimeView(laID),
-        id: laID,
-      });
-    } else {
-      return notFound(res);
     }
   } catch (error) {
     console.error(error);
