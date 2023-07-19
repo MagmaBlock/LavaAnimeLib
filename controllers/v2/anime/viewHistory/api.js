@@ -1,6 +1,7 @@
 import success from "../../response/2xx/success.js";
 import wrongQuery from "../../response/4xx/wrongQuery.js";
 import serverError from "../../response/5xx/serverError.js";
+import { getAnimeByID } from "../get.js";
 import { getUserViewHistory, recordViewHistory } from "./viewHistory.js";
 
 // /v2/anime/history/report
@@ -48,7 +49,7 @@ export async function reportViewHistoryAPI(req, res) {
 // /v2/anime/history/my
 // 获取我的观看历史记录
 export async function getMyViewHistoryAPI(req, res) {
-  let { page, pageSize, animeID } = req.body;
+  let { page, pageSize, animeID, withAnimeData, latestOnly } = req.body;
   let userID = req.user.id;
 
   if (
@@ -59,10 +60,22 @@ export async function getMyViewHistoryAPI(req, res) {
     return wrongQuery(res);
   }
   try {
-    return success(
-      res,
-      await getUserViewHistory(userID, page, pageSize, animeID)
+    let historyData = await getUserViewHistory(
+      userID,
+      page,
+      pageSize,
+      animeID,
+      latestOnly
     );
+
+    // 需要附带动画信息
+    if (withAnimeData) {
+      for (let record of historyData) {
+        record.animeData = await getAnimeByID(record.animeID);
+      }
+    }
+
+    return success(res, historyData);
   } catch (error) {
     return serverError(res);
   }

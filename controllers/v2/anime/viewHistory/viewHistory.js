@@ -66,19 +66,26 @@ export async function recordViewHistory(
  * @param {Number|undefined} page
  * @param {Number|undefined} pageSize
  * @param {Number|undefined} animeID 指定某个动画, 可选
+ * @param {Boolean} latestOnly 是否仅查询每个番剧的最新记录, 可选. 当此项为真时, animeID 会被忽略
  */
 export async function getUserViewHistory(
   userID,
   page = 1,
   pageSize = 20,
-  animeID
+  animeID,
+  latestOnly
 ) {
   if (page < 1) page = 1;
   if (pageSize < 1) pageSize = 20;
   if (pageSize > 100) pageSize = 100;
 
   let history;
-  if (animeID) {
+  if (latestOnly) {
+    history = await promiseDB.execute(
+      "SELECT vh.* FROM view_history vh JOIN ( SELECT animeID, MAX(lastReportTime) AS maxReportTime FROM view_history WHERE userID = ? GROUP BY animeID ) subquery ON vh.userID = ? AND vh.animeID = subquery.animeID AND vh.lastReportTime = subquery.maxReportTime ORDER BY vh.lastReportTime DESC LIMIT ?, ?;",
+      [userID, userID, (pageSize * (page - 1)).toString(), pageSize.toString()]
+    );
+  } else if (animeID) {
     history = await promiseDB.execute(
       "SELECT * FROM view_history vh WHERE userID = ? AND animeID = ? ORDER BY lastReportTime DESC LIMIT ?, ?;",
       [userID, animeID, (pageSize * (page - 1)).toString(), pageSize.toString()]
