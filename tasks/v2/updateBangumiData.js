@@ -86,13 +86,10 @@ export async function updateBangumiData(bgmID, bgmIDListInAnimeTable) {
 
 // 错误处理
 async function errorHanding(error, bgmID, bgmIDListInAnimeTable) {
-  if (error.response) {
-    // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
-    logger(error.response.data);
-    logger(error.response.status);
-  } else if (error.request || error.response) {
+  if (error.request || error.response) {
     // 请求已经成功发起，但没有收到响应
-    if (reTry[bgmID] < 15 || !reTry[bgmID]) {
+    logger(error.response.status, error.response.data);
+    if (reTry[bgmID] < 10 || !reTry[bgmID]) {
       reTry[bgmID] = reTry[bgmID] + 1 || 0;
       logger(
         `[Bangumi Data] bgm${bgmID} 抓取出错，准备重试 (${reTry[bgmID]})`
@@ -103,7 +100,7 @@ async function errorHanding(error, bgmID, bgmIDListInAnimeTable) {
     } else {
       console.error(error);
       logger(
-        `[Bangumi Data] bgm${bgmID} 抓取出错超 15 次, 已放弃. 以上为出错的内容`
+        `[Bangumi Data] bgm${bgmID} 抓取出错超 10 次, 已放弃. 以上为出错的内容`
       );
     }
   }
