@@ -11,6 +11,7 @@ import {
   getAllBgmIdInBangumiDataTable,
   insertBgmIDBlankToDB,
 } from "./bangumiDB.js";
+import { logger } from "../../common/tools/logger.js";
 
 let reTry = {};
 
@@ -21,7 +22,7 @@ export async function updateAllBangumiData() {
   let bgmIDListExpired = await findExpiredBangumiData(); // 查找过期
   let bgmIDListInAnimeTable = await getAllBgmIDInAnimeTable(); // Anime 表的 BgmID 用于查找关联番剧
   let chunkedbgmIDList = _.chunk(bgmIDListExpired, 9); // 把大数组拆成含有 n 个对象的小数组
-  console.log(
+  logger(
     "[Bangumi Data] 需要刷新的 BgmID 列表",
     JSON.stringify(chunkedbgmIDList)
   );
@@ -35,7 +36,7 @@ export async function updateAllBangumiData() {
     }
     await Promise.all(task); // 等待 task 中的任务全部 resolve
   }
-  console.log("[Bangumi Data] Bangumi Data 刷新完成");
+  logger("[Bangumi Data] Bangumi Data 刷新完成");
 }
 
 export async function repairBangumiDataID() {
@@ -45,7 +46,7 @@ export async function repairBangumiDataID() {
   let bgmIDInData = await getAllBgmIdInBangumiDataTable(); // Bangumi Data 表的 BgmID 用于查找缺漏
   let diff = _.difference(bgmIDInAnime, bgmIDInData);
 
-  console.log(`[Bangumi Data] 修复缺失 BgmID: ${diff}`);
+  logger(`[Bangumi Data] 修复缺失 BgmID: ${diff}`);
   for (let i in diff) await insertBgmIDBlankToDB(diff[i]); // 会自动新建并填入数据
 }
 
@@ -79,7 +80,7 @@ export async function updateBangumiData(bgmID, bgmIDListInAnimeTable) {
       bgmID,
     ]
   );
-  console.log(`[Bangumi Data] 成功刷新 bgm${bgmID}`);
+  logger(`[Bangumi Data] 成功刷新 bgm${bgmID}`);
   reTry[bgmID] = 0;
 }
 
@@ -87,13 +88,13 @@ export async function updateBangumiData(bgmID, bgmIDListInAnimeTable) {
 async function errorHanding(error, bgmID, bgmIDListInAnimeTable) {
   if (error.response) {
     // 请求成功发出且服务器也响应了状态码，但状态代码超出了 2xx 的范围
-    console.log(error.response.data);
-    console.log(error.response.status);
+    logger(error.response.data);
+    logger(error.response.status);
   } else if (error.request || error.response) {
     // 请求已经成功发起，但没有收到响应
-    if (reTry[bgmID] < 5 || !reTry[bgmID]) {
+    if (reTry[bgmID] < 15 || !reTry[bgmID]) {
       reTry[bgmID] = reTry[bgmID] + 1 || 0;
-      console.log(
+      logger(
         `[Bangumi Data] bgm${bgmID} 抓取出错，准备重试 (${reTry[bgmID]})`
       );
       setTimeout(() => {
@@ -101,8 +102,8 @@ async function errorHanding(error, bgmID, bgmIDListInAnimeTable) {
       }, 1000);
     } else {
       console.error(error);
-      console.log(
-        `[Bangumi Data] bgm${bgmID} 抓取出错超限, 已放弃. 以上为出错的内容`
+      logger(
+        `[Bangumi Data] bgm${bgmID} 抓取出错超 15 次, 已放弃. 以上为出错的内容`
       );
     }
   }

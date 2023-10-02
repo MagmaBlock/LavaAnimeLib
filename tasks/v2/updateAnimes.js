@@ -5,6 +5,7 @@ import { sendQQGroupMessage } from "../../controllers/v2/notifier/qqBot.js";
 import { updateBangumiData, repairBangumiDataID } from "./updateBangumiData.js";
 import config from "../../common/config.js";
 import { getDefaultDrive, getDrive } from "../../controllers/v2/drive/main.js";
+import { logger } from "../../common/tools/logger.js";
 
 export default async function updateAnimes() {
   // 用于存储本次入库和删除的的番剧列表
@@ -12,7 +13,7 @@ export default async function updateAnimes() {
   let allDeletedAnimes = new Array();
   // 获取年列表
   let allYears = await getYears();
-  console.log(`[番剧更新] 获取到 ${allYears.length} 个年份`);
+  logger(`[番剧更新] 获取到 ${allYears.length} 个年份`);
 
   // 获取每个年下的分类
   for (let i in allYears) {
@@ -24,7 +25,7 @@ export default async function updateAnimes() {
       let thisType = allTypes[j];
 
       let allAnimes = await getAnimes(thisYear, thisType); // Alist
-      console.log(`[番剧更新] 成功获取 ${thisYear} ${thisType}`);
+      logger(`[番剧更新] 成功获取 ${thisYear} ${thisType}`);
       let allDBAnimes = await getThisTypeDB(thisYear, thisType); // DB deleted = 0
 
       // 查找 Alist 多出来的番剧 -----------------------------------------------------
@@ -38,12 +39,12 @@ export default async function updateAnimes() {
         if ((isNew, !isDeleted)) {
           // 如果是新资源 (并未在 DB 中 deleted)
           insertAnimeToDB(thisYear, thisType, thisAnime);
-          console.log(`[番剧更新] 新入库 ${(thisYear, thisType, thisAnime)}`);
+          logger(`[番剧更新] 新入库 ${(thisYear, thisType, thisAnime)}`);
         }
         if ((!isNew, isDeleted)) {
           // 被删除的资源 (在 DB 中被 deleted)
           changeDelete(thisYear, thisType, thisAnime, false);
-          console.log(
+          logger(
             `[番剧更新] 移除删除标记 ${(thisYear, thisType, thisAnime)}`
           );
         }
@@ -56,9 +57,8 @@ export default async function updateAnimes() {
       for (let k in deletedAnimes) {
         let thisAnime = deletedAnimes[k];
         changeDelete(thisYear, thisType, thisAnime, true);
-        console.log(
-          `[番剧更新] 发现番剧被删除! 增加删除标记 ${
-            (thisYear, thisType, thisAnime)
+        logger(
+          `[番剧更新] 发现番剧被删除! 增加删除标记 ${(thisYear, thisType, thisAnime)
           }`
         );
         allDeletedAnimes.push({
@@ -71,14 +71,14 @@ export default async function updateAnimes() {
   }
   await repairBangumiDataID();
 
-  console.log("[番剧更新] 发现的 Alist 新番剧: ", allNewAnimes);
-  console.log("[番剧更新] 发现的 Alist 被删除的番剧: ", allDeletedAnimes);
+  logger("[番剧更新] 发现的 Alist 新番剧: ", allNewAnimes);
+  logger("[番剧更新] 发现的 Alist 被删除的番剧: ", allDeletedAnimes);
 
   if (allNewAnimes.length) {
     let message = createMessage(allNewAnimes);
     let usedGroup = config.qqBotApi.usedGroup;
     for (let i in usedGroup) sendQQGroupMessage(message, usedGroup[i]);
-    console.log(`[番剧更新] 发送 QQ 群消息: \n\n${message}\n`);
+    logger(`[番剧更新] 发送 QQ 群消息: \n\n${message}\n`);
   }
 }
 
