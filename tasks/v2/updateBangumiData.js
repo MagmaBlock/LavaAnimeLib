@@ -88,7 +88,7 @@ export async function updateBangumiData(bgmID, bgmIDListInAnimeTable) {
 async function errorHanding(error, bgmID, bgmIDListInAnimeTable) {
   if (error.request || error.response) {
     // 请求已经成功发起，但没有收到响应
-    logger(error.response.status, error.response.data);
+    logger(error?.response?.status, error?.response?.data);
     if (reTry[bgmID] < 10 || !reTry[bgmID]) {
       reTry[bgmID] = reTry[bgmID] + 1 || 0;
       logger(
