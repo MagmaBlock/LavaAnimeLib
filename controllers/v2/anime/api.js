@@ -1,12 +1,11 @@
 import { getFilesByID } from "./file.js";
 import { getAnimeByID, getAnimesByBgmID, getAnimesByID } from "./get.js";
-import { getAnimeView } from "./view.js";
 
-import notFound from "../response/4xx/notFound.js";
-import serverError from "../response/5xx/serverError.js";
-import wrongQuery from "../response/4xx/wrongQuery.js";
 import success from "../response/2xx/success.js";
 import forbidden from "../response/4xx/forbidden.js";
+import notFound from "../response/4xx/notFound.js";
+import wrongQuery from "../response/4xx/wrongQuery.js";
+import serverError from "../response/5xx/serverError.js";
 
 // GET /v2/anime/get
 export async function getAnimeByIDAPI(req, res) {
@@ -78,26 +77,6 @@ export async function getFilesByIDAPI(req, res) {
       if (["请求存储节点时服务端发生意外错误"].includes(files)) {
         return serverError(res, files);
       }
-    }
-  } catch (error) {
-    console.error(error);
-    return serverError(res);
-  }
-}
-
-// /v2/anime/view/get
-export async function getAnimeViewAPI(req, res) {
-  let laID = req.query.id;
-  if (!isFinite(laID)) return wrongQuery(res);
-
-  try {
-    let animeView = await getAnimeView(laID);
-    if (animeView >= 0) {
-      return success(res, { views: animeView, id: laID });
-    } else if (animeView === false) {
-      return notFound(res);
-    } else {
-      return serverError(res);
     }
   } catch (error) {
     console.error(error);

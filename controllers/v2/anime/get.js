@@ -39,7 +39,7 @@ export async function getAnimesByID(array) {
 /**
  * 根据 Bangumi ID 获取番剧，返回为数组
  * @param {Number} bgmID
- * @returns {Array<Object>}
+ * @returns {Promise<Array<Object>>}
  */
 export async function getAnimesByBgmID(bgmID) {
   // 传入 ID 返回数据库查询结果
