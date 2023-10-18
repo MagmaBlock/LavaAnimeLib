@@ -1,4 +1,5 @@
 export default {
+  // MySQL 相关配置
   mysql: {
     host: "localhost",
     port: 3306,
@@ -6,7 +7,8 @@ export default {
     database: "lavaanime",
     password: "password",
   },
-  // 节点列表，播放视频和自动刷新番剧时会用到
+  // Alist 存储节点相关配置
+  // 用于番剧库的视频播放和刷新
   drive: {
     default: "1A",
     list: [
@@ -22,23 +24,33 @@ export default {
       },
     ],
   },
-  // Bangumi API 域名，用于抓取 Bangumi 番组计划的番剧资料
+  // Bangumi API 域名
+  // 用于抓取 Bangumi 番组计划的番剧资料
   bangumi: {
     host: "https://api.bgm.tv",
   },
-  // Bangumi Image 地址
+  // Bangumi 的封面图域名
+  // 用于前端展示 Bangumi 番剧的封面
   bangumiImage: {
     host: "https://lain.bgm.tv/",
   },
-  // CQ-HTTP QQ Bot API 域名和消息群号 (可选)
-  qqBotApi: {
-    host: "https://bot.api.com",
-    group: {
-      // 群号
-      main: 0,
-      dev: 0,
+  // Mirai 相关配置
+  // 用于发送 QQ 消息提示 (新番入库)
+  mirai: {
+    baseConfig: {
+      qqID: 1234568789,
+      target: {
+        group: [123456789],
+        friend: [],
+      },
+      enableVerify: true,
+      verifyKey: "ThisIsYourMiraiVerifyKey",
     },
-    usedGroup: ["main"],
+    adapterSettings: {
+      http: {
+        baseURL: "https://url-access-your-mirai-api.com",
+      },
+    },
   },
   // 缓存天数，管理 Bangumi Data 数据会被缓存多少天后刷新
   cache: 3,

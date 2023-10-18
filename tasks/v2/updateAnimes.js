@@ -1,11 +1,10 @@
 import _ from "lodash";
-import alistGetter from "./tools/alistGetter.js";
 import { promiseDB } from "../../common/sql.js";
-import { sendQQGroupMessage } from "../../controllers/v2/notifier/qqBot.js";
-import { updateBangumiData, repairBangumiDataID } from "./updateBangumiData.js";
-import config from "../../common/config.js";
-import { getDefaultDrive, getDrive } from "../../controllers/v2/drive/main.js";
 import { logger } from "../../common/tools/logger.js";
+import { getDefaultDrive, getDrive } from "../../controllers/v2/drive/main.js";
+import { sendMiraiMessageToAll } from "../../controllers/v2/notifier/qqBot.js";
+import alistGetter from "./tools/alistGetter.js";
+import { repairBangumiDataID } from "./updateBangumiData.js";
 
 export default async function updateAnimes() {
   // 用于存储本次入库和删除的的番剧列表
@@ -44,9 +43,7 @@ export default async function updateAnimes() {
         if ((!isNew, isDeleted)) {
           // 被删除的资源 (在 DB 中被 deleted)
           changeDelete(thisYear, thisType, thisAnime, false);
-          logger(
-            `[番剧更新] 移除删除标记 ${(thisYear, thisType, thisAnime)}`
-          );
+          logger(`[番剧更新] 移除删除标记 ${(thisYear, thisType, thisAnime)}`);
         }
         allNewAnimes.push({ year: thisYear, type: thisType, name: thisAnime }); // 新增番剧加入本次刷新新增记录
       }
@@ -58,7 +55,8 @@ export default async function updateAnimes() {
         let thisAnime = deletedAnimes[k];
         changeDelete(thisYear, thisType, thisAnime, true);
         logger(
-          `[番剧更新] 发现番剧被删除! 增加删除标记 ${(thisYear, thisType, thisAnime)
+          `[番剧更新] 发现番剧被删除! 增加删除标记 ${
+            (thisYear, thisType, thisAnime)
           }`
         );
         allDeletedAnimes.push({
@@ -76,9 +74,9 @@ export default async function updateAnimes() {
 
   if (allNewAnimes.length) {
     let message = createMessage(allNewAnimes);
-    let usedGroup = config.qqBotApi.usedGroup;
-    for (let i in usedGroup) sendQQGroupMessage(message, usedGroup[i]);
-    logger(`[番剧更新] 发送 QQ 群消息: \n\n${message}\n`);
+    sendMiraiMessageToAll(message);
+    logger(`[番剧更新] 发送了 QQ 群消息.`);
+    logger(message);
   }
 }
 
@@ -193,13 +191,34 @@ async function changeDelete(year, type, name, deleted) {
 
 function createMessage(allNewAnimes) {
   // 传入新入库番剧列表，返回消息
+  let message = [
+    {
+      type: "Plain",
+      text: "【发现新作品收录 / 计划】(自动发送)\n",
+    },
+    {
+      type: "Plain",
+      text: "——————\n",
+    },
+  ];
 
-  let message = "【发现新作品收录 / 计划】(自动发送)\n——————\n";
   allNewAnimes.forEach((anime) => {
-    message =
-      message +
-      `【${anime.year}${anime.type}】${anime.name.replace("NSFW", "N***")}\n`;
+    message.push({
+      type: "Plain",
+      text: `${anime.year}${anime.type} - ${anime.name}\n`,
+    });
   });
-  message = message + `——————\n新收录 / 计划以上 ${allNewAnimes.length} 部作品`;
+
+  message.push(
+    {
+      type: "Plain",
+      text: "——————\n",
+    },
+    {
+      type: "Plain",
+      text: `新收录 / 计划以上 ${allNewAnimes.length} 部作品\n`,
+    }
+  );
+
   return message;
 }

@@ -11,7 +11,3 @@ export const bangumiAPI = axios.create({
   headers: { "User-Agent": "LavaAnimeLib/2.0" },
   timeout: 10000,
 });
-
-export const qqBotAPI = axios.create({
-  baseURL: config.qqBotApi.host,
-});
