@@ -16,6 +16,6 @@ checkDB();
 async function checkDB() {
   let test = await promiseDB.query("SELECT * FROM anime LIMIT 10");
   if (test[0].length) {
-    logger("数据库连接正常");
+    logger("成功连接到数据库");
   }
 }

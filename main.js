@@ -1,97 +1,38 @@
-// npm
-import chalk from "chalk";
 import cookieParser from "cookie-parser";
 import express from "express";
-// routers
-import admin from "./routes/v2/admin.js";
-import anime from "./routes/v2/anime.js";
-import drive from "./routes/v2/drive.js";
-import home from "./routes/v2/home.js";
-import index from "./routes/v2/index.js";
-import search from "./routes/v2/search.js";
-import site from "./routes/v2/site.js";
-import user from "./routes/v2/user.js";
-// modules
+
 import config from "./common/config.js";
+import router from "./routes/v2/router.js";
 import { logger } from "./common/tools/logger.js";
-import { inRefererWhiteList } from "./common/tools/referer.js";
-import { findUserByID } from "./controllers/v2/user/findUser.js";
-import { useToken } from "./controllers/v2/user/token.js";
+import { handleAuth } from "./middleware/auth/auth.js";
+import {
+  requestLogger,
+  requestStartRecorder,
+} from "./middleware/logger/requestLogger.js";
+import configHeaders from "./middleware/preprocess/headers.js";
+import { refererChecker } from "./middleware/preprocess/refererChecker.js";
 
 // 创建 app
 const app = express();
 // 中间件和设置
+app.use(requestStartRecorder);
 app.use(express.json()); // 使用 Express 4.16 自带的 .json() 中间件 , 使得全局的 req.body 自动解析为 JSON
 app.use(express.urlencoded({ extended: true })); // 使用 Express 自带的 URLEncoded 中间件，使得全局的 URl 参数可以被自动解析
 app.set("trust proxy", config.security.trustProxy); // 允许 Express 信任上级代理提供的 IP 地址
-app.use(cookieParser()); // cookie 处理器
-// 全局请求前置
-app.use(async (req, res, next) => {
-  let queryStart = new Date();
-  // 设置 Headers
-  res.set({
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers":
-      "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS, DELETE, PUT",
-    "Access-Control-Max-Age": "3600", // 要求浏览器每一小时才发送一次 OPTIONS 进行跨域校验
-  });
-  // 如果是 OPTIONS
-  if (req.method == "OPTIONS") return res.status(200).end();
+app.use(cookieParser()); // Cookie 处理器
+app.use(refererChecker); // 校验客户端 Referer
+app.use(configHeaders); // 回复增加跨域头
+app.use(handleAuth); // 验证用户
+app.use(requestLogger); // 打印 Log
 
-  // 尝试验证登录
-  let authHeader = req.get("Authorization");
-  if (authHeader) {
-    let userID = await useToken(authHeader);
-    if (userID) {
-      req.user = await findUserByID(userID);
-      /*
-        req.user = {
-            id: Number, email: String,
-            name: String, password: String,
-            create_time: Date,
-            data: Object || null,
-            settings: Object || null ,
-            expirationTime: Date (如果是从缓存中读取，此项存在)
-        }
-      */
-    }
-  }
-
-  let ref = req.get("Referer") || "无 Referer";
-
-  res.once("finish", () => {
-    // 打印 Log
-    logger(
-      chalk.dim(req.ip),
-      req.user ? chalk.dim(req.user.name) : chalk.cyan("访客"),
-      chalk.bgGreenBright(" " + req.method + " "),
-      decodeURIComponent(req.originalUrl),
-      chalk.dim(ref),
-      chalk.dim(new Date() - queryStart, "ms")
-    );
-  });
-
-  // 如果不在 Referer 白名单中
-  if (!inRefererWhiteList(ref)) {
-    logger("未知 Referer, 来自客户端 UA: ", chalk.dim(req.get("user-agent")));
-    return res.status(403).send({ code: 403, message: "" });
-  }
-  // 进行下一步
-  next();
-});
-
-// use routers
-app.use("/v2/index", index); // 索引
-app.use("/v2/user", user); // 用户
-app.use("/v2/anime", anime); // 动画
-app.use("/v2/search", search); // 搜索
-app.use("/v2/home", home); // 主页相关
-app.use("/v2/drive", drive); // 存储
-app.use("/v2/admin", admin); // 管理员 API
-app.use("/v2/site", site); // 站点
+// 注册业务相关路由
+app.use(router);
 
 // 启动服务器
 const server = app.listen(8090, () => {
-  logger("服务器已启动, 访问端口为: " + server.address().port);
+  logger(
+    "服务器已在",
+    server.address().address + ":" + server.address().port,
+    "上启动."
+  );
 });
