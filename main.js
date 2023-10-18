@@ -1,23 +1,22 @@
 // npm
-import express from "express";
 import chalk from "chalk";
 import cookieParser from "cookie-parser";
+import express from "express";
 // routers
-import index from "./routes/v2/index.js";
-import user from "./routes/v2/user.js";
-import anime from "./routes/v2/anime.js";
-import search from "./routes/v2/search.js";
-import home from "./routes/v2/home.js";
-import drive from "./routes/v2/drive.js";
 import admin from "./routes/v2/admin.js";
+import anime from "./routes/v2/anime.js";
+import drive from "./routes/v2/drive.js";
+import home from "./routes/v2/home.js";
+import index from "./routes/v2/index.js";
+import search from "./routes/v2/search.js";
 import site from "./routes/v2/site.js";
+import user from "./routes/v2/user.js";
 // modules
 import config from "./common/config.js";
-import db from "./common/sql.js";
-import { inRefererWhiteList } from "./common/tools/referer.js";
 import { logger } from "./common/tools/logger.js";
-import { useToken } from "./controllers/v2/user/token.js";
+import { inRefererWhiteList } from "./common/tools/referer.js";
 import { findUserByID } from "./controllers/v2/user/findUser.js";
+import { useToken } from "./controllers/v2/user/token.js";
 
 // 创建 app
 const app = express();
@@ -47,15 +46,15 @@ app.use(async (req, res, next) => {
     if (userID) {
       req.user = await findUserByID(userID);
       /*
-                req.user = {
-                    id: Number, email: String,
-                    name: String, password: String,
-                    create_time: Date,
-                    data: Object || null,
-                    settings: Object || null ,
-                    expirationTime: Date (如果是从缓存中读取，此项存在)
-                }
-            */
+        req.user = {
+            id: Number, email: String,
+            name: String, password: String,
+            create_time: Date,
+            data: Object || null,
+            settings: Object || null ,
+            expirationTime: Date (如果是从缓存中读取，此项存在)
+        }
+      */
     }
   }
 
@@ -83,8 +82,8 @@ app.use(async (req, res, next) => {
 });
 
 // use routers
-app.use(`/v2/index`, index); // 索引
-app.use(`/v2/user`, user); // 用户
+app.use("/v2/index", index); // 索引
+app.use("/v2/user", user); // 用户
 app.use("/v2/anime", anime); // 动画
 app.use("/v2/search", search); // 搜索
 app.use("/v2/home", home); // 主页相关

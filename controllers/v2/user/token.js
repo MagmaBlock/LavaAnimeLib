@@ -45,7 +45,7 @@ let tokenCache = cache.token;
 /**
  * 使用 token 找到用户 ID
  * @param {String} token
- * @returns {(Number|false)} 找到用户则返回用户 ID，否则为假
+ * @returns {Promise<Number | false>} 找到用户则返回用户 ID，否则为假
  */
 export async function useToken(token) {
   if (!token) return false;
