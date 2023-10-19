@@ -2,7 +2,7 @@ import _ from "lodash";
 import { promiseDB } from "../../common/sql.js";
 import { logger } from "../../common/tools/logger.js";
 import { getDefaultDrive, getDrive } from "../../controllers/v2/drive/main.js";
-import { sendMiraiMessageToAll } from "../../controllers/v2/notifier/qqBot.js";
+import { sendMiraiMessageToAll } from "../../common/miraiAPI.js";
 import alistGetter from "./tools/alistGetter.js";
 import { repairBangumiDataID } from "./updateBangumiData.js";
 
@@ -74,9 +74,10 @@ export default async function updateAnimes() {
 
   if (allNewAnimes.length) {
     let message = createMessage(allNewAnimes);
-    sendMiraiMessageToAll(message);
-    logger(`[番剧更新] 发送了 QQ 群消息.`);
+    let result = sendMiraiMessageToAll(message);
+    logger("[番剧更新] 发送了 QQ 群消息.");
     logger(message);
+    logger("结果:", result);
   }
 }
 

@@ -1,6 +1,7 @@
 import axios from "axios";
-import config from "../../../common/config.js";
-import { logger } from "../../../common/tools/logger.js";
+import config from "./config.js";
+import { logger } from "./tools/logger.js";
+import wrongQuery from "../controllers/v2/response/4xx/wrongQuery.js";
 
 const miraiConfig = config.mirai;
 // 存储 session
@@ -109,25 +110,42 @@ export async function sendMiraiMessage(
 /**
  * 发送 QQ 消息给配置文件中配置的所有目标.
  * @param {Object[]} messageChain
+ * @returns {Promise<Object[]>}
  */
 export async function sendMiraiMessageToAll(messageChain) {
-  if (!messageChain) return;
+  if (!messageChain) return wrongQuery(res);
+
+  let totalResult = [];
 
   for (let index in miraiConfig.baseConfig.target.group) {
     let target = miraiConfig.baseConfig.target.group[index];
-    await sendMiraiMessage(messageChain, target, "group");
-    await delay(10000 * Math.random());
+    let thisResult = await sendMiraiMessage(messageChain, target, "group");
+    totalResult.push(thisResult);
+    logger(`[Mirai Handler] 发送群 ${target} 完成`);
+
+    await doRandomDelay();
   }
 
   for (let index in miraiConfig.baseConfig.target.friend) {
     let target = miraiConfig.baseConfig.target.friend[index];
-    await sendMiraiMessage(messageChain, target, "friend");
+    let thisResult = await sendMiraiMessage(messageChain, target, "friend");
+    totalResult.push(thisResult);
+    logger(`[Mirai Handler] 发送好友 ${target} 完成`);
 
     // 如果此遍历并非最后一次，增加随机延迟
-    if (index !== miraiConfig.baseConfig.target.friend.length - 1) {
-      await delay(10000 * Math.random());
+    // P.S. 由于使用了 for ... in, 此处的 index 是 String
+    if (index != miraiConfig.baseConfig.target.friend.length - 1) {
+      await doRandomDelay();
     }
   }
+
+  return totalResult;
+}
+
+async function doRandomDelay() {
+  let randomDelay = 10000 * Math.random();
+  await delay(randomDelay);
+  logger(`[Mirai Handler] 完成 ${randomDelay}ms 随机延迟`);
 }
 
 /**

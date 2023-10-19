@@ -1,38 +1,53 @@
 import { Router } from "express";
-import getIndexInfo from "../../controllers/v2/index/info.js";
-import queryAnimeByIndex from "../../controllers/v2/index/query.js";
-import { loginRequire } from "../../controllers/v2/globalAuth/auth.js";
-import { updateAvatarAPI } from "../../controllers/v2/user/info/updateAvatarAPI.js";
-import { updateNameAPI } from "../../controllers/v2/user/info/updateNameAPI.js";
-import { updatePermissionAPI } from "../../controllers/v2/user/info/updatePermissionAPI.js";
-import { getUserInfoAPI } from "../../controllers/v2/user/info/userInfoAPI.js";
-import { userInviteCodeGetAPI } from "../../controllers/v2/user/inviteCode/userInviteCode.js";
-import { userInviteCodeNewAPI } from "../../controllers/v2/user/inviteCode/userInviteCode.js";
-import { changePasswordAPI } from "../../controllers/v2/user/password/changePasswordAPI.js";
-import { userLoginAPI } from "../../controllers/v2/user/userLogin.js";
-import { userLogoutAPI } from "../../controllers/v2/user/userLogout.js";
-import { userRegisterAPI } from "../../controllers/v2/user/userRegister.js";
-import { getAnimeByIDAPI } from "../../controllers/v2/anime/api.js";
-import { getAnimesByBgmIDAPI } from "../../controllers/v2/anime/api.js";
-import { getAnimesByIDAPI } from "../../controllers/v2/anime/api.js";
-import { getFilesByIDAPI } from "../../controllers/v2/anime/api.js";
+import { allVaildCodesAPI } from "../../controllers/v2/admin/invite/allValidCodes.js";
+import { deleteCodesAPI } from "../../controllers/v2/admin/invite/deleteCodes.js";
+import {
+  getAnimeByIDAPI,
+  getAnimesByBgmIDAPI,
+  getAnimesByIDAPI,
+  getFilesByIDAPI,
+} from "../../controllers/v2/anime/api.js";
 import { editAnimeFollowAPI } from "../../controllers/v2/anime/follow/edit.js";
 import { getAnimeFollowInfoAPI } from "../../controllers/v2/anime/follow/info.js";
 import { getAnimeFollowListAPI } from "../../controllers/v2/anime/follow/list.js";
 import { getAnimeFollowTotalAPI } from "../../controllers/v2/anime/follow/total.js";
-import { getMyViewHistoryAPI } from "../../controllers/v2/anime/viewHistory/api.js";
-import { reportViewHistoryAPI } from "../../controllers/v2/anime/viewHistory/api.js";
-import { quickSearchAPI } from "../../controllers/v2/search/api.js";
-import { searchAnimesAPI } from "../../controllers/v2/search/api.js";
-import { getHotAnimesAPI } from "../../controllers/v2/search/getHotAnimesAPI.js";
-import { allVaildCodesAPI } from "../../controllers/v2/admin/invite/allValidCodes.js";
-import { deleteCodesAPI } from "../../controllers/v2/admin/invite/deleteCodes.js";
+import {
+  getMyViewHistoryAPI,
+  reportViewHistoryAPI,
+} from "../../controllers/v2/anime/viewHistory/api.js";
 import { getDriveListAPI } from "../../controllers/v2/drive/api.js";
-import { adminRequire } from "../../controllers/v2/globalAuth/auth.js";
-import { getHeaderAPI } from "../../controllers/v2/home/headerAPI.js";
-import { updateHeaderAPI } from "../../controllers/v2/home/headerAPI.js";
-import { getSiteSetting } from "../../controllers/v2/site/setting.js";
-import { setSiteSetting } from "../../controllers/v2/site/setting.js";
+import {
+  adminRequire,
+  loginRequire,
+} from "../../controllers/v2/globalAuth/auth.js";
+import {
+  getHeaderAPI,
+  updateHeaderAPI,
+} from "../../controllers/v2/home/headerAPI.js";
+import getIndexInfo from "../../controllers/v2/index/info.js";
+import queryAnimeByIndex from "../../controllers/v2/index/query.js";
+import { sendMiraiMessageAPI } from "../../controllers/v2/notifier/api.js";
+import {
+  quickSearchAPI,
+  searchAnimesAPI,
+} from "../../controllers/v2/search/api.js";
+import { getHotAnimesAPI } from "../../controllers/v2/search/getHotAnimesAPI.js";
+import {
+  getSiteSetting,
+  setSiteSetting,
+} from "../../controllers/v2/site/setting.js";
+import { updateAvatarAPI } from "../../controllers/v2/user/info/updateAvatarAPI.js";
+import { updateNameAPI } from "../../controllers/v2/user/info/updateNameAPI.js";
+import { updatePermissionAPI } from "../../controllers/v2/user/info/updatePermissionAPI.js";
+import { getUserInfoAPI } from "../../controllers/v2/user/info/userInfoAPI.js";
+import {
+  userInviteCodeGetAPI,
+  userInviteCodeNewAPI,
+} from "../../controllers/v2/user/inviteCode/userInviteCode.js";
+import { changePasswordAPI } from "../../controllers/v2/user/password/changePasswordAPI.js";
+import { userLoginAPI } from "../../controllers/v2/user/userLogin.js";
+import { userLogoutAPI } from "../../controllers/v2/user/userLogout.js";
+import { userRegisterAPI } from "../../controllers/v2/user/userRegister.js";
 
 const router = Router();
 
@@ -119,7 +134,12 @@ router.post("/v2/admin/invite/delete-codes", [adminRequire, deleteCodesAPI]);
  * site 站点信息相关
  */
 
-router.post("/v2/site/setting/set", [loginRequire, setSiteSetting]); // 设定站点某一配置
 router.get("/v2/site/setting/get", getSiteSetting); // 获取站点某一配置
+router.post("/v2/site/setting/set", [loginRequire, setSiteSetting]); // 设定站点某一配置
+
+/**
+ * notifier 通知相关
+ */
+router.post("/v2/notifier/message", sendMiraiMessageAPI);
 
 export default router;
