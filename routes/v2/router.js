@@ -11,6 +11,7 @@ import { editAnimeFollowAPI } from "../../controllers/v2/anime/follow/edit.js";
 import { getAnimeFollowInfoAPI } from "../../controllers/v2/anime/follow/info.js";
 import { getAnimeFollowListAPI } from "../../controllers/v2/anime/follow/list.js";
 import { getAnimeFollowTotalAPI } from "../../controllers/v2/anime/follow/total.js";
+import { getRecentUpdatesAPI } from "../../controllers/v2/anime/recent-update/get.js";
 import {
   getMyViewHistoryAPI,
   reportViewHistoryAPI,
@@ -27,6 +28,7 @@ import {
 import getIndexInfo from "../../controllers/v2/index/info.js";
 import queryAnimeByIndex from "../../controllers/v2/index/query.js";
 import { sendMiraiMessageAPI } from "../../controllers/v2/notifier/api.js";
+import { reportUploadMessageAPI } from "../../controllers/v2/report/report-message.js";
 import {
   quickSearchAPI,
   searchAnimesAPI,
@@ -96,6 +98,8 @@ router.get("/v2/anime/follow/info", [loginRequire, getAnimeFollowInfoAPI]);
 // 历史记录
 router.post("/v2/anime/history/report", [loginRequire, reportViewHistoryAPI]);
 router.post("/v2/anime/history/my", [loginRequire, getMyViewHistoryAPI]);
+// 近期更新
+router.get("/v2/anime/recent-update/get", getRecentUpdatesAPI);
 
 /**
  * search 搜索相关
@@ -140,6 +144,13 @@ router.post("/v2/site/setting/set", [loginRequire, setSiteSetting]); // 设定�
 /**
  * notifier 通知相关
  */
+
 router.post("/v2/notifier/message", sendMiraiMessageAPI);
+
+/**
+ * report 上报数据相关
+ */
+
+router.post("/v2/report/upload-message", reportUploadMessageAPI); // 下载机用于上报新视频更新动态的 API
 
 export default router;
