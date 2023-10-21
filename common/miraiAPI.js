@@ -110,31 +110,38 @@ export async function sendMiraiMessage(
 /**
  * 发送 QQ 消息给配置文件中配置的所有目标.
  * @param {Object[]} messageChain
- * @returns {Promise<Object[]>}
+ * @returns {Promise<Object[]>} 将返回每个请求的结果
  */
 export async function sendMiraiMessageToAll(messageChain) {
   if (!messageChain) return wrongQuery(res);
 
   let totalResult = [];
 
-  for (let index in miraiConfig.baseConfig.target.group) {
-    let target = miraiConfig.baseConfig.target.group[index];
+  for (let index in miraiConfig.baseConfig.target?.group) {
+    let target = miraiConfig.baseConfig.target?.group[index];
     let thisResult = await sendMiraiMessage(messageChain, target, "group");
     totalResult.push(thisResult);
     logger(`[Mirai Handler] 发送群 ${target} 完成`);
 
+    // 如果此遍历并非最后一次，增加随机延迟
+    // P.S. 由于使用了 for ... in, 此处的 index 是 String
+    if (index != miraiConfig.baseConfig.target?.friend.length - 1) {
+      await doRandomDelay();
+    }
+  }
+
+  // 仅在需要发送好友消息的情况下才增加延迟
+  if (miraiConfig.baseConfig.target?.friend.length > 0) {
     await doRandomDelay();
   }
 
-  for (let index in miraiConfig.baseConfig.target.friend) {
-    let target = miraiConfig.baseConfig.target.friend[index];
+  for (let index in miraiConfig.baseConfig.target?.friend) {
+    let target = miraiConfig.baseConfig.target?.friend[index];
     let thisResult = await sendMiraiMessage(messageChain, target, "friend");
     totalResult.push(thisResult);
     logger(`[Mirai Handler] 发送好友 ${target} 完成`);
 
-    // 如果此遍历并非最后一次，增加随机延迟
-    // P.S. 由于使用了 for ... in, 此处的 index 是 String
-    if (index != miraiConfig.baseConfig.target.friend.length - 1) {
+    if (index != miraiConfig.baseConfig.target?.friend.length - 1) {
       await doRandomDelay();
     }
   }
