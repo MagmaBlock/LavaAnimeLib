@@ -2,7 +2,6 @@ import cookieParser from "cookie-parser";
 import express from "express";
 
 import config from "./common/config.js";
-import router from "./routes/v2/router.js";
 import { logger } from "./common/tools/logger.js";
 import { handleAuth } from "./middleware/auth/auth.js";
 import {
@@ -11,6 +10,7 @@ import {
 } from "./middleware/logger/requestLogger.js";
 import configHeaders from "./middleware/preprocess/headers.js";
 import { refererChecker } from "./middleware/preprocess/refererChecker.js";
+import router from "./routes/v2/router.js";
 
 // 创建 app
 const app = express();

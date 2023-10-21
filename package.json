@@ -17,6 +17,7 @@
   "author": "MagmaBlock",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^5.4.2",
     "aniep": "^0.4.1",
     "anime-file-parser": "^1.0.7",
     "axios": "^0.26.0",
@@ -29,5 +30,8 @@
   },
   "prettier": {
     "singleQuote": false
+  },
+  "devDependencies": {
+    "prisma": "^5.4.2"
   }
 }
