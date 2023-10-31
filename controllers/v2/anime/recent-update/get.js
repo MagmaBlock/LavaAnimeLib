@@ -19,6 +19,7 @@ export async function getRecentUpdatesAPI(req, res) {
     skip,
     take,
     include: { anime: true },
+    orderBy: { uploadTime: "desc" },
   });
 
   for (let record of recentUpdates) {
