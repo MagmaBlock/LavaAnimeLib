@@ -1,5 +1,29 @@
 import { prisma } from "../../../../prisma/client.js";
+import { animeParser } from "../../parser/animeParser.js";
+import success from "../../response/2xx/success.js";
+import wrongQuery from "../../response/4xx/wrongQuery.js";
 
 export async function getRecentUpdatesAPI(req, res) {
-  let recentUpdates = await prisma.upload_message.findMany({ take: 50 });
+  let { skip = 0, take = 20 } = req.query;
+
+  try {
+    skip = Number.parseInt(skip);
+    take = Number.parseInt(take);
+
+    if (skip < 0 || take < 0) throw "";
+  } catch (error) {
+    return wrongQuery(res);
+  }
+
+  let recentUpdates = await prisma.upload_message.findMany({
+    skip,
+    take,
+    include: { anime: true },
+  });
+
+  for (let record of recentUpdates) {
+    record.anime = (await animeParser(record.anime))[0];
+  }
+
+  return success(res, recentUpdates);
 }

@@ -87,18 +87,19 @@ router.post("/v2/user/info/permission", updatePermissionAPI);
 // 基础信息
 router.get(`/v2/anime/get`, getAnimeByIDAPI);
 router.post(`/v2/anime/get`, getAnimesByIDAPI);
+// bangumi 番组计划相关
 router.get(`/v2/anime/bangumi/get`, getAnimesByBgmIDAPI);
-// 文件列表
+// file 文件列表
 router.get("/v2/anime/file", [loginRequire, getFilesByIDAPI]);
-// 追番
+// follow 追番
 router.post("/v2/anime/follow/list", [loginRequire, getAnimeFollowListAPI]);
 router.post("/v2/anime/follow/edit", [loginRequire, editAnimeFollowAPI]);
 router.get("/v2/anime/follow/total", [loginRequire, getAnimeFollowTotalAPI]);
 router.get("/v2/anime/follow/info", [loginRequire, getAnimeFollowInfoAPI]);
-// 历史记录
+// history 历史记录
 router.post("/v2/anime/history/report", [loginRequire, reportViewHistoryAPI]);
 router.post("/v2/anime/history/my", [loginRequire, getMyViewHistoryAPI]);
-// 近期更新
+// recent-update 近期更新
 router.get("/v2/anime/recent-update/get", getRecentUpdatesAPI);
 
 /**
