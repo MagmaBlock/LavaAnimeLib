@@ -31,11 +31,22 @@ export async function reportUploadMessageAPI(req, res) {
     bangumiID = parseBangumiID;
   }
 
+  // 先检查是否存在此 bgmID 的 BangumiData, 如果不存在，不关联，否则将导致外键错误
+  let bgmData = await prisma.bangumi_data.findFirst({
+    where: {
+      bgmid: bangumiID,
+    },
+  });
+
+  if (bgmData === null) {
+    bangumiID = null;
+  }
+
   let createResult = await prisma.upload_message.create({
     data: {
       index: trueIndex.join("/"),
-      animeID: possibleAnime?.id ?? null,
-      bangumiID: bangumiID ?? null,
+      animeID: possibleAnime?.id,
+      bangumiID: bangumiID,
       fileName,
     },
   });
@@ -70,8 +81,8 @@ export async function reportUploadMessageAPI(req, res) {
 
 /**
  * 构建入库成功的消息
- * @param {Number} animeID
- * @param {Number} bangumiID
+ * @param {Number?} animeID
+ * @param {Number?} bangumiID
  * @param {Array} trueIndex
  * @param {String} fileName
  */
