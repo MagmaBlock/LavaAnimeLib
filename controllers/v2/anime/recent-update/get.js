@@ -1,3 +1,4 @@
+import parseFileName from "anime-file-parser";
 import { prisma } from "../../../../prisma/client.js";
 import { animeParser } from "../../parser/animeParser.js";
 import success from "../../response/2xx/success.js";
@@ -24,6 +25,7 @@ export async function getRecentUpdatesAPI(req, res) {
 
   for (let record of recentUpdates) {
     record.anime = (await animeParser(record.anime))[0];
+    record.parseResult = parseFileName(record.fileName);
   }
 
   return success(res, recentUpdates);
