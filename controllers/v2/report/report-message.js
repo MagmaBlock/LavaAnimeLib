@@ -34,8 +34,8 @@ export async function reportUploadMessageAPI(req, res) {
   let createResult = await prisma.upload_message.create({
     data: {
       index: trueIndex.join("/"),
-      animeID: possibleAnime?.id,
-      bangumiID: bangumiID,
+      animeID: possibleAnime?.id ?? null,
+      bangumiID: bangumiID ?? null,
       fileName,
     },
   });
