@@ -8,7 +8,7 @@ import { getAnimeByID } from "./get.js";
  * 获取指定动画指定节点文件列表的 API
  * @param {Number} laID
  * @param {String | undefined} drive
- * @returns {Array | String} String 为报错
+ * @returns {Promise<Array[Object] | String>} String 为报错
  */
 export async function getFilesByID(laID, drive) {
   // 根据 ID 获取某番剧目录下的文件和文件夹名
