@@ -24,7 +24,8 @@ export async function getRecentUpdatesAPI(req, res) {
   });
 
   for (let record of recentUpdates) {
-    record.anime = (await animeParser(record.anime))[0];
+    if (record.anime !== null)
+      record.anime = (await animeParser(record.anime))[0];
     record.parseResult = parseFileName(record.fileName);
   }
 
