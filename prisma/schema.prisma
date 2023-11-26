@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 番剧作品
+model Anime {
+  id           Int            @id @default(autoincrement())
+  name         String
+  originalName String?
+  summary      String?
+  poster       Image?         @relation(fields: [posterId], references: [id])
+  posterId      Int?
+  nsfw         Boolean        @default(false)
+  date         String?
+  platform     String?
+  Rating       Rating[] // 1-n, 来自多个平台的评分
+  episodes     AnimeEpisode[] // 1-n, 此作品的多个剧集
+  files        LibFile[] // 1-n, 此作品在所有节点中的所有文件
+}
+
+// 描述一个动画的集数
+model AnimeEpisode {
+  id            Int       @id
+  episode       String
+  anime         Anime?    @relation(fields: [animeId], references: [id])
+  animeId       Int?
+  title         String? // 标题
+  originalTitle String? // 标题 (原文)
+  summary       String? // 简介
+  airDate       String? // 放送日期
+  duration      Int? // 时长 (秒)
+  files         LibFile[] // m-n, 此集数下的所有文件
+}
+
+// 描述一个库中的文件
+model LibFile {
+  id        Int            @id
+  library   Library        @relation(fields: [libraryId], references: [id])
+  libraryId Int
+  anime     Anime?         @relation(fields: [animeId], references: [id])
+  animeId   Int?
+  type      FileType
+  episodes  AnimeEpisode[] // m-n, 一个文件可能对应多个集数 (如一个视频对应 1-3 集的极端情况)
+}
+
+enum FileType {
+  Video
+  Audio
+  Image
+  Document
+  Subtitle
+  CompressedFile
+  Other
+}
+
+// 描述评分
+model Rating {
+  id      Int          @id
+  anime   Anime        @relation(fields: [animeId], references: [id])
+  animeId Int
+  source  RatingSource // 评分来源
+  score   Float // 评分
+  rank    Int? // 在该来源中的排名
+  count   Int? // 评分人数
+
+  @@unique([animeId, source])
+}
+
+enum RatingSource {
+  Bangumi
+}
+
+// 描述一个资源库
+model Library {
+  id          Int         @id
+  name        String
+  description String?
+  type        LibraryType @default(Alist)
+  noNSFW      Boolean     @default(false)
+  noDownload  Boolean     @default(false)
+  files       LibFile[]
+}
+
+// 库的类型
+enum LibraryType {
+  Alist
+  // TODO: Local
+}
+
+// 作品图片、头像、评论区图片等
+model Image {
+  id   Int        @id @default(autoincrement())
+  file UploadFile @relation(fields: [uploadFileId], references: [id])
+
+  fileId Int
+
+  Anime        Anime[]
+  uploadFileId Int
+}
+
+// 用户上传文件、番剧视频文件
+model UploadFile {
+  id      Int      @id
+  storage Storage  @relation(fields: [storageId], references: [id])
+  path    String
+  created DateTime @default(now())
+
+  Image     Image[]
+  storageId Int
+}
+
+// 存储用户文件的存储器
+model Storage {
+  id   Int         @id
+  name String
+  type StorageType
+
+  UploadFile UploadFile[]
+}
+
+// 枚举支持的存储设备
+enum StorageType {
+  S3
+  Local
+}

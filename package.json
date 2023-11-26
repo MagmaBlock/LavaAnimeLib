@@ -1,0 +1,23 @@
+{
+  "name": "lava-anime-lib-server",
+  "version": "3.0.0",
+  "description": "Server side of LavaAnimeLib, based on nitro (nuxt's server) and prisma",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "prepare": "nitropack prepare",
+    "dev": "nitropack dev",
+    "build": "nitropack build",
+    "preview": "node .output/server/index.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.6.0",
+    "nitropack": "latest"
+  },
+  "keywords": [],
+  "author": "MagmaBlock",
+  "license": "ISC",
+  "devDependencies": {
+    "prisma": "^5.6.0"
+  }
+}
