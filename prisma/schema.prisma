@@ -149,12 +149,11 @@ enum StorageType {
 
 model User {
   id               Int                   @id @default(autoincrement())
-  email            String
-  name             String
+  email            String                @unique
+  name             String                @unique
   password         String
   encryption       Encryption            @default(Sha256)
   createdAt        DateTime              @default(now())
-  data             Json?
   settings         Json?
   animeCollections UserAnimeCollection[] // 用户的收藏记录
   inviteCodes      InviteCode[]          @relation(name: "create")
