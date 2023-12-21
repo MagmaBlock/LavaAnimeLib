@@ -12,22 +12,22 @@ datasource db {
 
 // 番剧作品
 model Anime {
-  id            Int                   @id @default(autoincrement())
+  id            Int               @id @default(autoincrement())
   name          String
   originalName  String?
   summary       String?
-  poster        UploadFile?           @relation(fields: [posterFileId], references: [id])
+  poster        UploadFile?       @relation(fields: [posterFileId], references: [id])
   posterFileId  Int?
   date          String?
   platform      String?
-  nsfw          Boolean               @default(false)
-  bdrip         Boolean               @default(false)
-  createdAt     DateTime              @default(now())
+  nsfw          Boolean           @default(false)
+  bdrip         Boolean           @default(false)
+  createdAt     DateTime          @default(now())
   ratings       Rating[] // 1-n, 来自多个平台的评分
   tags          Tag[]
   episodes      AnimeEpisode[] // 1-n, 此作品的多个剧集
   files         LibFile[] // 1-n, 此作品在所有节点中的所有文件
-  userCollects  UserAnimeCollection[]
+  userCollects  AnimeCollection[]
   viewHistories ViewHistory[]
 }
 
@@ -148,17 +148,31 @@ enum StorageType {
 }
 
 model User {
-  id               Int                   @id @default(autoincrement())
-  email            String                @unique
-  name             String                @unique
+  id               Int               @id @default(autoincrement())
+  email            String            @unique
+  name             String            @unique
   password         String
-  encryption       Encryption            @default(Sha256)
-  createdAt        DateTime              @default(now())
+  encryption       Encryption        @default(Sha256)
+  createdAt        DateTime          @default(now())
   settings         Json?
-  animeCollections UserAnimeCollection[] // 用户的收藏记录
-  inviteCodes      InviteCode[]          @relation(name: "create")
-  inviteBy         InviteCode?           @relation(name: "use")
+  infomations      UserInfomation[]
+  animeCollections AnimeCollection[] // 用户的收藏记录
+  inviteCodes      InviteCode[]      @relation(name: "create")
+  inviteBy         InviteCode?       @relation(name: "use")
   viewHistories    ViewHistory[]
+}
+
+// 用户的其他信息
+model UserInfomation {
+  id      Int               @id @default(autoincrement())
+  key     UserInfomationKey
+  value   Json
+  owner   User?             @relation(fields: [ownerId], references: [id])
+  ownerId Int?
+}
+
+enum UserInfomationKey {
+  avatar
 }
 
 enum Encryption {
@@ -166,18 +180,18 @@ enum Encryption {
 }
 
 // 用户追番记录
-model UserAnimeCollection {
-  id        Int                       @id @default(autoincrement())
-  user      User                      @relation(fields: [userId], references: [id])
+model AnimeCollection {
+  id        Int                   @id @default(autoincrement())
+  user      User                  @relation(fields: [userId], references: [id])
   userId    Int
-  anime     Anime                     @relation(fields: [animeId], references: [id])
+  anime     Anime                 @relation(fields: [animeId], references: [id])
   animeId   Int
-  status    UserAnimeCollectionStatus @default(Plan)
-  createdAt DateTime                  @default(now())
-  updatedAt DateTime                  @updatedAt
+  status    AnimeCollectionStatus @default(Plan)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
 }
 
-enum UserAnimeCollectionStatus {
+enum AnimeCollectionStatus {
   Plan
   Watching
   Finished
