@@ -12,6 +12,7 @@ export class UserEmailAlreadyExistError extends AlreadyExistError {}
 export class UserNameInvalidError extends ValidationError {}
 export class UserNameAlreadyExistError extends AlreadyExistError {}
 export class UserPasswordNotSecureError extends ValidationError {}
+export class UserPasswordError extends ValidationError {}
 export class UserNotExistError extends NotFoundError {}
 export class InviteCodeAlreadyExistError extends AlreadyExistError {}
 export class InviteCodeInvalidError extends ExpiredError {}

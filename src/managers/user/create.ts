@@ -7,7 +7,16 @@ import {
   UserNameInvalidError,
   UserPasswordNotSecureError,
 } from "../../error/error";
+import { Sha256Password } from "../../class/password/sha256";
 
+/**
+ * 创建新用户
+ * @param email
+ * @param name
+ * @param password
+ * @param inviteCode
+ * @returns 创建完成的 User Prisma 对象
+ */
 export async function userCreate(
   email: string,
   name: string,
@@ -18,12 +27,15 @@ export async function userCreate(
   if (!isVaildName(name)) throw new UserNameInvalidError();
   if (!isSecurePassword(password)) throw new UserPasswordNotSecureError();
 
+  const passwordObject = new Sha256Password();
+  passwordObject.setSalt(passwordObject.generateNewSalt(), password);
+
   try {
     const create = await usePrisma.user.create({
       data: {
         email,
         name,
-        password,
+        password: passwordObject.stringify(),
         inviteBy: {
           connect: {
             code: inviteCode,
