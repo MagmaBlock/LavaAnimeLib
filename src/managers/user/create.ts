@@ -1,11 +1,11 @@
 import { Prisma } from "@prisma/client";
 import {
-  InviteCodeInvalidError,
-  UserEmailAlreadyExistError,
-  UserEmailInvalidError,
-  UserNameAlreadyExistError,
-  UserNameInvalidError,
-  UserPasswordNotSecureError,
+  InviteCodeNotFoundError,
+  UserEmailConflictError,
+  UserEmailBadError,
+  UserNameConflictError,
+  UserNameBadError,
+  UserPasswordBadError,
 } from "../../error/error";
 import { Sha256Password } from "../../class/password/sha256";
 
@@ -23,9 +23,9 @@ export async function userCreate(
   password: string,
   inviteCode: string
 ) {
-  if (!isEmail(email)) throw new UserEmailInvalidError();
-  if (!isVaildName(name)) throw new UserNameInvalidError();
-  if (!isSecurePassword(password)) throw new UserPasswordNotSecureError();
+  if (!isEmail(email)) throw new UserEmailBadError();
+  if (!isVaildName(name)) throw new UserNameBadError();
+  if (!isSecurePassword(password)) throw new UserPasswordBadError();
 
   const passwordObject = new Sha256Password();
   passwordObject.setSalt(passwordObject.generateNewSalt(), password);
@@ -63,14 +63,14 @@ export async function userCreate(
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
         if (error.meta?.target === "User_email_key") {
-          throw new UserEmailAlreadyExistError();
+          throw new UserEmailConflictError();
         }
         if (error.meta?.target === "User_name_key") {
-          throw new UserNameAlreadyExistError();
+          throw new UserNameConflictError();
         }
       }
       if (error.code === "P2025") {
-        throw new InviteCodeInvalidError();
+        throw new InviteCodeNotFoundError();
       }
     }
     throw error;
@@ -78,7 +78,7 @@ export async function userCreate(
 }
 
 function isVaildName(name: string) {
-  return name.length > 0 && name.length <= 30;
+  return name?.length > 0 && name?.length <= 30;
 }
 
 function isEmail(email: string) {

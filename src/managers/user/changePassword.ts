@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { Sha256Password } from "../../class/password/sha256";
-import { UserNotExistError } from "../../error/error";
+import { UserNotFoundError } from "../../error/error";
 
 export async function userChangePassword(userId: number, newPassword: string) {
   const passwordObject = new Sha256Password();
@@ -19,7 +19,7 @@ export async function userChangePassword(userId: number, newPassword: string) {
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2025") {
-        throw new UserNotExistError();
+        throw new UserNotFoundError();
       }
     }
   }

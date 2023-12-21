@@ -1,8 +1,8 @@
 import { createHash } from "crypto";
 import { Prisma } from "@prisma/client";
 import {
-  InviteCodeAlreadyExistError,
-  UserNotExistError,
+  InviteCodeConflictError,
+  UserNotFoundError,
 } from "../../error/error";
 
 /**
@@ -28,10 +28,10 @@ export async function inviteCodeCreate(
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2002") {
-        throw new InviteCodeAlreadyExistError();
+        throw new InviteCodeConflictError();
       }
       if (error.code === "P2003") {
-        throw new UserNotExistError();
+        throw new UserNotFoundError();
       }
     }
     throw error;
@@ -66,7 +66,7 @@ export async function inviteCodeCreateMany(
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2003") {
-        throw new UserNotExistError();
+        throw new UserNotFoundError();
       }
     }
     throw error;

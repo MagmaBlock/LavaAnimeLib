@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { InviteCodeInvalidError, UserNotExistError } from "../../error/error";
+import { InviteCodeNotFoundError, UserNotFoundError } from "../../error/error";
 
 /**
  * 使用一个邀请码
@@ -34,10 +34,10 @@ export async function inviteCodeUse(code: string, usedById: number) {
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === "P2003") {
-        throw new UserNotExistError();
+        throw new UserNotFoundError();
       }
       if (error.code === "P2025") {
-        throw new InviteCodeInvalidError();
+        throw new InviteCodeNotFoundError();
       }
     }
     throw error;

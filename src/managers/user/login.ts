@@ -1,5 +1,5 @@
 import { Sha256Password } from "../../class/password/sha256";
-import { UserNotExistError, UserPasswordError } from "../../error/error";
+import { UserNotFoundError, UserPasswordError } from "../../error/error";
 
 /**
  * 用户登入
@@ -14,7 +14,7 @@ export async function userLogin(account: string, password: string) {
         OR: [{ email: account }, { name: account }],
       },
     });
-    if (user === null) throw new UserNotExistError();
+    if (user === null) throw new UserNotFoundError();
 
     if (user.encryption === "Sha256") {
       let hashedPassword = new Sha256Password();
