@@ -19,7 +19,7 @@ export async function userLogin(account: string, password: string) {
         OR: [{ email: account }, { name: account }],
       },
     });
-    if (user === null) throw new UserNotFoundError();
+    if (user === null) throw new UserNotFoundError("无法找到此用户");
 
     if (user.encryption === "Sha256") {
       let hashedPassword = new Sha256Password();
@@ -32,7 +32,7 @@ export async function userLogin(account: string, password: string) {
           user,
         };
       } else {
-        throw new UserPasswordError();
+        throw new UserPasswordError("密码错误");
       }
     }
 

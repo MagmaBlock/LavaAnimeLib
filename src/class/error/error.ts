@@ -64,15 +64,6 @@ export class GoneError extends ClientError {
   statusCode = 410;
 }
 
-// 客户端错误相关实现
-
-/**
- * 500 InternalServerError 服务器内部错误
- */
-export class InternalServerError extends ServerError {
-  statusCode = 500;
-}
-
 export class UserEmailBadError extends BadRequestError {}
 export class UserNameBadError extends BadRequestError {}
 export class UserPasswordBadError extends BadRequestError {}
@@ -84,3 +75,12 @@ export class InviteCodeConflictError extends ConflictError {}
 export class UserPasswordError extends UnauthorizedError {}
 export class UserNotFoundError extends NotFoundError {}
 export class InviteCodeNotFoundError extends NotFoundError {}
+
+// 服务端错误相关实现
+
+/**
+ * 500 InternalServerError 服务器内部错误
+ */
+export class InternalServerError extends ServerError {
+  statusCode = 500;
+}

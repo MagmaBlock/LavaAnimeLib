@@ -1,4 +1,4 @@
-class UserValidator {
+export class UserValidator {
   /**
    * 验证是否为有效用户名
    * @param name
