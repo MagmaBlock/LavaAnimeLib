@@ -18,13 +18,13 @@ export class ClientError extends Error implements ErrorWithStatus {
  * 500 系服务端错误
  */
 export class ServerError extends Error implements ErrorWithStatus {
-  statusCode: number = 400;
+  statusCode: number = 500;
   getStatusCode() {
     return this.statusCode;
   }
 }
 
-// 前端错误实现
+// 客户端错误相关实现
 
 /**
  * 400 BadRequest 请求格式错误, 一般用于非法参数
@@ -62,6 +62,15 @@ export class ConflictError extends ClientError {
  */
 export class GoneError extends ClientError {
   statusCode = 410;
+}
+
+// 客户端错误相关实现
+
+/**
+ * 500 InternalServerError 服务器内部错误
+ */
+export class InternalServerError extends ServerError {
+  statusCode = 500;
 }
 
 export class UserEmailBadError extends BadRequestError {}
