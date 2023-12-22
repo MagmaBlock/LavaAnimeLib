@@ -1,5 +1,10 @@
 import { Sha256Password } from "../../class/password/sha256";
-import { UserNotFoundError, UserPasswordError } from "../../class/error/error";
+import {
+  InternalServerError,
+  UserNotFoundError,
+  UserPasswordError,
+} from "../../class/error/error";
+import { User } from "@prisma/client";
 
 /**
  * 用户登入
@@ -20,16 +25,24 @@ export async function userLogin(account: string, password: string) {
       let hashedPassword = new Sha256Password();
       hashedPassword.parse(user.password);
       if (hashedPassword.testPassword(password)) {
-        return useAuth.sign(<TokenPayload>{
-          id: user.id,
-        });
+        return <LoginSuccessResult>{
+          token: useAuth.sign(<TokenPayload>{
+            id: user.id,
+          }),
+          user,
+        };
       } else {
         throw new UserPasswordError();
       }
     }
 
-    return null;
+    throw new InternalServerError("user.encryption 不支持");
   } catch (error) {
     throw error;
   }
 }
+
+type LoginSuccessResult = {
+  token: string;
+  user: User;
+};
