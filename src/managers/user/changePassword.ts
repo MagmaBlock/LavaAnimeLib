@@ -1,8 +1,15 @@
 import { Prisma } from "@prisma/client";
 import { Sha256Password } from "../../class/password/sha256";
-import { UserNotFoundError } from "../../class/error/error";
+import {
+  UserNotFoundError,
+  UserPasswordBadError,
+} from "../../class/error/error";
 
 export async function userChangePassword(userId: number, newPassword: string) {
+  if (UserValidator.isSecurePassword(newPassword) === false) {
+    throw new UserPasswordBadError();
+  }
+
   const passwordObject = new Sha256Password();
   passwordObject.setSalt(passwordObject.generateNewSalt(), newPassword);
 
