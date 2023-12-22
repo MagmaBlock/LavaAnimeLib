@@ -6,7 +6,7 @@ import {
   UserNameConflictError,
   UserNameBadError,
   UserPasswordBadError,
-} from "../../error/error";
+} from "../../class/error/error";
 import { Sha256Password } from "../../class/password/sha256";
 
 /**

@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { InviteCodeNotFoundError, UserNotFoundError } from "../../error/error";
+import { InviteCodeNotFoundError, UserNotFoundError } from "../../class/error/error";
 
 /**
  * 使用一个邀请码

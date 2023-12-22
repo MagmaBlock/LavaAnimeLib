@@ -6,7 +6,7 @@ import {
   UserNameBadError,
   UserNameConflictError,
   UserPasswordBadError,
-} from "../../src/error/error";
+} from "../../src/class/error/error";
 import { userCreate } from "../../src/managers/user/create";
 
 export default eventHandler(async (event) => {

@@ -1,5 +1,5 @@
 import { Sha256Password } from "../../class/password/sha256";
-import { UserNotFoundError, UserPasswordError } from "../../error/error";
+import { UserNotFoundError, UserPasswordError } from "../../class/error/error";
 
 /**
  * 用户登入

@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import {
   InviteCodeConflictError,
   UserNotFoundError,
-} from "../../error/error";
+} from "../../class/error/error";
 
 /**
  * 创建一个邀请码

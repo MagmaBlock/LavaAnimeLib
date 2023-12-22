@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { Sha256Password } from "../../class/password/sha256";
-import { UserNotFoundError } from "../../error/error";
+import { UserNotFoundError } from "../../class/error/error";
 
 export async function userChangePassword(userId: number, newPassword: string) {
   const passwordObject = new Sha256Password();
