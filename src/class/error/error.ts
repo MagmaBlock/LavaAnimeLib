@@ -72,7 +72,7 @@ export class UserEmailConflictError extends ConflictError {}
 export class UserNameConflictError extends ConflictError {}
 export class InviteCodeConflictError extends ConflictError {}
 
-export class UserPasswordError extends UnauthorizedError {}
+export class UserPasswordError extends ForbiddenError {}
 export class UserNotFoundError extends NotFoundError {}
 export class InviteCodeNotFoundError extends NotFoundError {}
 
