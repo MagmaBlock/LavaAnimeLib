@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@prisma/client": "^5.7.1",
+    "chalk": "^5.3.0",
     "dotenv": "^16.3.1",
+    "h3": "^1.9.0",
     "moment": "^2.29.4",
     "nitropack": "latest"
   },
