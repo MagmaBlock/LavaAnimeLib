@@ -31,16 +31,24 @@ model Anime {
   viewHistories ViewHistory[]
 }
 
+// 描述作品特点和内容的标签
 model Tag {
-  id     Int       @id @default(autoincrement())
-  name   String
-  type   TagSource @default(Bangumi)
+  name   String    @id
+  source TagSource @default(Bangumi)
+  type   TagType?
   animes Anime[]
 }
 
 enum TagSource {
   Bangumi
   User
+}
+
+enum TagType {
+  ReleaseYear
+  ReleaseSeason
+  Region
+  Style
 }
 
 // 描述一个动画的集数
@@ -155,11 +163,17 @@ model User {
   encryption       Encryption        @default(Sha256)
   createdAt        DateTime          @default(now())
   settings         Json?
+  role             UserRole          @default(Default)
   infomations      UserInfomation[]
   animeCollections AnimeCollection[] // 用户的收藏记录
   inviteCodes      InviteCode[]      @relation(name: "create")
   inviteBy         InviteCode?       @relation(name: "use")
   viewHistories    ViewHistory[]
+}
+
+enum UserRole {
+  Default
+  Admin
 }
 
 // 用户的其他信息
@@ -172,7 +186,7 @@ model UserInfomation {
 }
 
 enum UserInfomationKey {
-  avatar
+  Avatar
 }
 
 enum Encryption {
