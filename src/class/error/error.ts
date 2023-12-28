@@ -84,3 +84,12 @@ export class InviteCodeNotFoundError extends NotFoundError {}
 export class InternalServerError extends ServerError {
   statusCode = 500;
 }
+
+/**
+ * 503 ServiceUnavailableError 服务不可用
+ */
+export class ServiceUnavailableError extends ServerError {
+  statusCode = 503;
+}
+
+export class LibraryNotConfiguredError extends InternalServerError {}
