@@ -9,6 +9,9 @@ import { LibraryTool } from "./interface";
 import { posix as pathPosix } from "path";
 import axios, { AxiosError } from "axios";
 
+/**
+ * Alist 操作器实现
+ */
 export class AlistLibraryTool implements LibraryTool {
   id: string;
   name: string;
@@ -62,10 +65,20 @@ export class AlistLibraryTool implements LibraryTool {
         }
       );
 
-      if (listGet.data?.code === 200) {
+      // 成功且有文件
+      if (
+        listGet.data?.code === 200 &&
+        Array.isArray(listGet.data.data?.content)
+      ) {
         alistFiles = listGet.data.data?.content;
       }
 
+      // 成功但为空
+      if (listGet.data?.code === 200 && listGet.data.data?.content === null) {
+        alistFiles = [];
+      }
+
+      // 找不到文件夹
       if (
         listGet.data?.code === 500 &&
         listGet.data?.message.match("not found")
@@ -73,6 +86,7 @@ export class AlistLibraryTool implements LibraryTool {
         throw new NotFoundError(listGet.data.message);
       }
 
+      // 其他意外情况
       if (!Array.isArray(alistFiles)) {
         throw new ServiceUnavailableError("Alist 服务异常");
       }
