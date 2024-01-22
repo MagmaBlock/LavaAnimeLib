@@ -24,18 +24,18 @@ export default defineNitroErrorHandler((error: any, event: H3Event) => {
   }
   // 处理其他意外内部错误
   else if (error instanceof H3Error) {
-    console.error(chalk.gray("-----------------------"));
-    console.error(error);
-    console.error(chalk.red("[!]"), "运行时错误发生");
+    logger.error(chalk.gray("-----------------------"));
+    logger.error(error);
+    logger.error(chalk.red("[!]"), "运行时错误发生");
 
     setResponseStatus(event, error.statusCode);
     return send(event, JSON.stringify({ message: error.message }));
   }
   // 处理底层意外错误
   else {
-    console.error(chalk.gray("-----------------------"));
-    console.error(error);
-    console.error(chalk.red("[!]"), "发生底层意外错误");
+    logger.error(chalk.gray("-----------------------"));
+    logger.error(error);
+    logger.error(chalk.red("[!]"), "发生底层意外错误");
 
     setResponseStatus(event, 500);
     return send(event, JSON.stringify({ message: "服务器内部错误" }));

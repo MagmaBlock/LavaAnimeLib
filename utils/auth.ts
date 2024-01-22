@@ -33,7 +33,7 @@ export const readUser = async (event: H3Event) => {
  */
 export const readAdmin = async (event: H3Event) => {
   const user = await readUser(event);
-  console.log(user);
+  logger.log(user);
 
   if (user.role === "Admin") {
     return user;
@@ -65,7 +65,7 @@ const getUserByToken = defineCachedFunction(
 
       return user;
     } catch (error) {
-      console.error(error, chalk.red("[!]"), "readUser error!");
+      logger.error(error, chalk.red("[!]"), "readUser error!");
       return null;
     }
   },

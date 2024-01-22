@@ -52,7 +52,10 @@ export class AlistLibraryTool implements LibraryTool {
     let alistFiles: AlistAPIFile[] = null;
     let inDBLibFiles: LibFile[] = null;
 
-    // 从 Alist 获取最新的文件列表
+    /**
+     * 以下块：从 Alist 获取最新的文件列表，存入 alistFiles
+     * 若失败将掷出错误
+     */
     try {
       const listGet = await axios.post(
         "/api/fs/list",
@@ -88,16 +91,20 @@ export class AlistLibraryTool implements LibraryTool {
 
       // 其他意外情况
       if (!Array.isArray(alistFiles)) {
+        logger.error("Alist 返回意外结果:", listGet.data);
         throw new ServiceUnavailableError("Alist 服务异常");
       }
     } catch (error) {
       // Alist 在找不到路径时，不会回复 4xx，而是 200 中的 body 中的 code = 500
       if (error instanceof AxiosError) {
+        logger.error("Alist 请求失败:", error.message);
       }
       throw error;
     }
 
-    // 将 Alist 的文件状态应用到数据库
+    /**
+     * 以下块：遍历 alistFiles，将其插入或更新到数据库
+     */
     try {
       // 首先遍历 Alist 的资源，将获取到的文件写入到数据库
       for (let index in alistFiles) {
@@ -107,7 +114,7 @@ export class AlistLibraryTool implements LibraryTool {
           where: {
             uniqueFileInLib: {
               name: alistFile.name,
-              path: pathPosix.join(this.config.baseDir, path),
+              path,
               libraryId: this.id,
             },
           },
@@ -120,7 +127,7 @@ export class AlistLibraryTool implements LibraryTool {
           },
           create: {
             libraryId: this.id,
-            path: pathPosix.join(this.config.baseDir, path),
+            path, // 数据库内存储的应是不含存储库前缀的路径
             name: alistFile.name,
             isDirectory: alistFile.is_dir,
             size: alistFile.size, // 只为文件标记尺寸
@@ -133,12 +140,19 @@ export class AlistLibraryTool implements LibraryTool {
       throw error;
     }
 
-    // 将更新后的 DB 记录和 Alist 中的进行对比，若文件不存在，则会将文件标记为 "removed"
+    /**
+     * 以下块：将基于 Alist 更新后的数据库记录和 Alist 中的进行对比
+     * 若此 path 下的文件(夹)不存在，则会将文件标记为 "removed"
+     *
+     * P.S. 这里只能删除到调用此函数时传入的 path 的子文件、子文件夹
+     *      若数据库中包含有上级目录已经被删除的文件(夹)，则不是在这里删除的。
+     *      (是在 LibraryScanner.scan() 完成的)
+     */
     try {
       inDBLibFiles = await usePrisma.libFile.findMany({
         where: {
           libraryId: this.id,
-          path: pathPosix.join(this.config.baseDir, path),
+          path,
           removed: false,
         },
       });
@@ -164,6 +178,9 @@ export class AlistLibraryTool implements LibraryTool {
               removed: true,
             },
           });
+          logger.trace(
+            `${this.name}(${this.id}) 删除 ${dbFile.path}${dbFile.name}`
+          );
         }
       }
     } catch (error) {
@@ -173,7 +190,7 @@ export class AlistLibraryTool implements LibraryTool {
     const result = await usePrisma.libFile.findMany({
       where: {
         libraryId: this.id,
-        path: pathPosix.join(this.config.baseDir, path),
+        path,
         removed: false,
       },
     });
