@@ -17,6 +17,7 @@ export class AlistLibraryTool implements LibraryTool {
   name: string;
   description: string;
   type: "Alist";
+  structure: Library["structure"];
   noNSFW: boolean;
   noDownload: boolean;
   config: AlistLibraryConfig;
@@ -30,6 +31,7 @@ export class AlistLibraryTool implements LibraryTool {
     this.id = library.id;
     this.name = library.name;
     this.description = library.description;
+    this.type = library.type;
     this.noNSFW = library.noNSFW;
     this.noDownload = library.noDownload;
     this.config = library.config as AlistLibraryConfig;

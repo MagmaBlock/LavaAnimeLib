@@ -21,7 +21,7 @@ model Anime {
   bdrip         Boolean   @default(false)
   nsfw          Boolean   @default(false)
   platform      String?
-  Date          DateTime?
+  date          DateTime?
   releaseYear   Int?
   releaseSeason String?
   region        String?
@@ -85,13 +85,14 @@ enum AnimeRatingSource {
 
 // 描述一个资源库
 model Library {
-  id          String        @id @db.VarChar(32)
+  id          String           @id @db.VarChar(32)
   name        String
   description String?
-  type        LibraryType   @default(Alist)
-  noNSFW      Boolean       @default(false)
-  noDownload  Boolean       @default(false)
+  type        LibraryType      @default(Alist)
   config      Json?
+  structure   LibraryStructure
+  noNSFW      Boolean          @default(false)
+  noDownload  Boolean          @default(false)
   files       LibFile[]
   userViews   ViewHistory[]
 }
@@ -100,6 +101,10 @@ model Library {
 enum LibraryType {
   Alist
   // TODO: Local
+}
+
+enum LibraryStructure {
+  LavaAnimeLibV2
 }
 
 // 描述一个库中的文件
