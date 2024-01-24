@@ -1,6 +1,7 @@
 import { LibFile, Library } from "@prisma/client";
-import { LibraryScanner } from "./scanner";
-import { LibraryScraper } from "./scraper/interface";
+import type { LibraryScanner } from "./scanner";
+import type { LibraryScraper } from "./scraper/interface";
+import type { LibraryReader } from "./reader";
 
 /**
  * 资源库工具的接口
@@ -22,4 +23,9 @@ export interface LibraryTool extends Library {
    * 获取此 Library 应当使用的挂削器
    */
   getScraper(): LibraryScraper;
+
+  /**
+   * 获取此 Library 的读取器
+   */
+  getReader(): LibraryReader;
 }

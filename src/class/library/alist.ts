@@ -9,7 +9,9 @@ import { LibraryTool } from "./interface";
 import { posix as pathPosix } from "path";
 import axios, { AxiosError } from "axios";
 import { LibraryScanner } from "./scanner";
-import { LibraryScraper, getScraper } from "./scraper/interface";
+import type { LibraryScraper } from "./scraper/interface";
+import { getScraper } from "./scraper/interface";
+import { LibraryReader } from "./reader";
 
 /**
  * Alist 操作器实现
@@ -34,6 +36,7 @@ export class AlistLibraryTool implements LibraryTool {
     this.name = library.name;
     this.description = library.description;
     this.type = library.type;
+    this.structure = library.structure;
     this.noNSFW = library.noNSFW;
     this.noDownload = library.noDownload;
     this.config = library.config as AlistLibraryConfig;
@@ -208,6 +211,10 @@ export class AlistLibraryTool implements LibraryTool {
 
   getScraper(): LibraryScraper {
     return getScraper(this);
+  }
+
+  getReader(): LibraryReader {
+    return new LibraryReader(this);
   }
 }
 
