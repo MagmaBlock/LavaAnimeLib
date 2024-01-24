@@ -33,7 +33,6 @@ export const readUser = async (event: H3Event) => {
  */
 export const readAdmin = async (event: H3Event) => {
   const user = await readUser(event);
-  logger.log(user);
 
   if (user.role === "Admin") {
     return user;
