@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import { H3Event } from "h3";
 import moment from "moment";
+import { ClientError, ServerError } from "../src/class/error/error";
 
 export default defineNitroPlugin((nitro) => {
   nitro.hooks.hook("request", (event) => {
@@ -14,9 +15,11 @@ export default defineNitroPlugin((nitro) => {
   });
 
   nitro.hooks.hook("error", async (error, { event }) => {
-    await printLog(event).catch((error) => {
-      console.error(error, "[hook] [error] 时打印 Log 发生错误");
-    });
+    if (error instanceof ClientError || error instanceof ServerError) {
+      await printLog(event).catch((error) => {
+        console.error("[hook] [error] 时打印 Log 发生错误");
+      });
+    }
   });
 });
 
