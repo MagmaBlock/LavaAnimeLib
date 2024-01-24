@@ -1,4 +1,6 @@
 import { LibFile, Library } from "@prisma/client";
+import { LibraryScanner } from "./scanner";
+import { LibraryScraper } from "./scraper/interface";
 
 /**
  * 资源库工具的接口
@@ -10,4 +12,14 @@ export interface LibraryTool extends Library {
    * @param path
    */
   readList(path: string): Promise<LibFile[]>;
+
+  /**
+   * 获取此 Library 应当使用的扫描器
+   */
+  getScanner(): LibraryScanner;
+
+  /**
+   * 获取此 Library 应当使用的挂削器
+   */
+  getScraper(): LibraryScraper;
 }

@@ -8,6 +8,8 @@ import { LibFile, Library } from "@prisma/client";
 import { LibraryTool } from "./interface";
 import { posix as pathPosix } from "path";
 import axios, { AxiosError } from "axios";
+import { LibraryScanner } from "./scanner";
+import { LibraryScraper, getScraper } from "./scraper/interface";
 
 /**
  * Alist 操作器实现
@@ -198,6 +200,14 @@ export class AlistLibraryTool implements LibraryTool {
     });
 
     return result;
+  }
+
+  getScanner(): LibraryScanner {
+    return new LibraryScanner(this);
+  }
+
+  getScraper(): LibraryScraper {
+    return getScraper(this);
   }
 }
 
