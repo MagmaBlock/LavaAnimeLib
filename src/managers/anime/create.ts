@@ -10,6 +10,7 @@ import { BadRequestError } from "../../class/error/error";
  * @param platform
  * @param nsfw
  * @param bdrip
+ * @deprecated
  */
 export async function animeCreate(
   name: string,
