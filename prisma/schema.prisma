@@ -24,9 +24,10 @@ model Anime {
   date          DateTime?
   releaseYear   Int?
   releaseSeason String?
-  region        String?
+  region        Region?
 
   tags         AnimeTag[] // 1-n, 此作品的相关标签
+  sites        AnimeSiteLink[] // 1-n, 此作品在其他平台的关联
   ratings      AnimeRating[] // 1-n, 来自多个平台的评分
   episodes     AnimeEpisode[] // 1-n, 此作品的多个剧集
   files        LibFile[] // 1-n, 此作品在所有节点中的所有文件
@@ -47,6 +48,20 @@ model AnimeTag {
 enum AnimeTagSource {
   Bangumi
   User
+}
+
+// 其他站点的作品关联
+model AnimeSiteLink {
+  id       Int           @id @default(autoincrement())
+  siteType AnimeSiteType
+  siteId   String
+  animes   Anime[]
+
+  @@unique([siteId, siteType])
+}
+
+enum AnimeSiteType {
+  Bangumi
 }
 
 // 描述一个动画的集数
@@ -81,6 +96,15 @@ model AnimeRating {
 
 enum AnimeRatingSource {
   Bangumi
+}
+
+enum Region {
+  Japan
+  China
+  Korea
+  Europe
+  America
+  Other
 }
 
 // 描述一个资源库
