@@ -1,5 +1,6 @@
 node_modules
 *.log
+*.log.*.gz
 .nitro
 .cache
 .output
