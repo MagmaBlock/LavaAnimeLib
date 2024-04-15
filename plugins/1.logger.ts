@@ -25,7 +25,7 @@ export default defineNitroPlugin((nitro) => {
 
 async function printLog(event: H3Event) {
   const queryCost = new Date().getTime() - event.context.startAt;
-  let user = await readUser(event).catch(() => null);
+  let user = await assertUser(event).catch(() => null);
   let status = getResponseStatus(event);
 
   console.info(

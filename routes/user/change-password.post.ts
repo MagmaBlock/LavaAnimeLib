@@ -1,12 +1,12 @@
+import { UserManager } from "~/src/class/user/manager";
 import { BadRequestError } from "../../src/class/error/error";
-import { userChangePassword } from "../../src/managers/user/changePassword";
-import { readUser } from "../../utils/auth";
+import { assertUser } from "../../utils/auth";
 
 export default eventHandler(async (event) => {
-  const user = await readUser(event);
+  const user = await assertUser(event);
   const { newPassword } = await readBody(event);
 
   if (!newPassword) throw new BadRequestError("密码不能为空");
-  await userChangePassword(user.id, newPassword);
+  await UserManager.changePassword(user.id, newPassword);
   return { message: "修改成功" };
 });

@@ -1,9 +1,14 @@
-import { userCreate } from "../../src/managers/user/create";
+import { UserManager } from "~/src/class/user/manager";
 
 export default eventHandler(async (event) => {
   let { email, name, password, inviteCode } = await readBody(event);
 
-  const register = await userCreate(email, name, password, inviteCode);
+  const register = await UserManager.register(
+    email,
+    name,
+    password,
+    inviteCode
+  );
   register.encryption = undefined;
   register.password = undefined;
 

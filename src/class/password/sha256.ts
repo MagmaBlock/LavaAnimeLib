@@ -1,10 +1,10 @@
 import { createHash } from "crypto";
-import { Password, PasswordParseFailedError } from "./interface";
+import { EncryptedPassword, PasswordParseFailedError } from "./interface";
 
 /**
  * Sha256 密码实现
  */
-export class Sha256Password implements Password {
+export class Sha256Password implements EncryptedPassword {
   salt: string;
   hashedPassword: string;
 

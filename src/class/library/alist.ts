@@ -8,23 +8,22 @@ import { LibFile, Library } from "@prisma/client";
 import { LibraryTool } from "./interface";
 import { posix as pathPosix } from "path";
 import axios, { AxiosError } from "axios";
-import { LibraryScanner } from "./scanner";
+import { LibraryScanner } from "./scanner/scanner";
 import type { LibraryScraper } from "./scraper/interface";
-import { getScraper } from "./scraper/interface";
-import { LibraryReader } from "./reader";
+import { scraperFactory } from "./scraper/interface";
+import { LibraryReader } from "./reader/reader";
 
 /**
  * Alist 操作器实现
  */
 export class AlistLibraryTool implements LibraryTool {
-  id: string;
-  name: string;
-  description: string;
-  type: "Alist";
-  structure: Library["structure"];
-  noNSFW: boolean;
-  noDownload: boolean;
-  config: AlistLibraryConfig;
+  private _library: Library;
+  get library(): Library {
+    return this._library;
+  }
+  set library(value: Library) {
+    this._library = value;
+  }
 
   constructor(library: Library) {
     if (library.type !== "Alist") {
@@ -32,21 +31,7 @@ export class AlistLibraryTool implements LibraryTool {
         "构造 AlistLibrary 时的 Library 对象的 type 应该是 Alist"
       );
     }
-    this.id = library.id;
-    this.name = library.name;
-    this.description = library.description;
-    this.type = library.type;
-    this.structure = library.structure;
-    this.noNSFW = library.noNSFW;
-    this.noDownload = library.noDownload;
-    this.config = library.config as AlistLibraryConfig;
-    if (
-      typeof this.config?.baseDir !== "string" ||
-      typeof this.config?.host !== "string" ||
-      typeof this.config?.password !== "string"
-    ) {
-      throw new LibraryNotConfiguredError(`资源库 ${library.id} 未正确配置`);
-    }
+    this.library = library;
     return this;
   }
 
@@ -55,7 +40,7 @@ export class AlistLibraryTool implements LibraryTool {
    * @param path
    * @returns
    */
-  async readList(path: string): Promise<LibFile[]> {
+  async updateDB(path: string): Promise<LibFile[]> {
     let alistFiles: AlistAPIFile[] = null;
     let inDBLibFiles: LibFile[] = null;
 
@@ -67,11 +52,11 @@ export class AlistLibraryTool implements LibraryTool {
       const listGet = await axios.post(
         "/api/fs/list",
         {
-          path: pathPosix.join(this.config.baseDir, path),
-          password: this.config.password,
+          path: pathPosix.join(this.getConfig().baseDir, path),
+          password: this.getConfig().password,
         },
         {
-          baseURL: this.config.host,
+          baseURL: this.getConfig().host,
         }
       );
 
@@ -122,7 +107,7 @@ export class AlistLibraryTool implements LibraryTool {
             uniqueFileInLib: {
               name: alistFile.name,
               path,
-              libraryId: this.id,
+              libraryId: this.library.id,
             },
           },
           update: {
@@ -133,7 +118,7 @@ export class AlistLibraryTool implements LibraryTool {
             lastFoundAt: new Date(),
           },
           create: {
-            libraryId: this.id,
+            libraryId: this.library.id,
             path, // 数据库内存储的应是不含存储库前缀的路径
             name: alistFile.name,
             isDirectory: alistFile.is_dir,
@@ -158,7 +143,7 @@ export class AlistLibraryTool implements LibraryTool {
     try {
       inDBLibFiles = await usePrisma.libFile.findMany({
         where: {
-          libraryId: this.id,
+          libraryId: this.library.id,
           path,
           removed: false,
         },
@@ -186,7 +171,7 @@ export class AlistLibraryTool implements LibraryTool {
             },
           });
           logger.trace(
-            `${this.name}(${this.id}) 删除 ${dbFile.path}${dbFile.name}`
+            `${this.library.name}(${this.library.id}) 删除 ${dbFile.path}${dbFile.name}`
           );
         }
       }
@@ -196,7 +181,7 @@ export class AlistLibraryTool implements LibraryTool {
 
     const result = await usePrisma.libFile.findMany({
       where: {
-        libraryId: this.id,
+        libraryId: this.library.id,
         path,
         removed: false,
       },
@@ -210,11 +195,27 @@ export class AlistLibraryTool implements LibraryTool {
   }
 
   getScraper(): LibraryScraper {
-    return getScraper(this);
+    return scraperFactory(this);
   }
 
   getReader(): LibraryReader {
     return new LibraryReader(this);
+  }
+
+  private getConfig(): AlistLibraryConfig {
+    let config = this.library.config as AlistLibraryConfig;
+
+    if (
+      typeof config?.host !== "string" ||
+      typeof config?.password !== "string" ||
+      typeof config?.baseDir !== "string"
+    ) {
+      throw new LibraryNotConfiguredError(
+        `资源库 ${this.library.id} 未正确配置`
+      );
+    }
+
+    return config;
   }
 }
 

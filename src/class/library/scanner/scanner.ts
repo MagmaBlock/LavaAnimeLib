@@ -1,8 +1,9 @@
-import { LibraryTool } from "./interface";
+import { LibraryTool } from "../interface";
 import pathTool from "path/posix";
 
 /**
  * 操纵 LibraryTool 类对资源库存储器进行扫描
+ * 本类中的方法均是对数据库的写方法
  */
 export class LibraryScanner {
   private libraryTool: LibraryTool;
@@ -22,7 +23,7 @@ export class LibraryScanner {
     const removed = await usePrisma.libFile.updateMany({
       data: { removed: true },
       where: {
-        libraryId: this.libraryTool.id,
+        libraryId: this.libraryTool.library.id,
         id: { notIn: scanedRecords },
         removed: false,
         path: { startsWith: rootPath },
@@ -30,7 +31,7 @@ export class LibraryScanner {
     });
 
     logger.info(
-      `${this.libraryTool.name}(${this.libraryTool.id}) - ${rootPath} 中成功扫描到了 ${scanedRecords.length} 个文件(夹)，已经标记删除了数据库中 ${removed.count} 条本次扫描未扫描到的记录.`
+      `${this.libraryTool.library.name}(${this.libraryTool.library.id}) - ${rootPath} 中成功扫描到了 ${scanedRecords.length} 个文件(夹)，已经标记删除了数据库中 ${removed.count} 条本次扫描未扫描到的记录.`
     );
   }
 
@@ -41,9 +42,9 @@ export class LibraryScanner {
    */
   protected async scanLikeATree(rootPath: string, scanedRecords: number[]) {
     logger.trace(
-      `${this.libraryTool.name}(${this.libraryTool.id}) 扫描 ${rootPath}`
+      `${this.libraryTool.library.name}(${this.libraryTool.library.id}) 扫描 ${rootPath}`
     );
-    let root = await this.libraryTool.readList(rootPath);
+    let root = await this.libraryTool.updateDB(rootPath);
 
     root.forEach((record) => {
       scanedRecords.push(record.id);

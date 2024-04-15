@@ -1,6 +1,10 @@
-export interface Auth {
+/**
+ * 此接口描述了一种加密和解密资源的方法。
+ * 本类仅描述对称式加密方法。
+ */
+export interface Encryption {
   /**
-   * 提供资源的标识，将签发一个 token
+   * 提供资源，将签发一个 token
    * @param userId
    */
   sign(resource: any): string | null;

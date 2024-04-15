@@ -1,6 +1,6 @@
 import chalk from "chalk";
-import { JWTAuth } from "../src/class/auth/jwt";
 import { H3Event } from "h3";
+import { JWTAuth } from "../src/class/encryption/jwt";
 import { ForbiddenError, UnauthorizedError } from "../src/class/error/error";
 
 export const useAuth = new JWTAuth(process.env.AUTH_SECRET);
@@ -12,7 +12,7 @@ export const useAuth = new JWTAuth(process.env.AUTH_SECRET);
  * @throws {UnauthorizedError}
  * @returns
  */
-export const readUser = async (event: H3Event) => {
+export const assertUser = async (event: H3Event) => {
   const authorizationHeader = getHeader(event, "Authorization");
   if (authorizationHeader) {
     const token = authorizationHeader.replace(/^Bearer /i, "");
@@ -31,8 +31,8 @@ export const readUser = async (event: H3Event) => {
  * @throws {UnauthorizedError | ForbiddenError}
  * @returns
  */
-export const readAdmin = async (event: H3Event) => {
-  const user = await readUser(event);
+export const assertAdmin = async (event: H3Event) => {
+  const user = await assertUser(event);
 
   if (user.role === "Admin") {
     return user;

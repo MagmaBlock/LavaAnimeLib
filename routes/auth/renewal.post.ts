@@ -1,7 +1,7 @@
-import { tokenRenewal } from "../../src/managers/token/renewal";
+import { TokenManager } from "~/src/class/token/manager";
 
 export default eventHandler(async (event) => {
   const { token } = await readBody(event);
 
-  return { token: tokenRenewal(token) };
+  return { token: TokenManager.renewal(token) };
 });

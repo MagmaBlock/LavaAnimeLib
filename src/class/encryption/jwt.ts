@@ -1,8 +1,8 @@
 import moment from "moment";
-import { Auth } from "./interface";
+import { Encryption } from "./interface";
 import { createHmac } from "crypto";
 
-export class JWTAuth implements Auth {
+export class JWTAuth implements Encryption {
   private secret: string;
   private header: object;
 
