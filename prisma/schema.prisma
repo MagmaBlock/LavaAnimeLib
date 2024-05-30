@@ -35,33 +35,55 @@ model Anime {
   userViews    ViewHistory[]
 }
 
-// 描述作品特点和内容的标签
-model AnimeTag {
-  name   String         @id
-  count  Int            @default(1)
-  source AnimeTagSource @default(Bangumi)
-
-  Anime   Anime? @relation(fields: [animeId], references: [id])
-  animeId Int?
+enum Region {
+  Japan
+  China
+  Korea
+  Europe
+  America
+  Other
 }
 
-enum AnimeTagSource {
-  Bangumi
-  User
+// 描述作品特点和内容的标签
+model AnimeTag {
+  name   String
+  count  Int?
+  source AnimeInfoSource @default(Bangumi)
+
+  anime   Anime @relation(fields: [animeId], references: [id])
+  animeId Int
+
+  @@id([name, source, animeId])
 }
 
 // 其他站点的作品关联
 model AnimeSiteLink {
-  id       Int           @id @default(autoincrement())
-  siteType AnimeSiteType
+  id       Int             @id @default(autoincrement())
+  siteType AnimeInfoSource
   siteId   String
   animes   Anime[]
 
   @@unique([siteId, siteType])
 }
 
-enum AnimeSiteType {
+// 描述评分
+model AnimeRating {
+  id    Int   @id @default(autoincrement())
+  score Float // 评分
+  rank  Int? // 在该来源中的排名
+  count Int? // 评分人数
+
+  anime   Anime           @relation(fields: [animeId], references: [id])
+  animeId Int
+  source  AnimeInfoSource // 评分来源
+
+  @@unique([animeId, source])
+}
+
+// 番剧作品关联到外部站点、番剧数据信息的来源
+enum AnimeInfoSource {
   Bangumi
+  User
 }
 
 // 描述一个动画的集数
@@ -79,32 +101,6 @@ model AnimeEpisode {
   userViews     ViewHistory[]
 
   @@unique([episode, animeId])
-}
-
-// 描述评分
-model AnimeRating {
-  id      Int               @id @default(autoincrement())
-  anime   Anime             @relation(fields: [animeId], references: [id])
-  animeId Int
-  source  AnimeRatingSource // 评分来源
-  score   Float // 评分
-  rank    Int? // 在该来源中的排名
-  count   Int? // 评分人数
-
-  @@unique([animeId, source])
-}
-
-enum AnimeRatingSource {
-  Bangumi
-}
-
-enum Region {
-  Japan
-  China
-  Korea
-  Europe
-  America
-  Other
 }
 
 // 描述一个资源库
@@ -231,6 +227,8 @@ model AnimeCollection {
   status    AnimeCollectionStatus @default(Plan)
   createdAt DateTime              @default(now())
   updatedAt DateTime              @updatedAt
+
+  @@unique([userId, animeId])
 }
 
 enum AnimeCollectionStatus {
