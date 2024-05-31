@@ -12,7 +12,7 @@ model Anime {
   id           Int         @id @default(autoincrement())
   name         String
   originalName String?
-  summary      String?
+  summary      String?     @db.Text
   poster       UploadFile? @relation(fields: [posterFileId], references: [id])
   posterFileId Int?
   createdAt    DateTime    @default(now())
@@ -27,7 +27,7 @@ model Anime {
   region        Region?
 
   tags         AnimeTag[] // 1-n, 此作品的相关标签
-  sites        AnimeSiteLink[] // 1-n, 此作品在其他平台的关联
+  sites        AnimeSiteLink[] // m-n, 此作品在其他平台的关联
   ratings      AnimeRating[] // 1-n, 来自多个平台的评分
   episodes     AnimeEpisode[] // 1-n, 此作品的多个剧集
   files        LibFile[] // 1-n, 此作品在所有节点中的所有文件
@@ -58,10 +58,12 @@ model AnimeTag {
 
 // 其他站点的作品关联
 model AnimeSiteLink {
-  id       Int             @id @default(autoincrement())
-  siteType AnimeInfoSource
-  siteId   String
-  animes   Anime[]
+  id         Int             @id @default(autoincrement())
+  siteType   AnimeInfoSource
+  siteId     String
+  lastUpdate DateTime?
+
+  animes Anime[]
 
   @@unique([siteId, siteType])
 }
@@ -88,19 +90,31 @@ enum AnimeInfoSource {
 
 // 描述一个动画的集数
 model AnimeEpisode {
-  id            Int           @id @default(autoincrement())
-  episode       String
-  anime         Anime         @relation(fields: [animeId], references: [id])
-  animeId       Int
-  title         String? // 标题
-  originalTitle String? // 标题 (原文)
-  summary       String? // 简介
-  airDate       String? // 放送日期
-  duration      Int? // 时长 (秒)
-  files         LibFile[] // m-n, 此集数下的所有文件
-  userViews     ViewHistory[]
+  id             Int         @id @default(autoincrement())
+  episodeDisplay Float // 显示用集数，若是 Bangumi，对应 sort 字段
+  episodeIndex   Float       @default(0) // 集数索引，一般用于排序等. 对应 Bangumi ep 字段. 可重复
+  type           EpisodeType @default(Normal) // 本季类型
+  name           String? // 标题
+  originalName   String? // 标题 (原文)
+  summary        String? // 简介
+  airDate        String? // 放送日期
+  duration       Int? // 时长 (秒)
 
-  @@unique([episode, animeId])
+  anime   Anime           @relation(fields: [animeId], references: [id])
+  animeId Int
+  source  AnimeInfoSource
+
+  files     LibFile[] // m-n, 此集数下的所有文件
+  userViews ViewHistory[]
+
+  @@unique([animeId, type, episodeDisplay]) // 同一个动画的相同类型集数不可重复
+}
+
+enum EpisodeType {
+  Normal
+  SP
+  OP
+  ED
 }
 
 // 描述一个资源库
