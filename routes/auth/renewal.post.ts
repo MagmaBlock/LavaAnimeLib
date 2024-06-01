@@ -1,7 +1,7 @@
-import { TokenManager } from "~/src/class/token/manager";
+import { Entrance } from "~/src/class/manager";
 
 export default eventHandler(async (event) => {
   const { token } = await readBody(event);
 
-  return { token: TokenManager.renewal(token) };
+  return { token: Entrance.getInstance().getTokenManager().tokenRenewal(token) };
 });

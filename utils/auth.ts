@@ -1,9 +1,9 @@
 import chalk from "chalk";
 import { H3Event } from "h3";
-import { JWTAuth } from "../src/class/encryption/jwt";
+import { JwtAuthentication } from "../src/class/token/authentication/jwt";
 import { ForbiddenError, UnauthorizedError } from "../src/class/error/error";
 
-export const useAuth = new JWTAuth(process.env.AUTH_SECRET);
+export const useAuth = new JwtAuthentication(process.env.AUTH_SECRET);
 
 /**
  * 读取请求来源的用户

@@ -1,6 +1,6 @@
 import { Encryption } from "@prisma/client";
 import { Sha256Password } from "./sha256";
-import { InternalServerError } from "../error/error";
+import { InternalServerError } from "../../error/error";
 
 /**
  * 本接口描述了一种被非对称加密算法加密的密码

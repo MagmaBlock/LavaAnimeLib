@@ -5,7 +5,7 @@ import {
   BangumiAPIEpisode,
   BangumiAPIEpisodes,
   BangumiAPISubject,
-} from "../bangumi";
+} from "../../../api/bangumi";
 import moment from "moment";
 
 /**

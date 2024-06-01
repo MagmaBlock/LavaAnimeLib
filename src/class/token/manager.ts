@@ -6,7 +6,7 @@ export class TokenManager {
    * @param token
    * @returns
    */
-  static renewal(token: string) {
+  tokenRenewal(token: string) {
     let payload = useAuth.verify(token);
 
     // 如果 token 已过期
@@ -24,7 +24,7 @@ export class TokenManager {
    * @param token
    * @returns
    */
-  static tokenVerify(token: string): TokenPayload | null {
+  tokenVerify(token: string): TokenPayload | null {
     let payload = useAuth.verify(token);
     if (payload === null) return null;
     else {

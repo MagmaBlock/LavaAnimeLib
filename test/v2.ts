@@ -1,4 +1,3 @@
-import { AnimeCreator } from "~/src/class/anime/creator";
 import { AlistLibraryTool } from "~/src/class/library/alist";
 
 export async function main() {

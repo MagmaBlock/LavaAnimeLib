@@ -4,7 +4,7 @@ import { AnimeCollectionStatus } from "@prisma/client";
  * 管理用户的动画追番
  */
 export class AnimeCollectionManager {
-  static async createOrUpdate(
+  async createOrUpdate(
     userId: number,
     animeId: number,
     status: AnimeCollectionStatus
@@ -29,7 +29,7 @@ export class AnimeCollectionManager {
     return result;
   }
 
-  static async remove(userId: number, animeId: number) {
+  async remove(userId: number, animeId: number) {
     const result = await usePrisma.animeCollection.delete({
       where: {
         userId_animeId: {
@@ -42,7 +42,7 @@ export class AnimeCollectionManager {
     return result;
   }
 
-  static async get(userId: number, animeId: number) {
+  async get(userId: number, animeId: number) {
     const result = await usePrisma.animeCollection.findUnique({
       where: {
         userId_animeId: {
@@ -55,7 +55,7 @@ export class AnimeCollectionManager {
     return result;
   }
 
-  static async getAllWithUser(userId: number) {
+  async getAllWithUser(userId: number) {
     const result = await usePrisma.animeCollection.findMany({
       where: {
         userId,
@@ -68,7 +68,7 @@ export class AnimeCollectionManager {
     return result;
   }
 
-  static async getAllWithAnime(animeId: number) {
+  async getAllWithAnime(animeId: number) {
     const result = await usePrisma.animeCollection.findMany({
       where: {
         animeId,

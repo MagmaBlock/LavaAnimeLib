@@ -1,28 +1,23 @@
-import { Encryption, Prisma } from "@prisma/client";
+import { Encryption, Prisma, User } from "@prisma/client";
 import {
   InviteCodeNotFoundError,
-  UserEmailConflictError,
   UserEmailBadError,
-  UserNameConflictError,
+  UserEmailConflictError,
   UserNameBadError,
-  UserPasswordBadError,
-} from "../../class/error/error";
-import { Sha256Password } from "../../class/password/sha256";
-import { UserValidator } from "./validator/user";
-import {
-  InternalServerError,
+  UserNameConflictError,
   UserNotFoundError,
+  UserPasswordBadError,
   UserPasswordError,
 } from "../../class/error/error";
-import { User } from "@prisma/client";
 import { TokenPayload } from "../token/manager";
-import { encryptedPasswordFactory } from "../password/interface";
+import { UserValidator } from "./validator/user";
+import { encryptedPasswordFactory } from "./password/interface";
 
 export class UserManager {
   /**
    * 当前主要使用的密码加密方法
    */
-  private static readonly encryptMethod = Encryption.Sha256;
+  private readonly encryptMethod = Encryption.Sha256;
 
   /**
    * 注册新用户
@@ -32,7 +27,7 @@ export class UserManager {
    * @param inviteCode
    * @returns 创建完成的 User Prisma 对象
    */
-  static async register(
+  async register(
     email: string,
     name: string,
     password: string,
@@ -103,7 +98,7 @@ export class UserManager {
    * @param password 明文密码
    * @returns 返回一个 JWT Token
    */
-  static async login(account: string, password: string) {
+  async login(account: string, password: string) {
     try {
       let user = await usePrisma.user.findFirst({
         where: {
@@ -132,7 +127,7 @@ export class UserManager {
   /**
    * 更改用户密码
    */
-  static async changePassword(userId: number, newPassword: string) {
+  async changePassword(userId: number, newPassword: string) {
     if (UserValidator.isSecurePassword(newPassword) === false) {
       throw new UserPasswordBadError("密码至少包含字母, 且长度为 7-64");
     }

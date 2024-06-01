@@ -14,7 +14,7 @@ export class InviteCodeManager {
    * @param expiredAt 过期时间
    * @returns
    */
-  static async create(code?: string, createdById?: number, expiredAt?: Date) {
+  async create(code?: string, createdById?: number, expiredAt?: Date) {
     try {
       return await usePrisma.inviteCode.create({
         data: {
@@ -42,11 +42,7 @@ export class InviteCodeManager {
    * @param createdById 创建者
    * @param expiredAt 过期时间
    */
-  static async createMany(
-    tryAmount: number,
-    createdById?: number,
-    expiredAt?: Date
-  ) {
+  async createMany(tryAmount: number, createdById?: number, expiredAt?: Date) {
     let codes = [];
     for (let i = 0; i < tryAmount; i++) {
       codes.push({
@@ -74,7 +70,7 @@ export class InviteCodeManager {
   /**
    * 生成随机的邀请码
    */
-  static getRandomInviteCode() {
+  getRandomInviteCode() {
     let randomNumer = Math.random();
     let inviteCodeLong = createHash("sha1")
       .update(randomNumer.toString())
@@ -90,7 +86,7 @@ export class InviteCodeManager {
    * @param createdById 筛选创建者
    * @param expiredLt 筛选过期时间早于...
    */
-  static async remove(code?: string, createdById?: number, expiredLt?: Date) {
+  async remove(code?: string, createdById?: number, expiredLt?: Date) {
     try {
       return await usePrisma.inviteCode.deleteMany({
         where: {
@@ -109,7 +105,7 @@ export class InviteCodeManager {
    * @param code
    * @returns
    */
-  static async test(code: string) {
+  async test(code: string) {
     try {
       const find = await usePrisma.inviteCode.findFirst({
         where: {
@@ -140,7 +136,7 @@ export class InviteCodeManager {
    * @param usedById
    * @returns
    */
-  static async use(code: string, usedById: number) {
+  async use(code: string, usedById: number) {
     try {
       return await usePrisma.inviteCode.update({
         // 查找没有过期的此邀请码
