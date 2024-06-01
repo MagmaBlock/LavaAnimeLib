@@ -1,4 +1,4 @@
-import { Anime, AnimeSiteType, LibFile, Region } from "@prisma/client";
+import { Anime, AnimeInfoSource, LibFile, Region } from "@prisma/client";
 
 /**
  * 挂削器的结果
@@ -59,7 +59,7 @@ export interface NewAnime {
   region: Region;
 
   sites: {
-    siteType: AnimeSiteType;
+    siteType: AnimeInfoSource;
     siteId: string;
   }[];
 }

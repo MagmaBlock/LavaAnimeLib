@@ -93,10 +93,10 @@ model AnimeEpisode {
   id             Int         @id @default(autoincrement())
   episodeDisplay Float // 显示用集数，若是 Bangumi，对应 sort 字段
   episodeIndex   Float       @default(0) // 集数索引，一般用于排序等. 对应 Bangumi ep 字段. 可重复
-  type           EpisodeType @default(Normal) // 本季类型
+  type           EpisodeType @default(Other) // 本季类型
   name           String? // 标题
   originalName   String? // 标题 (原文)
-  summary        String? // 简介
+  summary        String?     @db.Text // 简介
   airDate        String? // 放送日期
   duration       Int? // 时长 (秒)
 
@@ -115,6 +115,7 @@ enum EpisodeType {
   SP
   OP
   ED
+  Other
 }
 
 // 描述一个资源库

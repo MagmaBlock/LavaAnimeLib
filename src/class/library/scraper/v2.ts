@@ -1,4 +1,4 @@
-import { AnimeSiteType, LibFile, Region } from "@prisma/client";
+import { AnimeInfoSource, LibFile, Region } from "@prisma/client";
 import nodePath from "path/posix";
 import type { LibraryTool } from "../interface";
 import { LibraryReader } from "../reader/reader";
@@ -180,7 +180,7 @@ export class LavaAnimeLibV2LibraryScraper implements LibraryScraper {
         if (Number(parseFolder.bgmID) > 0) {
           return [
             {
-              siteType: AnimeSiteType.Bangumi,
+              siteType: AnimeInfoSource.Bangumi,
               siteId: parseFolder.bgmID,
             },
           ];

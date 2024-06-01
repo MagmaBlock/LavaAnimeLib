@@ -3,8 +3,8 @@ import type { LibraryTool } from "../interface";
 import { LibraryScrapeResult } from "./result";
 
 /**
- * 挂削器
- * 本接口定义了一种挂削器，挂削器会按照一定的规范来根据数据库内记录的 LibFile 进行挂削
+ * 资源库挂削器
+ * 本接口定义了一种挂削器，会按照一定的规范来根据数据库内记录的 LibFile 文件记录判断文件属于什么作品
  */
 export interface LibraryScraper {
   libraryTool: LibraryTool;

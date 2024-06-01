@@ -11,5 +11,6 @@ export async function main() {
   const libraryTool = new AlistLibraryTool(library);
   // await libraryTool.getScanner().scan("/");
   const result = await libraryTool.getScraper().scrapeLibrary("/");
-  await AnimeCreator.applyLibraryScraperResult(result);
+  // console.log(JSON.stringify(result));
+  // await AnimeCreator.applyLibraryScraperResult(result);
 }
