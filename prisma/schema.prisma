@@ -105,7 +105,6 @@ model AnimeEpisode {
   source  AnimeInfoSource
 
   files     LibFile[] // m-n, 此集数下的所有文件
-  userViews ViewHistory[]
 
   @@unique([animeId, type, episodeDisplay]) // 同一个动画的相同类型集数不可重复
 }
@@ -278,8 +277,6 @@ model ViewHistory {
   animeId     Int
   file        LibFile       @relation(fields: [libFileId], references: [id])
   libFileId   Int
-  episode     AnimeEpisode? @relation(fields: [episodeId], references: [id])
-  episodeId   Int?
   currentTime Int?
   totalTime   Int?
   userIP      String?
