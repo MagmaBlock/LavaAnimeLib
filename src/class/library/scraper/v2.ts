@@ -201,7 +201,7 @@ export class LavaAnimeLibV2LibraryScraper implements LibraryScraper {
    * 即向后代染色
    * @param path
    */
-  async markAnimeForBlankFiles(path: string) {
+  private async markAnimeForBlankFiles(path: string) {
     const allBlank = await usePrisma.libFile.findMany({
       where: {
         libraryId: this.libraryTool.library.id,
