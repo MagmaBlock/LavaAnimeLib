@@ -1,4 +1,4 @@
-import { Entrance } from "~/src/class/manager";
+import { Entrance } from "~/src/class/entrance";
 
 export default eventHandler(async (event) => {
   let { email, name, password, inviteCode } = await readBody(event);

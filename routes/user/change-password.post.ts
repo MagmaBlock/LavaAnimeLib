@@ -1,6 +1,6 @@
 import { BadRequestError } from "../../src/class/error/error";
 import { assertUser } from "../../utils/auth";
-import { Entrance } from "~/src/class/manager";
+import { Entrance } from "~/src/class/entrance";
 
 export default eventHandler(async (event) => {
   const user = await assertUser(event);
