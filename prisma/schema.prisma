@@ -104,7 +104,7 @@ model AnimeEpisode {
   animeId Int
   source  AnimeInfoSource
 
-  files     LibFile[] // m-n, 此集数下的所有文件
+  files LibFile[] // m-n, 此集数下的所有文件
 
   @@unique([animeId, type, episodeDisplay]) // 同一个动画的相同类型集数不可重复
 }
@@ -167,7 +167,8 @@ enum FileType {
   Image
   Document
   Subtitle
-  CompressedFile
+  Archive
+  Seed
   Other
 }
 
@@ -270,19 +271,19 @@ model Setting {
 }
 
 model ViewHistory {
-  id          Int           @id @default(autoincrement())
-  user        User          @relation(fields: [userId], references: [id])
+  id          Int      @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [id])
   userId      Int
-  anime       Anime         @relation(fields: [animeId], references: [id])
+  anime       Anime    @relation(fields: [animeId], references: [id])
   animeId     Int
-  file        LibFile       @relation(fields: [libFileId], references: [id])
+  file        LibFile  @relation(fields: [libFileId], references: [id])
   libFileId   Int
   currentTime Int?
   totalTime   Int?
   userIP      String?
   watchMethod String?
-  library     Library       @relation(fields: [libraryId], references: [id])
-  libraryId   String        @db.VarChar(32)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  library     Library  @relation(fields: [libraryId], references: [id])
+  libraryId   String   @db.VarChar(32)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

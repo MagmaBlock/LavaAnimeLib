@@ -4,7 +4,7 @@ import {
   NotFoundError,
   ServiceUnavailableError,
 } from "../error/error";
-import { LibFile, Library } from "@prisma/client";
+import { FileType, LibFile, Library } from "@prisma/client";
 import { LibraryTool } from "./interface";
 import { posix as pathPosix } from "path";
 import axios, { AxiosError } from "axios";
@@ -12,6 +12,9 @@ import { LibraryScanner } from "./scanner/scanner";
 import type { LibraryScraper } from "./scraper/interface";
 import { scraperFactory } from "./scraper/interface";
 import { LibraryReader } from "./reader/reader";
+import { supportedExtensions, supportedMimeTypes } from "file-type";
+import { ExtensionType } from "anime-name-tool";
+import { extensionMap } from "./type/type";
 
 /**
  * Alist 操作器实现
@@ -111,13 +114,14 @@ export class AlistLibraryTool implements LibraryTool {
             },
           },
           update: {
-            // TODO: type 的判断
+            type: alistFile.is_dir ? "Other" : this.getFileType(alistFile.name),
             isDirectory: alistFile.is_dir,
             size: alistFile.size, // 只为文件标记尺寸
             removed: false,
             lastFoundAt: new Date(),
           },
           create: {
+            type: alistFile.is_dir ? "Other" : this.getFileType(alistFile.name),
             libraryId: this.library.id,
             path, // 数据库内存储的应是不含存储库前缀的路径
             name: alistFile.name,
@@ -216,6 +220,39 @@ export class AlistLibraryTool implements LibraryTool {
     }
 
     return config;
+  }
+
+  /**
+   * 根据文件名获取文件类型。
+   *
+   * 此方法通过解析文件名的扩展名来确定文件类型。它首先从文件名中提取扩展名，
+   * 然后通过一个预定义的映射表（extensionMap）来查找与扩展名匹配的文件类型。
+   * 如果找不到匹配的类型，则默认返回"Other"。
+   *
+   * @param fileName 文件名，可以包含路径和扩展名。
+   * @returns 文件类型，根据扩展名匹配的结果返回；如果找不到匹配的类型，则返回"Other"。
+   */
+  private getFileType(fileName: string): FileType {
+    // 解析文件名获取扩展名
+    let thisExt = pathPosix.parse(fileName).ext;
+
+    // 如果扩展名不为空
+    if (thisExt !== "") {
+      // 去除扩展名前的点号
+      thisExt = thisExt.slice(1);
+
+      // 遍历extensionMap，寻找匹配的扩展名及其对应的文件类型
+      for (const [reg, extType] of extensionMap.entries()) {
+        // 使用正则表达式测试扩展名是否匹配
+        if (reg.test(thisExt)) {
+          // 如果匹配，返回对应的文件类型
+          return extType[1];
+        }
+      }
+    }
+
+    // 如果没有找到匹配的扩展名，返回"Other"
+    return "Other";
   }
 }
 
