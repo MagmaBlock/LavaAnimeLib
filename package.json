@@ -12,10 +12,11 @@
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
-    "anime-name-tool": "^1.0.1",
+    "anime-name-tool": "^1.0.3",
     "axios": "^1.7.2",
     "chalk": "^5.3.0",
     "dotenv": "^16.4.5",
+    "file-type": "^19.0.0",
     "h3": "^1.11.1",
     "log4js": "^6.9.1",
     "moment": "^2.30.1",
