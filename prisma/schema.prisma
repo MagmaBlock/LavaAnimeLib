@@ -18,13 +18,13 @@ model Anime {
   createdAt    DateTime    @default(now())
 
   // Informations
-  bdrip         Boolean   @default(false)
-  nsfw          Boolean   @default(false)
-  platform      String?
+  bdrip         Boolean       @default(false)
+  nsfw          Boolean       @default(false)
+  platform      AnimePlatform @default(Unknown)
   date          DateTime?
   releaseYear   Int?
   releaseSeason String?
-  region        Region?
+  region        Region        @default(Unknown)
 
   tags         AnimeTag[] // 1-n, 此作品的相关标签
   sites        AnimeSiteLink[] // m-n, 此作品在其他平台的关联
@@ -35,6 +35,15 @@ model Anime {
   userViews    ViewHistory[]
 }
 
+enum AnimePlatform {
+  TV
+  Web
+  OVA
+  Movie
+  Other
+  Unknown
+}
+
 enum Region {
   Japan
   China
@@ -42,6 +51,7 @@ enum Region {
   Europe
   America
   Other
+  Unknown
 }
 
 // 描述作品特点和内容的标签
