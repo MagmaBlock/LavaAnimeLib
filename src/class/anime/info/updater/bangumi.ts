@@ -7,6 +7,7 @@ import {
   BangumiAPISubject,
 } from "../../../api/bangumi";
 import moment from "moment";
+import { remove as removeDiacritics } from "diacritics";
 
 /**
  * 从番组计划获取番剧信息的信息更新器
@@ -185,11 +186,16 @@ export class BangumiAnimeInfoUpdater implements AnimeInfoUpdater {
 
     // name 去重合并，因为 mysql 重复约束是忽略大小写的.
     tags.forEach((tag, index, array) => {
+      if (tag.count === -1) return;
       // 找到相同 name 的 tag
       const equalsTag = tags.find((tagFind, indexFind) => {
         if (index === indexFind) return false;
         if (tagFind.count === -1) return false;
-        if (tag.name.toLowerCase() === tagFind.name.toLowerCase()) return true;
+        if (
+          removeDiacritics(tag.name.toLowerCase()) ===
+          removeDiacritics(tagFind.name.toLowerCase())
+        )
+          return true;
       });
 
       if (equalsTag) {
