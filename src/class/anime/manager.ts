@@ -1,8 +1,8 @@
 import { AnimeInfoSource } from "@prisma/client";
+import { LibFileEpLinker } from "../library/file/episode";
 import { LibraryScrapeResult } from "../library/scraper/result";
-import { AnimeInfoUpdater } from "./info/updater/interface";
-import { BangumiAnimeInfoUpdater } from "./info/updater/bangumi";
 import { AnimeCollectionManager } from "./collection/manager";
+import { BangumiAnimeInfoUpdater } from "./info/updater/bangumi";
 
 /**
  * 用于创建新番和管理番剧文件列表的工具类
@@ -125,6 +125,57 @@ export class AnimeManager {
     logger.info(
       `更新库内所有番剧的第三方站点资料数据完成. (${before.toLocaleString()} 前)`
     );
+  }
+
+  /**
+   * 将 Anime 的 LibFile 与 AnimeEpisode 关联。
+   * 此函数接收一个 Anime id 列表，查询这些动漫的信息及其文件，并尝试将这些文件与相应的剧集关联起来。
+   *
+   * @param animeIdList 动漫ID列表，这些动漫的文件将被关联到剧集。
+   */
+  async linkAnimeFileToEp(animeIdList: number[]) {
+    const animes = await usePrisma.anime.findMany({
+      where: {
+        id: {
+          in: animeIdList,
+        },
+      },
+      include: {
+        files: true,
+      },
+    });
+
+    // 遍历查询到的动漫列表。
+    for (const anime of animes) {
+      // 记录正在处理的动漫ID和名称，用于调试。
+      logger.trace(
+        `关联动画 ${anime.id} ${
+          anime.name ?? anime.originalName
+        } 的文件到集数...`
+      );
+      // 使用 LibFileEpLinker 尝试将动漫的文件与剧集关联。
+      const result = await this.getLibFileEpLinker().connect(anime.files);
+      logger.trace(`成功关联: ${result.totalConnectedCount}`);
+      if (result.videoEpisodeNotFound.length) {
+        logger.fatal(`失败关联的视频(${result.videoEpisodeNotFound.length}):
+      ${result.videoEpisodeNotFound.map((file) => file.name).join(", ")}`);
+      }
+    }
+  }
+
+  /**
+   * 将所有 Anime 的 LibFile 与 AnimeEpisode 关联。
+   */
+  async linkAllAnimeFileToEp() {
+    const allAnimeIds = await usePrisma.anime.findMany({
+      select: { id: true },
+    });
+
+    await this.linkAnimeFileToEp(allAnimeIds.map((anime) => anime.id));
+  }
+
+  private getLibFileEpLinker() {
+    return new LibFileEpLinker();
   }
 
   /**
