@@ -12,9 +12,7 @@ import { LibraryScanner } from "./scanner/scanner";
 import type { LibraryScraper } from "./scraper/interface";
 import { scraperFactory } from "./scraper/interface";
 import { LibraryReader } from "./reader/reader";
-import { supportedExtensions, supportedMimeTypes } from "file-type";
-import { ExtensionType } from "anime-name-tool";
-import { extensionMap } from "./type/type";
+import { extensionMap } from "./file/type/type";
 
 /**
  * Alist 操作器实现
