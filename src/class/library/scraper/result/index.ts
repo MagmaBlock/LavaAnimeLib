@@ -1,4 +1,10 @@
-import { Anime, AnimeInfoSource, LibFile, Region } from "@prisma/client";
+import {
+  Anime,
+  AnimeInfoSource,
+  AnimePlatform,
+  LibFile,
+  Region,
+} from "@prisma/client";
 
 /**
  * 挂削器的结果
@@ -52,11 +58,11 @@ export interface NewAnime {
   originalName?: string;
   bdrip: boolean;
   nsfw: boolean;
-  platform?: string;
+  platform?: AnimePlatform;
   date?: Date;
   releaseYear?: number;
   releaseSeason?: string;
-  region: Region;
+  region?: Region;
 
   sites: {
     siteType: AnimeInfoSource;

@@ -1,4 +1,9 @@
-import { AnimeInfoSource, EpisodeType } from "@prisma/client";
+import {
+  AnimeInfoSource,
+  AnimePlatform,
+  EpisodeType,
+  Prisma,
+} from "@prisma/client";
 import { AnimeInfoUpdater } from "./interface";
 import {
   BangumiAPI,
@@ -144,6 +149,12 @@ export class BangumiAnimeInfoUpdater implements AnimeInfoUpdater {
     animeId: number,
     bangumiSubject: BangumiAPISubject
   ) {
+    let platform: AnimePlatform = "Other";
+    if (bangumiSubject.platform === "TV") platform = "TV";
+    else if (bangumiSubject.platform === "剧场版") platform = "Movie";
+    else if (bangumiSubject.platform === "OVA") platform = "OVA";
+    else if (bangumiSubject.platform === "WEB") platform = "Web";
+
     await usePrisma.anime.update({
       where: {
         id: animeId,
@@ -151,7 +162,7 @@ export class BangumiAnimeInfoUpdater implements AnimeInfoUpdater {
       data: {
         originalName: bangumiSubject.name,
         summary: bangumiSubject.summary,
-        platform: bangumiSubject.platform,
+        platform,
         date: moment(bangumiSubject.date).toDate(),
       },
     });
@@ -209,11 +220,10 @@ export class BangumiAnimeInfoUpdater implements AnimeInfoUpdater {
       return tag.count !== -1;
     });
 
-    // logger.debug(tags);
-
     // 添加新的 Banugmi 标签
     await usePrisma.animeTag.createMany({
       data: tags,
+      skipDuplicates: true,
     });
 
     logger.trace(`从 Bangumi 更新了番剧 ${animeId} 的最新标签.`);
