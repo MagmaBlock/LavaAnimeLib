@@ -5,10 +5,11 @@
   "type": "module",
   "main": "index.ts",
   "scripts": {
-    "prepare": "nitropack prepare",
+    "prepare": "nitropack prepare && prisma generate",
     "dev": "nitropack dev",
     "build": "nitropack build",
-    "preview": "node .output/server/index.mjs"
+    "preview": "node .output/server/index.mjs",
+    "prisma studio": "prisma studio"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
