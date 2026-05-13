@@ -1,4 +1,6 @@
 .vscode/
 node_modules/
+dist/
 common/config.js
+common/config.ts
 .env

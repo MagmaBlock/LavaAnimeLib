@@ -9,13 +9,13 @@ export async function updatePosters() {
     [allBgmIDInAnime]
   );
   allSubjectsData = allSubjectsData[0];
-  let newArray = {};
+  let newArray: Record<string, any> = {};
   for (let i in allSubjectsData) {
     newArray[allSubjectsData[i].bgmid] = JSON.parse(
       allSubjectsData[i].subjects
     );
   }
-  allSubjectsData = newArray;
+  allSubjectsData = newArray as any;
 
   for (let i in allBgmIDInAnime) {
     try {

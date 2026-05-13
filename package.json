@@ -2,12 +2,14 @@
   "name": "lavaanime",
   "version": "2.0.0",
   "description": "熔岩番剧库后端",
-  "main": "main.js",
+  "main": "dist/main.js",
   "type": "module",
   "scripts": {
-    "start": "node main.js",
-    "dev": "nodemon main.js",
-    "sync": "node ./tasks/v2/main.js",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/main.js",
+    "dev": "tsx watch main.ts",
+    "sync": "tsx ./tasks/v2/main.ts",
     "update": "git pull"
   },
   "repository": {
@@ -31,6 +33,12 @@
     "singleQuote": false
   },
   "devDependencies": {
-    "nodemon": "^3.1.9"
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/lodash": "^4.17.24",
+    "@types/node": "^25.7.0",
+    "nodemon": "^3.1.9",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
   }
 }

@@ -43,7 +43,7 @@ export async function reportViewHistoryAPI(req, res) {
     return serverError(res);
   }
 
-  return success(res);
+  return success(res, undefined);
 }
 
 // /v2/anime/history/my

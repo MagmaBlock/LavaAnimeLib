@@ -19,10 +19,10 @@ export async function editAnimeFollowAPI(req, res) {
       );
     } catch (error) {
       console.error(error);
-      return serverError(error);
+      return serverError(res);
     }
 
-    return success(res);
+    return success(res, undefined);
     // end
   }
 
@@ -55,7 +55,7 @@ export async function editAnimeFollowAPI(req, res) {
       return serverError(res);
     }
 
-    return success(res);
+    return success(res, undefined);
   }
 
   wrongQuery(res, "请求了修改追番 API 但什么也没修改, 请检查参数是否正确");

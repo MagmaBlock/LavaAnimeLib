@@ -55,7 +55,7 @@ export async function testInviteCode(inviteCode) {
 
 // 使用邀请码
 export async function useInviteCode(inviteCode, user) {
-  if ((!inviteCode, !user)) throw "参数缺失";
+  if (!inviteCode || !user) throw "参数缺失";
 
   await promiseDB.query(
     `UPDATE invite_code

@@ -1,5 +1,6 @@
 import cookieParser from "cookie-parser";
 import express from "express";
+import type { AddressInfo } from "net";
 
 import config from "./common/config.js";
 import { logger } from "./common/tools/logger.js";
@@ -30,11 +31,11 @@ app.use(router);
 
 // 启动服务器
 const server = app.listen(8090, () => {
+  const address = server.address() as AddressInfo;
   logger(
     "服务器已在",
-    server.address().address + ":" + server.address().port,
+    address.address + ":" + address.port,
     "上启动."
   );
 });
-
 

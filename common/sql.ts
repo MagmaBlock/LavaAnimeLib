@@ -5,7 +5,6 @@
 import mysql from "mysql2";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
 import config from "./config.js";
 import { logger } from "./tools/logger.js";
 
@@ -35,8 +34,7 @@ async function initDatabase() {
     await initConn.promise().query(`USE \`${database}\``);
 
     // 读取并执行建表 SQL
-    const __dirname = path.dirname(fileURLToPath(import.meta.url));
-    const sqlPath = path.resolve(__dirname, "../sql/init.sql");
+    const sqlPath = path.resolve(process.cwd(), "sql/init.sql");
     const sqlContent = fs.readFileSync(sqlPath, "utf-8");
 
     // 先去掉注释行，再按分号拆分
@@ -56,7 +54,10 @@ async function initDatabase() {
 
     logger("数据库表初始化完成");
   } catch (error) {
-    console.error("数据库初始化失败:", error.message);
+    console.error(
+      "数据库初始化失败:",
+      error instanceof Error ? error.message : error
+    );
   } finally {
     await initConn.end();
   }

@@ -13,7 +13,7 @@ export async function searchAnimes(value) {
   }
   query = query + "deleted = 0 ORDER BY views DESC";
 
-  let searchResults = await promiseDB.query(query, splitedValue);
+  let searchResults: any = await promiseDB.query(query, splitedValue);
   searchResults = await animeParser(searchResults[0]);
 
   return searchResults;
@@ -39,7 +39,7 @@ export async function quickSearch(value) {
   }
   // 删除过多的数据 (如果有)
   for (let i in quickSearch) {
-    if (i >= 10) quickSearch[i] = "";
+    if (Number(i) >= 10) quickSearch[i] = "";
   }
   quickSearch = _.compact(quickSearch);
   return quickSearch;

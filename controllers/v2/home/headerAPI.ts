@@ -45,7 +45,7 @@ export async function updateHeaderAPI(req, res) {
       ]);
     }
 
-    success(res);
+    success(res, undefined);
   } catch (error) {
     console.error(error);
     return serverError(res);

@@ -71,7 +71,7 @@ export async function userRegisterAPI(req, res) {
       `INSERT INTO user (email, password, \`name\`) VALUES (?, ?, ?)`,
       [email, saltyPassword, name]
     );
-    if (registerResult.affectedRows != 0) {
+    if (registerResult[0].affectedRows != 0) {
       success(res, undefined, "注册成功");
     } else {
       serverError(res, "服务器错误，注册失败");

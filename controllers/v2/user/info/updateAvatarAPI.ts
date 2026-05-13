@@ -29,5 +29,5 @@ export async function updateAvatarAPI(req, res) {
   } catch (error) {
     serverError(res);
   }
-  success(res);
+  success(res, undefined);
 }

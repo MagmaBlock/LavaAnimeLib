@@ -3,7 +3,7 @@ import config from "./config.js";
 import { getDefaultDrive, getDrive } from "../controllers/v2/drive/main.js";
 
 export const AlistAPI = axios.create({
-  baseURL: getDrive(getDefaultDrive()).host,
+  baseURL: getDrive(getDefaultDrive())?.host,
 });
 
 export const bangumiAPI = axios.create({

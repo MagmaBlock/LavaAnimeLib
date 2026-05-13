@@ -19,7 +19,7 @@ export async function updatePermissionAPI(req, res) {
 
   try {
     await updateUserData({ permission }, userID);
-    success(res);
+    success(res, undefined);
   } catch (error) {
     return serverError(res);
   }

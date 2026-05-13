@@ -53,7 +53,7 @@ export async function setSiteSetting(req, res) {
       [key, JSON.stringify(value), JSON.stringify(value)]
     );
 
-    return success(res);
+    return success(res, undefined);
   } catch (error) {
     console.error(error);
     return serverError(res);

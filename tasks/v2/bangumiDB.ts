@@ -25,7 +25,7 @@ export async function findExpiredBangumiData() {
 
 function isExpired(ts) {
   // 过期查验
-  let cachedTime = new Date() - ts; // 用现在时间减去给定时间
+  let cachedTime = new Date().getTime() - new Date(ts).getTime(); // 用现在时间减去给定时间
   if (cachedTime > 1000 * 60 * 60 * 24 * config.cache) return true;
   else return false;
 }
@@ -61,17 +61,16 @@ export async function insertBgmIDToDB(bgmID) {
         将会在数据也获取完成并且插入后返回 resolve, 比较耗时
     */
 
-  let isExist = await promiseDB.query(
+  let [isExist] = await promiseDB.query(
     "SELECT bgmid FROM bangumi_data WHERE bgmid = ?",
     [bgmID]
   );
-  isExist = isExist[0];
   if (isExist.length == 0) {
     await promiseDB.query("INSERT INTO bangumi_data (`bgmid`) VALUES (?)", [
       bgmID,
     ]);
     console.log(`[Bangumi Data] 插入 bgm${bgmID} 到 Bangumi Data`);
-    await updateBangumiData(bgmID);
+    await updateBangumiData(bgmID, undefined);
   }
 }
 
@@ -81,11 +80,10 @@ export async function insertBgmIDBlankToDB(bgmID) {
         会将时间戳插入为数年前，以保证其一定过期
     */
 
-  let isExist = await promiseDB.query(
+  let [isExist] = await promiseDB.query(
     "SELECT bgmid FROM bangumi_data WHERE bgmid = ?",
     [bgmID]
   );
-  isExist = isExist[0];
   if (isExist.length == 0) {
     await promiseDB.query(
       "INSERT INTO bangumi_data (`bgmid`,update_time) VALUES (?,?)",

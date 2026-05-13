@@ -16,6 +16,25 @@
 * mysql2
 * Axios
 * lodash
+* TypeScript
+
+## 开发与部署
+
+本项目源码使用 TypeScript。开发环境可直接运行：
+
+```bash
+npm run dev
+```
+
+生产环境需要先编译：
+
+```bash
+npm install
+npm run build
+npm start
+```
+
+`npm start` 会运行编译后的 `dist/main.js`。本地配置文件为 `common/config.ts`，可从 `common/configTemplate.ts` 复制生成。
 
 # 其他
 本程序并未链接到任何资源服务，若您需要使用，请自行搭建 AList 服务并按照相应的目录结构搭建您的存储并接入。

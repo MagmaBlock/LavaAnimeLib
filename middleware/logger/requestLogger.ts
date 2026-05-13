@@ -17,7 +17,7 @@ export function requestLogger(req, res, next) {
       chalk.bgGreenBright(" " + req.method + " "),
       decodeURIComponent(req.originalUrl),
       chalk.dim(ref),
-      chalk.dim(new Date() - req.queryStart, "ms")
+      chalk.dim(new Date().getTime() - req.queryStart.getTime(), "ms")
     );
   });
 

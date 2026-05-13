@@ -20,7 +20,7 @@ export async function deleteCodesAPI(req, res) {
     return serverError(res);
   }
 
-  success(res);
+  success(res, undefined);
 }
 
 /**

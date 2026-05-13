@@ -13,7 +13,7 @@ import {
 } from "./bangumiDB.js";
 import { logger } from "../../common/tools/logger.js";
 
-let reTry = {};
+let reTry: Record<string, number> = {};
 
 export async function updateAllBangumiData() {
   // 根据缓存情况更新全部库内数据
@@ -57,7 +57,11 @@ export async function updateBangumiData(bgmID, bgmIDListInAnimeTable) {
   if (!bgmIDListInAnimeTable)
     bgmIDListInAnimeTable = await getAllBgmIDInAnimeTable();
 
-  let thisSubject = {};
+  let thisSubject: {
+    subject?: unknown;
+    relations?: unknown;
+    characters?: unknown;
+  } = {};
   try {
     thisSubject.subject = await getBangumiSubjects(bgmID);
     thisSubject.relations = await getBangumiRelations(

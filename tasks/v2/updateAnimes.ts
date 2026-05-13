@@ -34,15 +34,15 @@ export default async function updateAnimes() {
         let isNew = await isNewInDB(thisYear, thisType, thisAnime);
         let isDeleted = await isDeletedInDB(thisYear, thisType, thisAnime);
 
-        if ((isNew, !isDeleted)) {
+        if (isNew && !isDeleted) {
           // 如果是新资源 (并未在 DB 中 deleted)
           insertAnimeToDB(thisYear, thisType, thisAnime);
-          logger(`[番剧更新] 新入库 ${(thisYear, thisType, thisAnime)}`);
+          logger(`[番剧更新] 新入库 ${thisYear} ${thisType} ${thisAnime}`);
         }
-        if ((!isNew, isDeleted)) {
+        if (!isNew && isDeleted) {
           // 被删除的资源 (在 DB 中被 deleted)
           changeDelete(thisYear, thisType, thisAnime, false);
-          logger(`[番剧更新] 移除删除标记 ${(thisYear, thisType, thisAnime)}`);
+          logger(`[番剧更新] 移除删除标记 ${thisYear} ${thisType} ${thisAnime}`);
         }
         allNewAnimes.push({ year: thisYear, type: thisType, name: thisAnime }); // 新增番剧加入本次刷新新增记录
       }
@@ -55,7 +55,7 @@ export default async function updateAnimes() {
         changeDelete(thisYear, thisType, thisAnime, true);
         logger(
           `[番剧更新] 发现番剧被删除! 增加删除标记 ${
-            (thisYear, thisType, thisAnime)
+            `${thisYear} ${thisType} ${thisAnime}`
           }`
         );
         allDeletedAnimes.push({
@@ -138,25 +138,25 @@ async function getThisTypeDB(year, type) {
 async function isNewInDB(year, type, name) {
   // 从数据库查询此番剧是否已经存在
 
-  let isNew = await promiseDB.query(
+  let [isNew] = await promiseDB.query(
     "SELECT * FROM anime WHERE `year` LIKE ? AND `type` LIKE ? AND `name` LIKE ?",
     [year, type, name]
   );
-  isNew = isNew[0];
   if (isNew.length == 0) return true; // 如果数据库内找不到此动画为真
   if (isNew.length !== 0) return false; // 如果找到此动画为假（也可能是在数据库中被标记为 deleted 的资源）
+  return false;
 }
 
 async function isDeletedInDB(year, type, name) {
   // 从数据库查询此番剧是否被标记为删除
 
-  let isDeleted = await promiseDB.query(
+  let [isDeleted] = await promiseDB.query(
     "SELECT * FROM anime WHERE `year` LIKE ? AND `type` LIKE ? AND `name` LIKE ? AND deleted = 1",
     [year, type, name]
   );
-  isDeleted = isDeleted[0];
   if (isDeleted.length !== 0) return true; // 如果数据库找到被删除的此动画为真
   if (isDeleted.length == 0) return false; // 如果数据库找不到已经被删除的此动画为假
+  return false;
 }
 
 async function insertAnimeToDB(year, type, name) {
@@ -181,5 +181,3 @@ async function changeDelete(year, type, name, deleted) {
     [deleted, year, type, name]
   );
 }
-
-

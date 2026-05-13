@@ -23,8 +23,9 @@ export async function reportUploadMessageAPI(req, res) {
   );
   let possibleAnime = animeRows[0] || null;
 
-  let bangumiID = trueIndex.slice(-1)[0].match(/(?<= )\d{1,6}$/);
-  let parseBangumiID = Number.parseInt(bangumiID?.[0]);
+  let bangumiID: number | string | null =
+    trueIndex.slice(-1)[0].match(/(?<= )\d{1,6}$/)?.[0] ?? null;
+  let parseBangumiID = Number.parseInt(bangumiID ?? "");
   if (!isNaN(parseBangumiID)) {
     bangumiID = parseBangumiID;
   }
@@ -45,5 +46,5 @@ export async function reportUploadMessageAPI(req, res) {
     [trueIndex.join("/"), possibleAnime?.id ?? null, bangumiID, fileName]
   );
 
-  success(res);
+  success(res, undefined);
 }

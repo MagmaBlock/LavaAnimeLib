@@ -14,7 +14,7 @@ export async function userLogoutAPI(req, res) {
   try {
     let logout = await removeToken(token, all);
     if (logout) {
-      success(res);
+      success(res, undefined);
     } else {
       return unauthorized(res);
     }

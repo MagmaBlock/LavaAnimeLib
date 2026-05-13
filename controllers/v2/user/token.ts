@@ -10,7 +10,7 @@ export function createToken() {
   let createTime = new Date();
 
   let tokenRaw =
-    createTime *
+    createTime.getTime() *
     Math.floor(Math.random() * 1000) *
     Math.floor(Math.random() * 1000);
   let token = createHash("sha256")
