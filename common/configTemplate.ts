@@ -1,5 +1,5 @@
 export default {
-  // MySQL 相关配置
+  // MariaDB 相关配置
   mysql: {
     host: "localhost",
     port: 3306,
