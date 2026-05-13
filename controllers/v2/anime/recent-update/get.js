@@ -1,5 +1,5 @@
 import parseFileName from "anime-file-parser";
-import { prisma } from "../../../../prisma/client.js";
+import { promiseDB } from "../../../../common/sql.js";
 import { animeParser } from "../../parser/animeParser.js";
 import success from "../../response/2xx/success.js";
 import wrongQuery from "../../response/4xx/wrongQuery.js";
@@ -17,16 +17,49 @@ export async function getRecentUpdatesAPI(req, res) {
     return wrongQuery(res);
   }
 
-  let recentUpdates = await prisma.upload_message.findMany({
-    skip,
-    take,
-    where: ignoreDuplicate
-      ? {
-          messageSkiped: false,
-        }
-      : {},
-    include: { anime: true },
-    orderBy: { uploadTime: "desc" },
+  let whereClause = "";
+  let params = [];
+
+  if (ignoreDuplicate) {
+    whereClause = "WHERE um.messageSkiped = false";
+  }
+
+  const [rows] = await promiseDB.query(
+    `SELECT um.*, a.id AS a_id, a.year AS a_year, a.type AS a_type, a.name AS a_name, a.views AS a_views, a.bgmid AS a_bgmid, a.nsfw AS a_nsfw, a.title AS a_title, a.deleted AS a_deleted, a.poster AS a_poster
+     FROM upload_message um
+     LEFT JOIN anime a ON um.animeID = a.id
+     ${whereClause}
+     ORDER BY um.uploadTime DESC
+     LIMIT ?, ?`,
+    [...params, skip, take]
+  );
+
+  let recentUpdates = rows.map((row) => {
+    let record = {
+      id: row.id,
+      index: row.index,
+      animeID: row.animeID,
+      bangumiID: row.bangumiID,
+      fileName: row.fileName,
+      messageSentStatus: row.messageSentStatus,
+      messageSkiped: row.messageSkiped,
+      uploadTime: row.uploadTime,
+      anime: row.a_id
+        ? {
+            id: row.a_id,
+            year: row.a_year,
+            type: row.a_type,
+            name: row.a_name,
+            views: row.a_views,
+            bgmid: row.a_bgmid,
+            nsfw: row.a_nsfw,
+            title: row.a_title,
+            deleted: row.a_deleted,
+            poster: row.a_poster,
+          }
+        : null,
+    };
+    return record;
   });
 
   for (let record of recentUpdates) {

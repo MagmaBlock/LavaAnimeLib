@@ -17,7 +17,6 @@
   "author": "MagmaBlock",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^5.4.2",
     "aniep": "^0.6.0",
     "anime-file-parser": "^1.0.9",
     "axios": "^1.13.2",
@@ -33,7 +32,6 @@
     "singleQuote": false
   },
   "devDependencies": {
-    "nodemon": "^3.1.9",
-    "prisma": "^5.4.2"
+    "nodemon": "^3.1.9"
   }
 }

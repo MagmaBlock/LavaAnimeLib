@@ -2,7 +2,7 @@ import parseFileName from "anime-file-parser";
 import dayjs from "dayjs";
 import config from "../../../common/config.js";
 import { sendMessageToAllTarget } from "../../../common/onebot.js";
-import { prisma } from "../../../prisma/client.js";
+import { promiseDB } from "../../../common/sql.js";
 
 /**
  * 检查 upload_message 表中未处理完成的上报消息，并尝试处理
@@ -10,15 +10,10 @@ import { prisma } from "../../../prisma/client.js";
 export async function processPendingUploadMessage() {
   await markPendingMessageSkip();
 
-  const pendingUploadMessages = await prisma.upload_message.findMany({
-    where: {
-      messageSentStatus: false,
-      messageSkiped: false,
-      uploadTime: {
-        gte: dayjs().subtract(1, "days"),
-      },
-    },
-  });
+  const [pendingUploadMessages] = await promiseDB.query(
+    "SELECT * FROM upload_message WHERE messageSentStatus = 0 AND messageSkiped = 0 AND uploadTime >= ?",
+    [dayjs().subtract(1, "days").toDate()]
+  );
 
   if (pendingUploadMessages.length === 0) return;
 
@@ -31,16 +26,10 @@ export async function processPendingUploadMessage() {
     return;
   }
 
-  await prisma.upload_message.updateMany({
-    where: {
-      id: {
-        in: pendingUploadMessages.map((msg) => msg.id),
-      },
-    },
-    data: {
-      messageSentStatus: true,
-    },
-  });
+  await promiseDB.query(
+    `UPDATE upload_message SET messageSentStatus = 1 WHERE id IN (${pendingUploadMessages.map(() => "?").join(",")})`,
+    pendingUploadMessages.map((msg) => msg.id)
+  );
 }
 
 /**
@@ -49,27 +38,17 @@ export async function processPendingUploadMessage() {
  */
 async function markPendingMessageSkip() {
   // 未处理的消息
-  const pendingUploadMessages = await prisma.upload_message.findMany({
-    where: {
-      messageSentStatus: false,
-      messageSkiped: false,
-    },
-    orderBy: {
-      uploadTime: "desc",
-    },
-  });
+  const [pendingUploadMessages] = await promiseDB.query(
+    "SELECT * FROM upload_message WHERE messageSentStatus = 0 AND messageSkiped = 0 ORDER BY uploadTime DESC"
+  );
 
   for (const pendingUploadMessage of pendingUploadMessages) {
     // 如果这个集数不是第一次更新了，则跳过
     if (await checkEpisodeHasSent(pendingUploadMessage)) {
-      await prisma.upload_message.update({
-        data: {
-          messageSkiped: true,
-        },
-        where: {
-          id: pendingUploadMessage.id,
-        },
-      });
+      await promiseDB.query(
+        "UPDATE upload_message SET messageSkiped = 1 WHERE id = ?",
+        [pendingUploadMessage.id]
+      );
     }
 
     // 如果某一集有两个待发送群消息的记录，则跳过较早的
@@ -78,14 +57,10 @@ async function markPendingMessageSkip() {
     );
     // 删除多余的消息
     for (const duplicatedMessage of duplicatedMessages) {
-      await prisma.upload_message.update({
-        where: {
-          id: duplicatedMessage.id,
-        },
-        data: {
-          messageSkiped: true,
-        },
-      });
+      await promiseDB.query(
+        "UPDATE upload_message SET messageSkiped = 1 WHERE id = ?",
+        [duplicatedMessage.id]
+      );
     }
   }
 }
@@ -111,15 +86,10 @@ async function checkEpisodeHasSent(message) {
   if (!episode) return false;
 
   // 查询此番剧所有已经发送过群消息的更新记录
-  const allThisAnime = await prisma.upload_message.findMany({
-    where: {
-      animeID: message.animeID,
-      fileName: {
-        not: null,
-      },
-      messageSentStatus: true,
-    },
-  });
+  const [allThisAnime] = await promiseDB.query(
+    "SELECT * FROM upload_message WHERE animeID = ? AND fileName IS NOT NULL AND messageSentStatus = 1",
+    [message.animeID]
+  );
 
   // 寻找曾经发送此集数的记录
   const episodeHasSentMessage = allThisAnime.find((oldMessage) => {
@@ -162,16 +132,10 @@ async function findEpisodeDuplicatedPendingMessage(message) {
   const episode = parseFileName(message.fileName)?.episode;
   if (!episode) return [];
 
-  const allThisAnimeMessage = await prisma.upload_message.findMany({
-    where: {
-      animeID: message.animeID,
-      fileName: {
-        not: null,
-      },
-      messageSentStatus: false,
-      messageSkiped: false,
-    },
-  });
+  const [allThisAnimeMessage] = await promiseDB.query(
+    "SELECT * FROM upload_message WHERE animeID = ? AND fileName IS NOT NULL AND messageSentStatus = 0 AND messageSkiped = 0",
+    [message.animeID]
+  );
 
   const episodeDuplicatedPendingMessage = allThisAnimeMessage
     .filter((msg) => msg.id != message.id) // 排除自己
@@ -222,9 +186,14 @@ async function buildSuccessMessageChain(pedingMessages) {
       else return "🎬 未知集数";
     })();
 
-    const anime = pedingMessage.animeID
-      ? await prisma.anime.findFirst({ where: { id: pedingMessage.animeID } })
-      : null;
+    let anime = null;
+    if (pedingMessage.animeID) {
+      const [animeRows] = await promiseDB.query(
+        "SELECT * FROM anime WHERE id = ? LIMIT 1",
+        [pedingMessage.animeID]
+      );
+      anime = animeRows[0] || null;
+    }
 
     const maybeIndex = (() => {
       if (anime) {
@@ -242,11 +211,14 @@ async function buildSuccessMessageChain(pedingMessages) {
       };
     })();
 
-    const bangumiData = pedingMessage.bangumiID
-      ? await prisma.bangumi_data.findFirst({
-          where: { bgmid: pedingMessage.bangumiID },
-        })
-      : null;
+    let bangumiData = null;
+    if (pedingMessage.bangumiID) {
+      const [bgmRows] = await promiseDB.query(
+        "SELECT * FROM bangumi_data WHERE bgmid = ? LIMIT 1",
+        [pedingMessage.bangumiID]
+      );
+      bangumiData = bgmRows[0] || null;
+    }
 
     const posterUrl = (() => {
       const subject = bangumiData?.subjects
