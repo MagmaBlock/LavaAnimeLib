@@ -11,8 +11,6 @@ import {
 import configHeaders from "./middleware/preprocess/headers.js";
 import { refererChecker } from "./middleware/preprocess/refererChecker.js";
 import router from "./routes/v2/router.js";
-import cron from "node-cron";
-import { processPendingUploadMessage } from "./controllers/v2/report/processer.js";
 
 // 创建 app
 const app = express();
@@ -39,7 +37,4 @@ const server = app.listen(8090, () => {
   );
 });
 
-// 新番更新群消息定时任务, 每三分钟执行一次
-cron.schedule("*/3 * * * *", () => {
-  processPendingUploadMessage();
-});
+

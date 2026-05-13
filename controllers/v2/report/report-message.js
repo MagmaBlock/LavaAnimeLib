@@ -4,7 +4,7 @@ import success from "../response/2xx/success.js";
 import wrongQuery from "../response/4xx/wrongQuery.js";
 
 /**
- * 此 API 接收下载机的更新上报，然后将信息加入消息队列
+ * 此 API 接收下载机的更新上报，并记录到最近更新列表。
  */
 export async function reportUploadMessageAPI(req, res) {
   let { index, fileName } = req.body;

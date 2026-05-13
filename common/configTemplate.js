@@ -34,37 +34,6 @@ export default {
   bangumiImage: {
     host: "https://lain.bgm.tv/",
   },
-  // Mirai 相关配置
-  // 用于发送 QQ 消息提示 (新番入库)
-  mirai: {
-    baseConfig: {
-      qqID: 1234568789,
-      target: {
-        group: [123456789],
-        friend: [],
-      },
-      enableVerify: true,
-      verifyKey: "ThisIsYourMiraiVerifyKey",
-    },
-    adapterSettings: {
-      http: {
-        baseURL: "https://url-access-your-mirai-api.com",
-      },
-    },
-  },
-  // OneBot 设置
-  // 用于发送 QQ 消息提示 (新番入库)
-  oneBot: {
-    target: {
-      group: [123456789],
-    },
-    accessToken: "ThisIsYourOneBotAccessToken",
-    adapterSettings: {
-      http: {
-        baseURL: "https://onebot-api.com",
-      },
-    },
-  },
   // 缓存天数，管理 Bangumi Data 数据会被缓存多少天后刷新
   cache: 3,
   security: {

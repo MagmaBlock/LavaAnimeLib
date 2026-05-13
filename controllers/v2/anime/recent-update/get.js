@@ -21,6 +21,7 @@ export async function getRecentUpdatesAPI(req, res) {
   let params = [];
 
   if (ignoreDuplicate) {
+    // messageSkiped 是旧通知队列留下的字段；当前仅兼容历史数据的重复过滤。
     whereClause = "WHERE um.messageSkiped = false";
   }
 

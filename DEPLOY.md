@@ -33,7 +33,7 @@ mysql: {
 },
 ```
 
-> 配置中的 `drive`（AList 存储）、`bangumi`（番组计划 API）、`oneBot`（QQ 机器人）等可后续再配，不影响数据库初始化测试。
+> 配置中的 `drive`（AList 存储）、`bangumi`（番组计划 API）等可后续再配，不影响数据库初始化测试。
 
 ## 4. 启动 & 验证自动建表
 

@@ -27,7 +27,6 @@ import {
 } from "../../controllers/v2/home/headerAPI.js";
 import getIndexInfo from "../../controllers/v2/index/info.js";
 import queryAnimeByIndex from "../../controllers/v2/index/query.js";
-import { sendMiraiMessageAPI } from "../../controllers/v2/notifier/api.js";
 import { reportUploadMessageAPI } from "../../controllers/v2/report/report-message.js";
 import {
   quickSearchAPI,
@@ -141,12 +140,6 @@ router.post("/v2/admin/invite/delete-codes", [adminRequire, deleteCodesAPI]);
 
 router.get("/v2/site/setting/get", getSiteSetting); // 获取站点某一配置
 router.post("/v2/site/setting/set", [loginRequire, setSiteSetting]); // 设定站点某一配置
-
-/**
- * notifier 通知相关
- */
-
-router.post("/v2/notifier/message", sendMiraiMessageAPI);
 
 /**
  * report 上报数据相关

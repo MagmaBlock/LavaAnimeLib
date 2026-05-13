@@ -4,9 +4,6 @@ import { logger } from "../../common/tools/logger.js";
 import { getDefaultDrive, getDrive } from "../../controllers/v2/drive/main.js";
 import alistGetter from "./tools/alistGetter.js";
 import { repairBangumiDataID } from "./updateBangumiData.js";
-import {
-  sendMessageToAllTarget
-} from "../../common/onebot.js";
 
 export default async function updateAnimes() {
   // 用于存储本次入库和删除的的番剧列表
@@ -74,13 +71,6 @@ export default async function updateAnimes() {
   logger("[番剧更新] 发现的 Alist 新番剧: ", allNewAnimes);
   logger("[番剧更新] 发现的 Alist 被删除的番剧: ", allDeletedAnimes);
 
-  if (allNewAnimes.length) {
-    let message = createMessage(allNewAnimes);
-    let result = sendMessageToAllTarget(message);
-    logger("[番剧更新] 发送了 QQ 群消息.");
-    logger(message);
-    logger("结果:", result);
-  }
 }
 
 async function getYears() {
@@ -192,46 +182,4 @@ async function changeDelete(year, type, name, deleted) {
   );
 }
 
-// 传入新入库番剧列表，返回消息
-function createMessage(allNewAnimes) {
-  return `【发现新作品收录 / 计划】(自动发送)
-——————
-${allNewAnimes
-  .map((anime) => {
-    return `${anime.year}${anime.type} - ${anime.name}`;
-  })
-  .join("\n")}
-——————
-新收录 / 计划以上 ${allNewAnimes.length} 部作品`;
 
-  let message = [
-    {
-      type: "Plain",
-      text: "【发现新作品收录 / 计划】(自动发送)\n",
-    },
-    {
-      type: "Plain",
-      text: "——————\n",
-    },
-  ];
-
-  allNewAnimes.forEach((anime) => {
-    message.push({
-      type: "Plain",
-      text: `${anime.year}${anime.type} - ${anime.name}\n`,
-    });
-  });
-
-  message.push(
-    {
-      type: "Plain",
-      text: "——————\n",
-    },
-    {
-      type: "Plain",
-      text: `新收录 / 计划以上 ${allNewAnimes.length} 部作品\n`,
-    }
-  );
-
-  return message;
-}
