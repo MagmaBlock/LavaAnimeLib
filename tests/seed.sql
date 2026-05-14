@@ -15,12 +15,15 @@ VALUES ('TESTCODE001', 1, NULL),
 REPLACE INTO `invite_code` (`code`, `code_creator`, `code_user`, `use_time`, `expiration_time`)
 VALUES ('USEDCODE001', 1, 999, NOW(), NULL);
 
--- 测试 Bangumi 数据
-REPLACE INTO `bangumi_data` (`bgmid`, `subjects`, `update_time`)
-VALUES (123456, '{"title":"测试番剧A","name_cn":"测试番剧A"}', NOW());
+-- 测试 Bangumi 数据（subjects 需包含 images 字段，与 Bangumi API 响应格式一致）
+REPLACE INTO `bangumi_data` (`bgmid`, `relations_anime`, `subjects`, `characters`, `update_time`)
+VALUES (123456, '[]', '{"title":"测试番剧A","name_cn":"测试番剧A","images":{"large":"https://example.com/large.jpg","common":"https://example.com/common.jpg","medium":"https://example.com/medium.jpg","small":"https://example.com/small.jpg","grid":"https://example.com/grid.jpg"}}', '[]', NOW());
 
 REPLACE INTO `bangumi_data` (`bgmid`, `relations_anime`, `subjects`, `characters`, `update_time`)
-VALUES (234567, '[]', '{"title":"Test Anime B","name_cn":"测试番剧B"}', '[]', NOW());
+VALUES (234567, '[]', '{"title":"Test Anime B","name_cn":"测试番剧B","images":{"large":"https://example.com/large_b.jpg","common":"https://example.com/common_b.jpg","medium":"https://example.com/medium_b.jpg","small":"https://example.com/small_b.jpg","grid":"https://example.com/grid_b.jpg"}}', '[]', NOW());
+
+REPLACE INTO `bangumi_data` (`bgmid`, `relations_anime`, `subjects`, `characters`, `update_time`)
+VALUES (345678, '[]', '{"title":"Test Anime C","name_cn":"测试番剧C","images":{"large":"https://example.com/large_c.jpg","common":"https://example.com/common_c.jpg","medium":"https://example.com/medium_c.jpg","small":"https://example.com/small_c.jpg","grid":"https://example.com/grid_c.jpg"}}', '[]', NOW());
 
 -- 测试站点设置
 REPLACE INTO `settings` (`key`, `value`)
