@@ -11,15 +11,6 @@ import { promiseDB } from "../common/database/connection.js";
 import cache from "../common/cache.js";
 
 beforeAll(async () => {
-  // 清空旧数据避免重复插入
-  const tables = [
-    "upload_message", "view_history", "views", "follow", "token",
-    "invite_code", "settings", "bangumi_data", "anime", "user",
-  ];
-  for (const table of tables) {
-    await promiseDB.query(`DELETE FROM \`${table}\``);
-  }
-
   const seedPath = path.resolve(import.meta.dirname, "seed.sql");
   const seedSQL = fs.readFileSync(seedPath, "utf-8");
 
