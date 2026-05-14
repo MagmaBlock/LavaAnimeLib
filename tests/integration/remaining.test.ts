@@ -88,6 +88,13 @@ describe("GET /v2/search/quick", () => {
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.data)).toBe(true);
   });
+
+  it("缺少 value 应返回 400", async () => {
+    const res = await request
+      .get("/v2/search/quick")
+      .set("Authorization", token);
+    expect(res.status).toBe(400);
+  });
 });
 
 describe("GET /v2/home/header/get", () => {
