@@ -21,7 +21,7 @@ import { getAnimeFollowInfoQuerySchema } from "../../schemas/v2/anime/follow/inf
 import { getAnimeFollowListBodySchema } from "../../schemas/v2/anime/follow/list.js";
 import { reportViewHistoryBodySchema } from "../../schemas/v2/anime/history/report.js";
 import { getMyViewHistoryBodySchema } from "../../schemas/v2/anime/history/my.js";
-import { getRecentUpdatesQuerySchema } from "../../schemas/v2/anime/recent-update.js";
+import { getRecentUpdatesQuerySchema } from "../../schemas/v2/anime/recent-update/get.js";
 
 const router = Router();
 
