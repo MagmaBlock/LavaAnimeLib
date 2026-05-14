@@ -2,13 +2,9 @@ import { queryAnimeByIndex as queryAnimeByIndexService  } from "../../../service
 import { parseAnime } from "../../../services/v2/parser/anime.js";
 import success from "../../../common/response/success.js";
 import serverError from "../../../common/response/server-error.js";
-import badRequest from "../../../common/response/bad-request.js";
 
-export default async function queryAnimeByIndex(req, res) {
-  if (Object.keys(req.body).length == 0) return badRequest(res);
-
+export async function queryAnimeByIndex(req, res) {
   let { year, type } = req.body;
-  if (!year && !type) return badRequest(res);
 
   try {
     let rawResults = await queryAnimeByIndexService(year, type);

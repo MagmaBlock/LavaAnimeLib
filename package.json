@@ -32,7 +32,8 @@
     "dayjs": "^1.11.19",
     "express": "^4.17.3",
     "lodash": "^4.17.21",
-    "mysql2": "^3.16.0"
+    "mysql2": "^3.16.0",
+    "zod": "^4.4.3"
   },
   "prettier": {
     "singleQuote": false

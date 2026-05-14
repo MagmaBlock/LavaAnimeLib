@@ -6,13 +6,6 @@ import { checkNameExists, updateUserName } from "../../../../services/v2/user/us
 export async function updateName(req, res) {
   let { name } = req.body;
   let user = req.user;
-
-  if (typeof name != "string")
-    return badRequest(res, "请求格式错误: 用户名不是 String");
-  if (!name) return badRequest(res, "用户名不可为空");
-  if (name.length > 30) {
-    return badRequest(res, "用户名长度太长");
-  }
   if (user.name == name) {
     return badRequest(res, "更改的用户名不能和之前的相同");
   }

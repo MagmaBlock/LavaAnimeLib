@@ -1,6 +1,5 @@
 import { getFilesByID as getFilesByIDService  } from "../../../services/v2/anime/file.js";
 import success from "../../../common/response/success.js";
-import badRequest from "../../../common/response/bad-request.js";
 import notFound from "../../../common/response/not-found.js";
 import forbidden from "../../../common/response/forbidden.js";
 import serverError from "../../../common/response/server-error.js";
@@ -9,8 +8,6 @@ import serverError from "../../../common/response/server-error.js";
 export async function getFilesByID(req, res) {
   let laID = req.query.id;
   let drive = req.query.drive;
-  if (!Number.isInteger(laID) && laID <= 0) return badRequest(res);
-  if (!drive) return badRequest(res);
 
   try {
     let files = await getFilesByIDService(laID, drive);

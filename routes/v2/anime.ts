@@ -11,19 +11,30 @@ import { reportViewHistory } from "../../controllers/v2/anime/history/report.js"
 import { getMyViewHistory } from "../../controllers/v2/anime/history/my.js";
 import { getRecentUpdates } from "../../controllers/v2/anime/recent-update/get.js";
 import { requireLogin } from "../../middleware/auth/require-auth.js";
+import { validateQuery, validateBody } from "../../middleware/validate.js";
+import { getAnimeByIDQuerySchema } from "../../schemas/v2/anime/get.js";
+import { getAnimesByIDBodySchema } from "../../schemas/v2/anime/get-batch.js";
+import { getAnimesByBgmIDQuerySchema } from "../../schemas/v2/anime/get-by-bangumi.js";
+import { getFilesByIDQuerySchema } from "../../schemas/v2/anime/file.js";
+import { editAnimeFollowBodySchema } from "../../schemas/v2/anime/follow/edit.js";
+import { getAnimeFollowInfoQuerySchema } from "../../schemas/v2/anime/follow/info.js";
+import { getAnimeFollowListBodySchema } from "../../schemas/v2/anime/follow/list.js";
+import { reportViewHistoryBodySchema } from "../../schemas/v2/anime/history/report.js";
+import { getMyViewHistoryBodySchema } from "../../schemas/v2/anime/history/my.js";
+import { getRecentUpdatesQuerySchema } from "../../schemas/v2/anime/recent-update.js";
 
 const router = Router();
 
-router.get("/get", getAnimeByID);
-router.post("/get", getAnimesByID);
-router.get("/bangumi/get", getAnimesByBgmID);
-router.get("/file", requireLogin, getFilesByID);
-router.post("/follow/list", requireLogin, getAnimeFollowList);
-router.post("/follow/edit", requireLogin, editAnimeFollow);
+router.get("/get", validateQuery(getAnimeByIDQuerySchema), getAnimeByID);
+router.post("/get", validateBody(getAnimesByIDBodySchema), getAnimesByID);
+router.get("/bangumi/get", validateQuery(getAnimesByBgmIDQuerySchema), getAnimesByBgmID);
+router.get("/file", requireLogin, validateQuery(getFilesByIDQuerySchema), getFilesByID);
+router.post("/follow/list", requireLogin, validateBody(getAnimeFollowListBodySchema), getAnimeFollowList);
+router.post("/follow/edit", requireLogin, validateBody(editAnimeFollowBodySchema), editAnimeFollow);
 router.get("/follow/total", requireLogin, getAnimeFollowTotal);
-router.get("/follow/info", requireLogin, getAnimeFollowInfo);
-router.post("/history/report", requireLogin, reportViewHistory);
-router.post("/history/my", requireLogin, getMyViewHistory);
-router.get("/recent-update/get", getRecentUpdates);
+router.get("/follow/info", requireLogin, validateQuery(getAnimeFollowInfoQuerySchema), getAnimeFollowInfo);
+router.post("/history/report", requireLogin, validateBody(reportViewHistoryBodySchema), reportViewHistory);
+router.post("/history/my", requireLogin, validateBody(getMyViewHistoryBodySchema), getMyViewHistory);
+router.get("/recent-update/get", validateQuery(getRecentUpdatesQuerySchema), getRecentUpdates);
 
 export default router;

@@ -6,7 +6,6 @@ import serverError from "../../../../common/response/server-error.js";
 // 编辑我的追番
 export async function editAnimeFollow(req, res) {
   let { id: laID, status, remove } = req.body;
-  if (!laID || !Number.isInteger(laID) || laID < 1) return badRequest(res);
   let userID = req.user.id;
 
   try {
