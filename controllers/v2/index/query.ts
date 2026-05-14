@@ -1,28 +1,18 @@
-import { promiseDB } from "../../../common/sql.js";
-import serverError from "../response/5xx/serverError.js";
-import wrongQuery from "../response/4xx/wrongQuery.js";
-
-import { animeParser } from "../parser/animeParser.js";
-import success from "../response/2xx/success.js";
+import { queryAnimeByIndex as queryAnimeByIndexService  } from "../../../services/v2/index/index.js";
+import { parseAnime } from "../../../services/v2/parser/anime.js";
+import success from "../../../common/response/success.js";
+import serverError from "../../../common/response/server-error.js";
+import badRequest from "../../../common/response/bad-request.js";
 
 export default async function queryAnimeByIndex(req, res) {
-  if (Object.keys(req.body).length == 0) return wrongQuery(res);
+  if (Object.keys(req.body).length == 0) return badRequest(res);
 
-  let queryPlaceholder = [req.body.year || "%", req.body.type || "%"];
-
-  let allEmpty = true;
-  for (let i in queryPlaceholder) {
-    if (queryPlaceholder[i] !== "%") allEmpty = false;
-  }
-  if (allEmpty) return wrongQuery(res);
+  let { year, type } = req.body;
+  if (!year && !type) return badRequest(res);
 
   try {
-    let queryResult = await promiseDB.query(
-      "SELECT * FROM anime WHERE year LIKE ? AND `type` LIKE ? AND deleted = 0 ORDER BY views DESC",
-      queryPlaceholder
-    );
-    let result = await animeParser(queryResult[0]);
-
+    let rawResults = await queryAnimeByIndexService(year, type);
+    let result = await parseAnime(rawResults);
     success(res, result);
   } catch (error) {
     console.error(error);

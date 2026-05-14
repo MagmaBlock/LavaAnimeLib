@@ -1,31 +1,17 @@
-import { promiseDB } from "../../../../common/sql.js";
-import success from "../../response/2xx/success.js";
-import wrongQuery from "../../response/4xx/wrongQuery.js";
-import serverError from "../../response/5xx/serverError.js";
+import { getAnimeFollowInfo as getAnimeFollowInfoService  } from "../../../../services/v2/anime/follow.js";
+import success from "../../../../common/response/success.js";
+import badRequest from "../../../../common/response/bad-request.js";
+import serverError from "../../../../common/response/server-error.js";
 
 // 查询追番状态
-// /v2/anime/follow/info
-export async function getAnimeFollowInfoAPI(req, res) {
+export async function getAnimeFollowInfo(req, res) {
   let laID = req.query?.id;
   laID = parseInt(laID);
-  if (!laID || !Number.isInteger(laID) || laID < 0) return wrongQuery(res);
+  if (!laID || !Number.isInteger(laID) || laID < 0) return badRequest(res);
 
   try {
-    let result = await promiseDB.query(
-      "SELECT * FROM follow WHERE user_id = ? AND anime_id = ?",
-      [req.user.id, laID]
-    );
-    if (result[0].length == 0) {
-      // 没追番
-      return success(res, { status: -1 });
-    }
-    if (result[0][0]) {
-      // 已追番
-      return success(res, {
-        status: result[0][0].status,
-        editTime: result[0][0]?.edit_time?.getTime() ?? 0,
-      });
-    }
+    let result = await getAnimeFollowInfoService(req.user.id, laID);
+    return success(res, result);
   } catch (error) {
     console.error(error);
     serverError(res);

@@ -1,13 +1,14 @@
-import { AlistAPI } from "../../../common/api.js";
+import { createAlistClient } from "../../../common/api-clients/alist.js";
 import {
   getDefaultDrive,
   getDrive,
-} from "../../../controllers/v2/drive/main.js";
+} from "../../../services/v2/drive/index.js";
 
 export default async function alistGetter(
   path = getDrive(getDefaultDrive()).path
 ) {
-  let files = await AlistAPI.post("/api/fs/list", {
+  let client = createAlistClient(getDrive(getDefaultDrive()).host);
+  let files = await client.post("/api/fs/list", {
     path: path,
   });
 

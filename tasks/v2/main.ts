@@ -1,4 +1,4 @@
-import { promiseDB } from "../../common/sql.js";
+import { promiseDB } from "../../common/database/connection.js";
 import { logger } from "../../common/tools/logger.js";
 import updateAnimes from "./updateAnimes.js";
 import { updateAllBangumiData } from "./updateBangumiData.js";

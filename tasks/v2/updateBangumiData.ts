@@ -1,5 +1,5 @@
 import _ from "lodash";
-import { promiseDB } from "../../common/sql.js";
+import { promiseDB } from "../../common/database/connection.js";
 import {
   getBangumiCharacters,
   getBangumiRelations,

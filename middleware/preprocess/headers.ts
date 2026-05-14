@@ -1,4 +1,4 @@
-export default function handler(req, res, next) {
+export default function configHeaders(req, res, next) {
   // 设置 Headers
   res.set({
     "Access-Control-Allow-Origin": "*",

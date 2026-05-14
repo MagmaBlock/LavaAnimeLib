@@ -1,4 +1,4 @@
-import { bangumiAPI } from "../../common/api.js";
+import { bangumiAPI } from "../../common/api-clients/bangumi.js";
 
 // Bangumi API 信息获取
 export async function getBangumiSubjects(bgmID) {

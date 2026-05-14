@@ -1,7 +1,7 @@
 import _ from "lodash";
-import { promiseDB } from "../../common/sql.js";
+import { promiseDB } from "../../common/database/connection.js";
 import { logger } from "../../common/tools/logger.js";
-import { getDefaultDrive, getDrive } from "../../controllers/v2/drive/main.js";
+import { getDefaultDrive, getDrive } from "../../services/v2/drive/index.js";
 import alistGetter from "./tools/alistGetter.js";
 import { repairBangumiDataID } from "./updateBangumiData.js";
 
@@ -162,7 +162,7 @@ async function isDeletedInDB(year, type, name) {
 async function insertAnimeToDB(year, type, name) {
   // 插入番剧到数据库
 
-  let bgmID = name.match("\\d+$")[0];
+  let bgmID = name.match("\\d+")[0];
   let title = name.replace(bgmID, "").trim();
   promiseDB.query(
     "INSERT INTO anime (`year`, `type`, `name`, `bgmid`, `title`) VALUES (?, ?, ?, ?, ?)",

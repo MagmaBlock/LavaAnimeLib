@@ -1,5 +1,5 @@
 import config from "../../common/config.js";
-import { promiseDB } from "../../common/sql.js";
+import { promiseDB } from "../../common/database/connection.js";
 import { getAllBgmIDInAnimeTable } from "./bangumiDB.js";
 
 export async function updatePosters() {
