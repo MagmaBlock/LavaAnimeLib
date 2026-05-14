@@ -25,6 +25,20 @@ VALUES (234567, '[]', '{"title":"Test Anime B","name_cn":"测试番剧B","images
 REPLACE INTO `bangumi_data` (`bgmid`, `relations_anime`, `subjects`, `characters`, `update_time`)
 VALUES (345678, '[]', '{"title":"Test Anime C","name_cn":"测试番剧C","images":{"large":"https://example.com/large_c.jpg","common":"https://example.com/common_c.jpg","medium":"https://example.com/medium_c.jpg","small":"https://example.com/small_c.jpg","grid":"https://example.com/grid_c.jpg"}}', '[]', NOW());
 
+-- 含标签的测试番剧（用于 parser 测试 [BDRip]/[NSFW] 过滤）
+REPLACE INTO `anime` (`id`, `year`, `type`, `name`, `views`, `bgmid`, `nsfw`, `title`, `deleted`, `poster`)
+VALUES
+  (5, '2026年', '1月冬', '测试番剧E BDRip', 300, 123456, 0, '测试番剧E [BDRip]', 0, 'https://example.com/poster_e.jpg'),
+  (6, '2026年', '1月冬', '测试番剧F NSFW', 80, 234567, 0, '测试番剧F [NSFW]', 0, 'https://example.com/poster_f.jpg'),
+  (7, '2026年', '1月冬', '测试番剧G Both', 150, 345678, 1, '测试番剧G [BDRip][NSFW]', 0, 'https://example.com/poster_g.jpg'),
+  (8, '2025年', '7月夏', '测试番剧H NoBgm', 60, NULL, 0, '测试番剧H', 0, 'https://example.com/poster_h.jpg');
+
+-- 测试上报消息（用于 recent-update 测试）
+REPLACE INTO `upload_message` (`id`, `index`, `animeID`, `bangumiID`, `fileName`, `uploadTime`, `messageSentStatus`, `messageSkiped`)
+VALUES
+  (1, '2026年/1月冬/测试番剧A 123456', 1, 123456, 'ep01.mp4', NOW(), 0, false),
+  (2, '2026年/1月冬/测试番剧B 234567', 2, 234567, '[组] 测试番剧B - 01.mkv', NOW(), 1, false);
+
 -- 测试站点设置
 REPLACE INTO `settings` (`key`, `value`)
 VALUES ('site_name', '"LavaAnime Test"');
