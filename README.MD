@@ -63,5 +63,55 @@ docker compose -f compose.dev.yml down
 docker compose -f compose.dev.yml down -v
 ```
 
+# 测试
+
+本项目使用 [Vitest](https://vitest.dev/) 作为测试框架，测试数据库使用独立的 Docker MariaDB 实例。
+
+## 测试结构
+
+```
+tests/
+├── unit/                          # 单元测试（纯函数 + service 层）
+│   ├── password.test.ts           #   密码加密与验证，零依赖
+│   ├── token.test.ts              #   token 创建/保存/验证/注销
+│   └── user.test.ts               #   用户 CRUD、查询
+├── integration/                   # 集成测试（supertest × 完整 HTTP 请求）
+│   ├── anime.test.ts              #   番剧查询、批量查询、Bangumi 查询、近期更新
+│   ├── user-flow.test.ts          #   注册→登录→鉴权→登出全链路
+│   ├── follow.test.ts             #   追番添加/移除/列表/统计
+│   ├── history.test.ts            #   观看记录上报与查询
+│   └── remaining.test.ts          #   index、search、home、drive、site、report 等
+├── seed.sql                       # 测试种子数据
+├── setup.ts                       # 全局 setup：mock config、重置 cache、加载种子数据
+└── vitest.config.ts               # Vitest 配置
+```
+
+共 **101 个测试用例**，覆盖全部 34 个 API 端点的正常路径与异常路径。
+
+## 运行测试
+
+```bash
+# 启动测试数据库（首次需要）
+npm run test:db:up
+
+# 运行全部测试
+npm run test
+
+# 监听模式（开发时使用）
+npm run test:watch
+
+# 停止测试数据库
+npm run test:db:down
+
+# 清空并重建测试数据库
+npm run test:db:reset
+```
+
+测试数据库使用独立的 `compose.test.yml`，端口 **3307**，数据库名 `lavaanime_test`，与开发环境（3306）互不干扰。测试启动时自动执行建表（`sql/init.sql`）、加载种子数据（`tests/seed.sql`），每次测试文件运行前自动重置全局缓存。
+
+## 测试配置
+
+测试使用 `common/config.test.ts` 而非 `common/config.ts`，通过 Vitest 的 `vi.mock` 在 `tests/setup.ts` 中全局替换，确保所有测试请求均指向测试数据库。
+
 # 其他
 本程序并未链接到任何资源服务，若您需要使用，请自行搭建 AList 服务并按照相应的目录结构搭建您的存储并接入。
