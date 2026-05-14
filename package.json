@@ -10,7 +10,12 @@
     "start": "node dist/main.js",
     "dev": "tsx watch main.ts",
     "sync": "tsx ./tasks/v2/main.ts",
-    "update": "git pull"
+    "update": "git pull",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:db:up": "docker compose -f compose.test.yml up -d",
+    "test:db:down": "docker compose -f compose.test.yml down",
+    "test:db:reset": "docker compose -f compose.test.yml down -v && docker compose -f compose.test.yml up -d"
   },
   "repository": {
     "type": "git",
