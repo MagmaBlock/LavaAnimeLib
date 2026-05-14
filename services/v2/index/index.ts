@@ -1,4 +1,6 @@
-import { promiseDB } from "../../../common/database/connection.js";
+import { db } from "../../../common/database/connection.js";
+import { anime } from "../../../common/database/schema/anime.js";
+import { like, desc, eq, and } from "drizzle-orm";
 
 export async function getIndexInfo() {
   let indexData = {
@@ -6,33 +8,38 @@ export async function getIndexInfo() {
     type: [],
   };
 
-  let allYearQueryResult = await promiseDB.query(
-    "SELECT DISTINCT `year` FROM anime ORDER BY `year`"
-  );
-  let allTypeQueryResult = await promiseDB.query(
-    "SELECT DISTINCT `type` FROM anime"
-  );
-  for (let i in allYearQueryResult[0]) {
-    indexData.year.push(allYearQueryResult[0][i].year);
+  let allYears = await db
+    .select({ year: anime.year })
+    .from(anime)
+    .orderBy(anime.year);
+  let allTypes = await db
+    .select({ type: anime.type })
+    .from(anime);
+
+  for (let i of allYears) {
+    indexData.year.push(i.year);
   }
-  for (let i in allTypeQueryResult[0]) {
-    indexData.type.push(allTypeQueryResult[0][i].type);
+  for (let i of allTypes) {
+    indexData.type.push(i.type);
   }
 
   indexData.type = indexData.type.sort().sort((a, b) => {
-    return a.match(/\d{1,2}|./)[0] - b.match(/\d{1,2}|./)[0]; // 匹配1-2位数字，如果没有，则按第一个字符
+    return a.match(/\d{1,2}|./)[0] - b.match(/\d{1,2}|./)[0];
   });
 
   return indexData;
 }
 
 export async function queryAnimeByIndex(year, type) {
-  let queryPlaceholder = [year || "%", type || "%"];
+  let conditions = [eq(anime.deleted, 0)];
+  if (year) conditions.push(like(anime.year, year));
+  if (type) conditions.push(like(anime.type, type));
 
-  let queryResult = await promiseDB.query(
-    "SELECT * FROM anime WHERE year LIKE ? AND `type` LIKE ? AND deleted = 0 ORDER BY views DESC",
-    queryPlaceholder
-  );
+  let rows = await db
+    .select()
+    .from(anime)
+    .where(and(...conditions))
+    .orderBy(desc(anime.views));
 
-  return queryResult[0];
+  return rows;
 }

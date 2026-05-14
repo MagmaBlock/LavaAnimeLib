@@ -1,18 +1,18 @@
-import { promiseDB } from "../../../common/database/connection.js";
+import { db } from "../../../common/database/connection.js";
+import { settings } from "../../../common/database/schema/settings.js";
+import { eq } from "drizzle-orm";
 
 export async function getSiteSetting(key) {
-  let queryResult = await promiseDB.execute(
-    "SELECT * FROM settings WHERE `key` = ?",
-    [key]
-  );
+  let rows = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.key, key));
 
-  let result = queryResult[0][0];
+  let result = rows[0];
   if (result !== undefined) {
-    // 尝试解析 JSON
     try {
       return JSON.parse(result?.value);
     } catch (error) {
-      // 如果此字符串无法解析, 直接返回字符串
       if (error instanceof SyntaxError) {
         return result?.value;
       } else {
@@ -25,9 +25,11 @@ export async function getSiteSetting(key) {
 }
 
 export async function setSiteSetting(key, value) {
-  await promiseDB.query(
-    "INSERT INTO settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = ?",
-    [key, JSON.stringify(value), JSON.stringify(value)]
-  );
+  await db
+    .insert(settings)
+    .values({ key, value: JSON.stringify(value) })
+    .onDuplicateKeyUpdate({
+      set: { value: JSON.stringify(value) },
+    });
   return true;
 }

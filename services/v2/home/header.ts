@@ -1,36 +1,38 @@
-import { promiseDB } from "../../../common/database/connection.js";
+import { db } from "../../../common/database/connection.js";
+import { settings } from "../../../common/database/schema/settings.js";
+import { eq } from "drizzle-orm";
 
 export async function getHeader() {
-  let dbResult = await promiseDB.query(
-    "SELECT * FROM settings WHERE `key` = 'headerData'"
-  );
-  if (dbResult[0].length == 0) {
+  let rows = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.key, "headerData"));
+  if (rows.length == 0) {
     return [];
   } else {
-    return JSON.parse(dbResult[0][0].value);
+    return JSON.parse(rows[0].value);
   }
 }
 
 export async function updateHeader(newData) {
-  // 必须为数组
   if (!Array.isArray(newData)) {
     throw new Error("数据必须为数组");
   }
 
-  let dbResult = await promiseDB.query(
-    "SELECT * FROM settings WHERE `key` = ?",
-    ["headerData"]
-  );
-  if (dbResult[0].length == 0) {
-    await promiseDB.query("INSERT INTO settings (`key`,value) VALUES (?,?)", [
-      "headerData",
-      JSON.stringify(newData),
-    ]);
+  let rows = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.key, "headerData"));
+  if (rows.length == 0) {
+    await db.insert(settings).values({
+      key: "headerData",
+      value: JSON.stringify(newData),
+    });
   } else {
-    await promiseDB.query("UPDATE settings SET value=? WHERE `key`=?", [
-      JSON.stringify(newData),
-      "headerData",
-    ]);
+    await db
+      .update(settings)
+      .set({ value: JSON.stringify(newData) })
+      .where(eq(settings.key, "headerData"));
   }
 
   return true;

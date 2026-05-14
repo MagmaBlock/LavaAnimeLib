@@ -1,4 +1,4 @@
-import { promiseDB } from "../../common/database/connection.js";
+import { db, pool } from "../../common/database/connection.js";
 import { logger } from "../../common/tools/logger.js";
 import updateAnimes from "./updateAnimes.js";
 import { updateAllBangumiData } from "./updateBangumiData.js";
@@ -14,6 +14,6 @@ async function doAll() {
   await updatePosters();
   logger("[定时刷新] 所有刷新任务已经完成! 将在 10 秒后关闭...");
   setTimeout(() => {
-    promiseDB.end();
+    pool.end();
   }, 10000);
 }

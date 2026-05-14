@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1778778710857,
+      "tag": "0000_daily_virginia_dare",
+      "breakpoints": true
+    }
+  ]
+}

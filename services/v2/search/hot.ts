@@ -1,10 +1,22 @@
-import { promiseDB } from "../../../common/database/connection.js";
+import { db } from "../../../common/database/connection.js";
+import { viewHistory } from "../../../common/database/schema/view-history.js";
+import { anime } from "../../../common/database/schema/anime.js";
+import { sql, eq, desc, getTableColumns, count } from "drizzle-orm";
 import { parseAnime } from "../parser/anime.js";
 
 export async function getHotAnimes() {
-  let queryResult = await promiseDB.query(
-    "SELECT vh.animeID, COUNT(*) watchCount, a.* FROM `view_history` vh JOIN anime a ON vh.animeID = a.id WHERE DATEDIFF(NOW(), vh.lastReportTime) <= 7 GROUP BY animeID ORDER BY watchCount DESC LIMIT 10"
-  );
+  let queryResult = await db
+    .select({
+      ...getTableColumns(anime),
+      animeID: viewHistory.animeID,
+      watchCount: count(),
+    })
+    .from(viewHistory)
+    .innerJoin(anime, eq(viewHistory.animeID, anime.id))
+    .where(sql`DATEDIFF(NOW(), ${viewHistory.lastReportTime}) <= 7`)
+    .groupBy(viewHistory.animeID)
+    .orderBy(desc(count()))
+    .limit(10);
 
-  return parseAnime(queryResult[0]);
+  return parseAnime(queryResult);
 }

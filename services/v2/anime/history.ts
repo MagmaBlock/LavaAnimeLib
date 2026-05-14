@@ -1,19 +1,10 @@
-import { promiseDB } from "../../../common/database/connection.js";
+import { db } from "../../../common/database/connection.js";
+import { anime } from "../../../common/database/schema/anime.js";
+import { viewHistory } from "../../../common/database/schema/view-history.js";
+import { eq, and, sql, count, desc, max, gt } from "drizzle-orm";
 import parseFileName from "anime-file-parser";
+import { logger } from "../../../common/tools/logger.js";
 
-/**
- * 记录播放行为的历史记录
- * 将自动判断是否需要覆写已存在的记录
- * @param {Number} userID
- * @param {Number} animeID
- * @param {String} fileName 播放视频的名称（读操作时，可解析信息）
- * @param {Number} currentTime 播放视频的当前进度（如果有）
- * @param {Number} totalTime 播放视频的总长度（如果有）
- * @param {String} userIP 用户的播放 IP
- * @param {String} watchMethod 用户播放方式
- * @param {String} useDrive 播放时的节点
- * @throws {Error}
- */
 export async function recordViewHistory(
   userID,
   animeID,
@@ -24,49 +15,38 @@ export async function recordViewHistory(
   watchMethod,
   useDrive
 ) {
-  (async () => {
-    let isNewViewResult = await isNewView(userID, animeID, fileName);
-    if (isNewViewResult) {
-      try {
-        promiseDB.query(
-          "UPDATE anime SET views = views + 1 WHERE id = ? AND deleted = 0",
-          [animeID]
-        );
-      } catch (error) {
-        console.error(error);
-      }
+  isNewView(userID, animeID, fileName).then((isNew) => {
+    if (isNew) {
+      return db.update(anime)
+        .set({ views: sql`views + 1` })
+        .where(and(eq(anime.id, animeID), eq(anime.deleted, 0)));
     }
-  })();
+  }).catch(console.error);
 
-  await promiseDB.query(
-    "INSERT INTO view_history ( userID, animeID, fileName, episode, currentTime, totalTime, userIP, watchMethod, useDrive ) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ? ) ON DUPLICATE KEY UPDATE currentTime = ?, totalTime = ?, userIP = ?, lastReportTime = NOW(), useDrive = ?;",
-    [
+  await db
+    .insert(viewHistory)
+    .values({
       userID,
       animeID,
       fileName,
-      parseFileName(fileName)?.episode,
-      currentTime ? Math.round(currentTime) : null,
-      totalTime ? Math.round(totalTime) : null,
+      episode: parseFileName(fileName)?.episode,
+      currentTime: currentTime ? Math.round(currentTime) : null,
+      totalTime: totalTime ? Math.round(totalTime) : null,
       userIP,
       watchMethod,
       useDrive,
-      // UPDATE
-      currentTime ? Math.round(currentTime) : null,
-      totalTime ? Math.round(totalTime) : null,
-      userIP,
-      useDrive,
-    ]
-  );
+    })
+    .onDuplicateKeyUpdate({
+      set: {
+        currentTime: currentTime ? Math.round(currentTime) : null,
+        totalTime: totalTime ? Math.round(totalTime) : null,
+        userIP,
+        lastReportTime: sql`NOW()`,
+        useDrive,
+      },
+    });
 }
 
-/**
- * 获取某个用户的历史记录
- * @param {Number} userID
- * @param {Number|undefined} page
- * @param {Number|undefined} pageSize
- * @param {Number|undefined} animeID 指定某个动画, 可选
- * @param {Boolean} latestOnly 是否仅查询每个番剧的最新记录, 可选. 当此项为真时, animeID 会被忽略
- */
 export async function getUserViewHistory(
   userID,
   page = 1,
@@ -78,57 +58,59 @@ export async function getUserViewHistory(
   if (pageSize < 1) pageSize = 20;
   if (pageSize > 100) pageSize = 100;
 
-  let history;
+  let rows;
   if (latestOnly) {
-    history = await promiseDB.execute(
-      "SELECT vh.* FROM view_history vh JOIN ( SELECT animeID, MAX(lastReportTime) AS maxReportTime FROM view_history WHERE userID = ? GROUP BY animeID ) subquery ON vh.userID = ? AND vh.animeID = subquery.animeID AND vh.lastReportTime = subquery.maxReportTime ORDER BY vh.lastReportTime DESC LIMIT ?, ?;",
-      [userID, userID, (pageSize * (page - 1)).toString(), pageSize.toString()]
+    const [result] = await db.execute(
+      sql`SELECT vh.* FROM ${viewHistory} vh JOIN ( SELECT animeID, MAX(lastReportTime) AS maxReportTime FROM ${viewHistory} WHERE userID = ${userID} GROUP BY animeID ) subquery ON vh.userID = ${userID} AND vh.animeID = subquery.animeID AND vh.lastReportTime = subquery.maxReportTime ORDER BY vh.lastReportTime DESC LIMIT ${pageSize * (page - 1)}, ${pageSize}`
     );
+    rows = result;
   } else if (animeID) {
-    history = await promiseDB.execute(
-      "SELECT * FROM view_history vh WHERE userID = ? AND animeID = ? ORDER BY lastReportTime DESC LIMIT ?, ?;",
-      [userID, animeID, (pageSize * (page - 1)).toString(), pageSize.toString()]
-    );
+    rows = await db
+      .select()
+      .from(viewHistory)
+      .where(
+        and(eq(viewHistory.userID, userID), eq(viewHistory.animeID, animeID))
+      )
+      .orderBy(desc(viewHistory.lastReportTime))
+      .limit(pageSize)
+      .offset(pageSize * (page - 1));
   } else {
-    history = await promiseDB.execute(
-      "SELECT * FROM view_history vh WHERE userID = ? ORDER BY lastReportTime DESC LIMIT ?, ?;",
-      [userID, (pageSize * (page - 1)).toString(), pageSize.toString()]
-    );
+    rows = await db
+      .select()
+      .from(viewHistory)
+      .where(eq(viewHistory.userID, userID))
+      .orderBy(desc(viewHistory.lastReportTime))
+      .limit(pageSize)
+      .offset(pageSize * (page - 1));
   }
-  history = history[0].map((historyRecord) => {
+
+  rows = rows.map((historyRecord) => {
     delete historyRecord.userID;
     delete historyRecord.userIP;
     return historyRecord;
   });
 
-  return history;
+  return rows;
 }
 
-/**
- * 提供唯一主键 (即本函数的三个参数)
- * 判断是否是一个新鲜观看行为
- *
- * (同一个用户通过同一方式观看同一部番的同一部视频，1h 只能增加一次播放量)
- * @param {Number} userID
- * @param {Number} animeID
- * @param {String} fileName
- * @returns {Boolean} 是否是一个新观看
- */
 export async function isNewView(userID, animeID, fileName) {
   try {
-    let query = await promiseDB.execute(
-      "SELECT count(*) FROM view_history vh WHERE userID = ? AND animeID = ? AND fileName = ? AND lastReportTime > DATE_SUB(NOW(), INTERVAL 1 HOUR);",
-      [userID, animeID, fileName]
-    );
-    if (query[0][0]["count(*)"] == 0) {
-      return true;
-    } else if (query[0][0]["count(*)"] == 1) {
-      return false;
-    } else {
-      return null;
-    }
+    const [row] = await db
+      .select({ count: count() })
+      .from(viewHistory)
+      .where(
+        and(
+          eq(viewHistory.userID, userID),
+          eq(viewHistory.animeID, animeID),
+          eq(viewHistory.fileName, fileName),
+          sql`lastReportTime > DATE_SUB(NOW(), INTERVAL 1 HOUR)`
+        )
+      );
+    if (Number(row.count) === 0) return true;
+    if (Number(row.count) === 1) return false;
+    return null;
   } catch (error) {
-    console.error(error);
+    logger("[ViewHistory] isNewView 查询失败:", error);
     return null;
   }
 }

@@ -1,13 +1,14 @@
 import { vi, beforeAll, beforeEach } from "vitest";
 import fs from "fs";
 import path from "path";
+import { sql } from "drizzle-orm";
 
 vi.mock("../common/config.js", async () => {
   const testConfig = await import("../common/config.test.js");
   return { default: testConfig.default };
 });
 
-import { promiseDB } from "../common/database/connection.js";
+import { db } from "../common/database/connection.js";
 import cache from "../common/cache.js";
 
 beforeAll(async () => {
@@ -23,7 +24,7 @@ beforeAll(async () => {
     .filter((s) => s.length > 0);
 
   for (const statement of statements) {
-    await promiseDB.query(statement);
+    await db.execute(sql.raw(statement));
   }
 });
 

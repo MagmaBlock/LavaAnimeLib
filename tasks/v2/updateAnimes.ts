@@ -1,33 +1,31 @@
 import _ from "lodash";
-import { promiseDB } from "../../common/database/connection.js";
+import { db } from "../../common/database/connection.js";
+import { anime } from "../../common/database/schema/anime.js";
+import { eq, and } from "drizzle-orm";
 import { logger } from "../../common/tools/logger.js";
 import { getDefaultDrive, getDrive } from "../../services/v2/drive/index.js";
 import alistGetter from "./tools/alistGetter.js";
 import { repairBangumiDataID } from "./updateBangumiData.js";
 
 export default async function updateAnimes() {
-  // 用于存储本次入库和删除的的番剧列表
   let allNewAnimes = new Array();
   let allDeletedAnimes = new Array();
-  // 获取年列表
+
   let allYears = await getYears();
   logger(`[番剧更新] 获取到 ${allYears.length} 个年份`);
 
-  // 获取每个年下的分类
   for (let i in allYears) {
     let thisYear = allYears[i];
     let allTypes = await getTypes(thisYear);
 
-    // 获取每个分类下的番剧
     for (let j in allTypes) {
       let thisType = allTypes[j];
 
-      let allAnimes = await getAnimes(thisYear, thisType); // Alist
+      let allAnimes = await getAnimes(thisYear, thisType);
       logger(`[番剧更新] 成功获取 ${thisYear} ${thisType}`);
-      let allDBAnimes = await getThisTypeDB(thisYear, thisType); // DB deleted = 0
+      let allDBAnimes = await getThisTypeDB(thisYear, thisType);
 
-      // 查找 Alist 多出来的番剧 -----------------------------------------------------
-      let newAnimes = _.difference(allAnimes, allDBAnimes); // 获取左边数组比右边数组多出的部分，即找 Alist 新增
+      let newAnimes = _.difference(allAnimes, allDBAnimes);
 
       for (let k in newAnimes) {
         let thisAnime = newAnimes[k];
@@ -35,19 +33,16 @@ export default async function updateAnimes() {
         let isDeleted = await isDeletedInDB(thisYear, thisType, thisAnime);
 
         if (isNew && !isDeleted) {
-          // 如果是新资源 (并未在 DB 中 deleted)
           insertAnimeToDB(thisYear, thisType, thisAnime);
           logger(`[番剧更新] 新入库 ${thisYear} ${thisType} ${thisAnime}`);
         }
         if (!isNew && isDeleted) {
-          // 被删除的资源 (在 DB 中被 deleted)
           changeDelete(thisYear, thisType, thisAnime, false);
           logger(`[番剧更新] 移除删除标记 ${thisYear} ${thisType} ${thisAnime}`);
         }
-        allNewAnimes.push({ year: thisYear, type: thisType, name: thisAnime }); // 新增番剧加入本次刷新新增记录
+        allNewAnimes.push({ year: thisYear, type: thisType, name: thisAnime });
       }
 
-      // 查找数据库多出来的番剧 (Alist 删除的番剧) -------------------------------------
       let deletedAnimes = _.difference(allDBAnimes, allAnimes);
 
       for (let k in deletedAnimes) {
@@ -70,12 +65,9 @@ export default async function updateAnimes() {
 
   logger("[番剧更新] 发现的 Alist 新番剧: ", allNewAnimes);
   logger("[番剧更新] 发现的 Alist 被删除的番剧: ", allDeletedAnimes);
-
 }
 
 async function getYears() {
-  // Alist 获取所有年份
-
   let rootDir = await alistGetter();
   if (rootDir.code == 200) rootDir = rootDir.data.content;
   else throw new Error("Alist API 异常");
@@ -89,8 +81,6 @@ async function getYears() {
 }
 
 async function getTypes(year) {
-  // Alist 获取年份下的月份
-
   let yearDir = await alistGetter(
     getDrive(getDefaultDrive()).path + "/" + year
   );
@@ -106,8 +96,6 @@ async function getTypes(year) {
 }
 
 async function getAnimes(year, type) {
-  // Alist 获取指定分类的动画列表
-
   let typeDir = await alistGetter(
     getDrive(getDefaultDrive()).path + "/" + year + "/" + type
   );
@@ -123,61 +111,68 @@ async function getAnimes(year, type) {
 }
 
 async function getThisTypeDB(year, type) {
-  // 从数据库查询此分类有什么番剧
+  let rows = await db
+    .select({ name: anime.name })
+    .from(anime)
+    .where(
+      and(eq(anime.year, year), eq(anime.type, type), eq(anime.deleted, 0))
+    );
 
-  let thisTypeAnimes = await promiseDB.query(
-    "SELECT name FROM anime WHERE `year` LIKE ? AND `type` LIKE ? AND deleted = '0'",
-    [year, type]
-  );
   let allDBAnimes = new Array();
-  thisTypeAnimes[0].forEach((anime) => allDBAnimes.push(anime.name));
+  rows.forEach((row) => allDBAnimes.push(row.name));
 
   return allDBAnimes;
 }
 
 async function isNewInDB(year, type, name) {
-  // 从数据库查询此番剧是否已经存在
+  let rows = await db
+    .select()
+    .from(anime)
+    .where(and(eq(anime.year, year), eq(anime.type, type), eq(anime.name, name)))
+    .limit(1);
 
-  let [isNew] = await promiseDB.query(
-    "SELECT * FROM anime WHERE `year` LIKE ? AND `type` LIKE ? AND `name` LIKE ?",
-    [year, type, name]
-  );
-  if (isNew.length == 0) return true; // 如果数据库内找不到此动画为真
-  if (isNew.length !== 0) return false; // 如果找到此动画为假（也可能是在数据库中被标记为 deleted 的资源）
+  if (rows.length == 0) return true;
   return false;
 }
 
 async function isDeletedInDB(year, type, name) {
-  // 从数据库查询此番剧是否被标记为删除
+  let rows = await db
+    .select()
+    .from(anime)
+    .where(
+      and(
+        eq(anime.year, year),
+        eq(anime.type, type),
+        eq(anime.name, name),
+        eq(anime.deleted, 1)
+      )
+    )
+    .limit(1);
 
-  let [isDeleted] = await promiseDB.query(
-    "SELECT * FROM anime WHERE `year` LIKE ? AND `type` LIKE ? AND `name` LIKE ? AND deleted = 1",
-    [year, type, name]
-  );
-  if (isDeleted.length !== 0) return true; // 如果数据库找到被删除的此动画为真
-  if (isDeleted.length == 0) return false; // 如果数据库找不到已经被删除的此动画为假
+  if (rows.length !== 0) return true;
   return false;
 }
 
 async function insertAnimeToDB(year, type, name) {
-  // 插入番剧到数据库
-
   let bgmID = name.match("\\d+")[0];
   let title = name.replace(bgmID, "").trim();
-  promiseDB.query(
-    "INSERT INTO anime (`year`, `type`, `name`, `bgmid`, `title`) VALUES (?, ?, ?, ?, ?)",
-    [year, type, name, bgmID, title]
-  );
+  await db.insert(anime).values({
+    year,
+    type,
+    name,
+    bgmid: bgmID,
+    title,
+  });
 }
 
 async function changeDelete(year, type, name, deleted) {
-  // 修改数据库中指定年分类名称的番剧的删除状态
-
   if (!year || !type || !name) throw new Error("No anime provided");
   if (deleted === undefined || typeof deleted !== "boolean")
     throw new Error("No delete state provided");
-  promiseDB.query(
-    "UPDATE anime SET deleted = ? WHERE `year` = ? AND `type` = ? AND `name` = ?",
-    [deleted, year, type, name]
-  );
+  await db
+    .update(anime)
+    .set({ deleted: deleted ? 1 : 0 })
+    .where(
+      and(eq(anime.year, year), eq(anime.type, type), eq(anime.name, name))
+    );
 }

@@ -1,47 +1,47 @@
 import config from "../../common/config.js";
-import { promiseDB } from "../../common/database/connection.js";
+import { db } from "../../common/database/connection.js";
+import { anime } from "../../common/database/schema/anime.js";
+import { bangumiData } from "../../common/database/schema/bangumi-data.js";
+import { eq, inArray } from "drizzle-orm";
 import { getAllBgmIDInAnimeTable } from "./bangumiDB.js";
+import { logger } from "../../common/tools/logger.js";
 
 export async function updatePosters() {
   let allBgmIDInAnime = await getAllBgmIDInAnimeTable();
-  let allSubjectsData = await promiseDB.query(
-    "SELECT bgmid,subjects FROM bangumi_data WHERE bgmid IN (?)",
-    [allBgmIDInAnime]
-  );
-  allSubjectsData = allSubjectsData[0];
-  let newArray: Record<string, any> = {};
-  for (let i in allSubjectsData) {
-    newArray[allSubjectsData[i].bgmid] = JSON.parse(
-      allSubjectsData[i].subjects
-    );
-  }
-  allSubjectsData = newArray as any;
+  let dbResult = await db
+    .select({
+      bgmid: bangumiData.bgmid,
+      subjects: bangumiData.subjects,
+    })
+    .from(bangumiData)
+    .where(inArray(bangumiData.bgmid, allBgmIDInAnime));
 
-  for (let i in allBgmIDInAnime) {
+  let subjectsByBgmId: Record<string, any> = {};
+  for (let row of dbResult) {
+    subjectsByBgmId[row.bgmid] = JSON.parse(row.subjects);
+  }
+
+  for (let bgmId of allBgmIDInAnime) {
     try {
-      if (
-        allSubjectsData[allBgmIDInAnime[i]].images &&
-        allSubjectsData[allBgmIDInAnime[i]]
-      ) {
+      let subject = subjectsByBgmId[bgmId];
+      if (subject?.images) {
         let thisPoster =
-          allSubjectsData[allBgmIDInAnime[i]].images.large.replace(
+          subject.images.large.replace(
             "https://lain.bgm.tv",
             config.bangumiImage.host
           ) + "/poster" || "";
-        promiseDB.query("UPDATE anime SET poster = ? WHERE bgmid = ?", [
-          thisPoster,
-          allBgmIDInAnime[i],
-        ]);
-        // console.log(`[Poster 更新] ${allBgmIDInAnime[i]} => ${thisPoster}`);
+        await db
+          .update(anime)
+          .set({ poster: thisPoster })
+          .where(eq(anime.bgmid, String(bgmId)));
       } else {
-        promiseDB.query("UPDATE anime SET poster = ? WHERE bgmid = ?", [
-          "https://anime-img.5t5.top/assets/noposter.png",
-          allBgmIDInAnime[i],
-        ]);
-        // console.log(`[Poster 更新] 无图片的 ${allBgmIDInAnime[i]} => https://anime-img.5t5.top/assets/noposter.png`);
+        await db
+          .update(anime)
+          .set({ poster: "https://anime-img.5t5.top/assets/noposter.png" })
+          .where(eq(anime.bgmid, String(bgmId)));
       }
     } catch (error) {
-      console.error(error);
+      logger("[Poster 更新] 出错:", error);
     }
   }
 }

@@ -1,58 +1,59 @@
 import parseFileName from "anime-file-parser";
-import { promiseDB } from "../../../common/database/connection.js";
+import { db } from "../../../common/database/connection.js";
+import { uploadMessage } from "../../../common/database/schema/upload-message.js";
+import { anime } from "../../../common/database/schema/anime.js";
+import { eq, desc } from "drizzle-orm";
 import { parseAnime } from "../parser/anime.js";
 
 export async function getRecentUpdates(skip, take, ignoreDuplicate) {
-  let whereClause = "";
-  let params = [];
+  let conditions = undefined;
 
   if (ignoreDuplicate) {
-    // messageSkiped 是旧通知队列留下的字段；当前仅兼容历史数据的重复过滤。
-    whereClause = "WHERE um.messageSkiped = false";
+    conditions = eq(uploadMessage.messageSkiped, 0);
   }
 
-  const [rows] = await promiseDB.query(
-    `SELECT um.*, a.id AS a_id, a.year AS a_year, a.type AS a_type, a.name AS a_name, a.views AS a_views, a.bgmid AS a_bgmid, a.nsfw AS a_nsfw, a.title AS a_title, a.deleted AS a_deleted, a.poster AS a_poster
-     FROM upload_message um
-     LEFT JOIN anime a ON um.animeID = a.id
-     ${whereClause}
-     ORDER BY um.uploadTime DESC
-     LIMIT ?, ?`,
-    [...params, skip, take]
-  );
+  const rows = await db
+    .select()
+    .from(uploadMessage)
+    .leftJoin(anime, eq(uploadMessage.animeID, anime.id))
+    .where(conditions)
+    .orderBy(desc(uploadMessage.uploadTime))
+    .limit(take)
+    .offset(skip);
 
   let recentUpdates = rows.map((row) => {
-    let record = {
-      id: row.id,
-      index: row.index,
-      animeID: row.animeID,
-      bangumiID: row.bangumiID,
-      fileName: row.fileName,
-      messageSentStatus: row.messageSentStatus,
-      messageSkiped: row.messageSkiped,
-      uploadTime: row.uploadTime,
-      anime: row.a_id
+    const um = row.upload_message;
+    const a = row.anime;
+    return {
+      id: um.id,
+      index: um.index,
+      animeID: um.animeID,
+      bangumiID: um.bangumiID,
+      fileName: um.fileName,
+      parseResult: parseFileName(um.fileName),
+      messageSentStatus: um.messageSentStatus,
+      messageSkiped: um.messageSkiped,
+      uploadTime: um.uploadTime,
+      anime: a
         ? {
-            id: row.a_id,
-            year: row.a_year,
-            type: row.a_type,
-            name: row.a_name,
-            views: row.a_views,
-            bgmid: row.a_bgmid,
-            nsfw: row.a_nsfw,
-            title: row.a_title,
-            deleted: row.a_deleted,
-            poster: row.a_poster,
+            id: a.id,
+            year: a.year,
+            type: a.type,
+            name: a.name,
+            views: a.views,
+            bgmid: a.bgmid,
+            nsfw: a.nsfw,
+            title: a.title,
+            deleted: a.deleted,
+            poster: a.poster,
           }
         : null,
     };
-    return record;
   });
 
   for (let record of recentUpdates) {
     if (record.anime !== null)
       record.anime = (await parseAnime(record.anime))[0];
-    record.parseResult = parseFileName(record.fileName);
   }
 
   return recentUpdates;

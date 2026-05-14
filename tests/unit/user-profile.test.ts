@@ -7,7 +7,9 @@ import {
   changeUserPassword,
   updateUserSettings,
 } from "../../services/v2/user/profile.js";
-import { promiseDB } from "../../common/database/connection.js";
+import { db } from "../../common/database/connection.js";
+import { user } from "../../common/database/schema/user.js";
+import { eq } from "drizzle-orm";
 
 let userID: number;
 const TS = Date.now();
@@ -19,18 +21,18 @@ beforeAll(async () => {
     hash,
     `profile_${TS}`
   );
-  const user = await findUser(`profile_${TS}`);
-  userID = user.id;
+  const foundUser = await findUser(`profile_${TS}`);
+  userID = foundUser.id;
 });
 
 describe("updateUserData", () => {
   it("应更新用户 data 字段", async () => {
     const data = { avatar: "https://example.com/avatar.png", bio: "test" };
     await updateUserData(data, userID);
-    const [rows] = await promiseDB.execute(
-      "SELECT data FROM user WHERE id = ?",
-      [userID]
-    );
+    const rows = await db
+      .select({ data: user.data })
+      .from(user)
+      .where(eq(user.id, userID));
     expect(JSON.parse(rows[0].data)).toEqual(data);
   });
 
@@ -50,10 +52,10 @@ describe("changeUserPassword", () => {
   it("应更新密码字段", async () => {
     const newHash = getFormattedPassword("new_password_456");
     await changeUserPassword(userID, newHash);
-    const [rows] = await promiseDB.execute(
-      "SELECT password FROM user WHERE id = ?",
-      [userID]
-    );
+    const rows = await db
+      .select({ password: user.password })
+      .from(user)
+      .where(eq(user.id, userID));
     expect(rows[0].password).toBe(newHash);
   });
 
@@ -73,10 +75,10 @@ describe("updateUserSettings", () => {
   it("应更新用户 settings 字段", async () => {
     const settings = { theme: "dark", lang: "zh" };
     await updateUserSettings(settings, userID);
-    const [rows] = await promiseDB.execute(
-      "SELECT settings FROM user WHERE id = ?",
-      [userID]
-    );
+    const rows = await db
+      .select({ settings: user.settings })
+      .from(user)
+      .where(eq(user.id, userID));
     expect(JSON.parse(rows[0].settings)).toEqual(settings);
   });
 

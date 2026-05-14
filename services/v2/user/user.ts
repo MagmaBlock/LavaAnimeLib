@@ -1,20 +1,20 @@
 import cache from "../../../common/cache.js";
-import { promiseDB } from "../../../common/database/connection.js";
+import { db } from "../../../common/database/connection.js";
+import { user } from "../../../common/database/schema/user.js";
+import { eq, or, sql } from "drizzle-orm";
 
-// 使用邮箱、用户名来找到可能的用户
 export async function findUser(account) {
-  let resultByEmail = await promiseDB.query(
-    "SELECT * FROM user WHERE email = ? OR name = ?",
-    [account, account]
-  );
-  if (resultByEmail[0].length) {
-    let userData = dbUserParser(resultByEmail[0][0]);
+  let rows = await db
+    .select()
+    .from(user)
+    .where(or(eq(user.email, account), eq(user.name, account)));
+  if (rows.length) {
+    let userData = dbUserParser(rows[0]);
     return userData;
   }
   return false;
 }
 
-// 使用 ID 查找用户
 export async function findUserByID(userID) {
   if (!userID) return false;
 
@@ -22,63 +22,52 @@ export async function findUserByID(userID) {
     return dbUserParser(cache.user[userID]);
   }
 
-  let findReult = await promiseDB.query("SELECT * FROM user WHERE id = ?", [
-    userID,
-  ]);
-  findReult = findReult[0];
-  if (findReult[0]) {
-    // cache
+  let rows = await db.select().from(user).where(eq(user.id, userID));
+  if (rows[0]) {
     if (!cache.user) cache.user = {};
-    cache.user[userID] = findReult[0];
+    cache.user[userID] = rows[0];
     cache.user[userID].expirationTime = new Date(
       new Date().getTime() + 1000 * 60 * 5
-    ); // 五分钟后过期
-    return dbUserParser(findReult[0]);
+    );
+    return dbUserParser(rows[0]);
   } else {
     return false;
   }
 }
 
 export async function checkEmailExists(email) {
-  let result = await promiseDB.query(
-    `SELECT * FROM user WHERE email = ?`,
-    [email]
-  );
-  return result[0].length > 0;
+  let rows = await db
+    .select()
+    .from(user)
+    .where(eq(user.email, email));
+  return rows.length > 0;
 }
 
 export async function checkNameExists(name) {
-  let result = await promiseDB.query(
-    `SELECT * FROM user WHERE \`name\` = ?`,
-    [name]
-  );
-  return result[0].length > 0;
+  let rows = await db
+    .select()
+    .from(user)
+    .where(eq(user.name, name));
+  return rows.length > 0;
 }
 
 export async function createUser(email, password, name) {
-  let result = await promiseDB.query(
-    `INSERT INTO user (email, password, \`name\`) VALUES (?, ?, ?)`,
-    [email, password, name]
-  );
+  let result = await db.insert(user).values({ email, password, name });
   return result[0].affectedRows > 0;
 }
 
-export async function getNextUserID() {
-  let queryResult = await promiseDB.query(
-    `SELECT AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'user'`
-  );
-  return queryResult[0][0].AUTO_INCREMENT;
+export async function getNextUserID(): Promise<number> {
+  const [rows] = await (db.execute(
+    sql`SELECT AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'user'`
+  ) as any);
+  return rows[0].AUTO_INCREMENT;
 }
 
 export async function updateUserName(userID, name) {
-  await promiseDB.query("UPDATE `user` SET name=? WHERE id=?", [
-    name,
-    userID,
-  ]);
+  await db.update(user).set({ name }).where(eq(user.id, userID));
   delete cache.user[userID];
 }
 
-// 将数据库中的用户数据解析为对象
 export function dbUserParser(userData) {
   try {
     userData.data = JSON.parse(userData.data);

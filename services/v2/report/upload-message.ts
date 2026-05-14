@@ -1,43 +1,50 @@
 import path from "path";
-import { promiseDB } from "../../../common/database/connection.js";
+import { db } from "../../../common/database/connection.js";
+import { anime } from "../../../common/database/schema/anime.js";
+import { bangumiData } from "../../../common/database/schema/bangumi-data.js";
+import { uploadMessage } from "../../../common/database/schema/upload-message.js";
+import { eq, and, sql } from "drizzle-orm";
 
-/**
- * 此 API 接收下载机的更新上报，并记录到最近更新列表。
- */
 export async function reportUploadMessage(index, fileName) {
-  // 分割文件路径, 取出最后三层
   let filePath = path.normalize(index).split(/\\|\//);
   let trueIndex = filePath.slice(-3);
 
-  // 尝试获取此动画信息，当然 有可能是未入库的新动画，此项可能为 null
-  const [animeRows] = await promiseDB.query(
-    "SELECT * FROM anime WHERE year = ? AND type = ? AND name = ? LIMIT 1",
-    [trueIndex[0], trueIndex[1], trueIndex[2]]
-  );
+  const animeRows = await db
+    .select()
+    .from(anime)
+    .where(
+      and(
+        eq(anime.year, trueIndex[0]),
+        eq(anime.type, trueIndex[1]),
+        eq(anime.name, trueIndex[2])
+      )
+    )
+    .limit(1);
   let possibleAnime = animeRows[0] || null;
 
-  let bangumiID: number | string | null =
+  let bangumiID: string | number | null =
     trueIndex.slice(-1)[0].match(/(?<= )\d{1,6}$/)?.[0] ?? null;
-  let parseBangumiID = Number.parseInt(bangumiID ?? "");
+  let parseBangumiID = Number.parseInt(String(bangumiID));
   if (!isNaN(parseBangumiID)) {
     bangumiID = parseBangumiID;
   }
 
-  // 先检查是否存在此 bgmID 的 BangumiData, 如果不存在，不关联，否则将导致外键错误
-  const [bgmRows] = await promiseDB.query(
-    "SELECT * FROM bangumi_data WHERE bgmid = ?",
-    [bangumiID]
-  );
+  const bgmRows = await db
+    .select()
+    .from(bangumiData)
+    .where(eq(bangumiData.bgmid, Number(bangumiID)));
   let bgmData = bgmRows[0] || null;
 
   if (bgmData === null) {
     bangumiID = null;
   }
 
-  await promiseDB.query(
-    "INSERT INTO upload_message (`index`, animeID, bangumiID, fileName) VALUES (?, ?, ?, ?)",
-    [trueIndex.join("/"), possibleAnime?.id ?? null, bangumiID, fileName]
-  );
+  await db.insert(uploadMessage).values({
+    index: trueIndex.join("/"),
+    animeID: possibleAnime?.id ?? null,
+    bangumiID: bangumiID as number | null,
+    fileName,
+  });
 
   return true;
 }

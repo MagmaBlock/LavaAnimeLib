@@ -1,50 +1,44 @@
 import { createHash } from "crypto";
-import { promiseDB } from "../../../common/database/connection.js";
+import { db } from "../../../common/database/connection.js";
+import { inviteCode } from "../../../common/database/schema/invite-code.js";
+import { eq } from "drizzle-orm";
 import { findUserByID } from "./user.js";
 
-// 生成邀请码，12 位字母数字
 export function generateInviteCode() {
   let randomNumer = Math.random();
   let inviteCodeLong = createHash("sha1")
     .update(randomNumer.toString())
     .digest("base64url");
   inviteCodeLong = inviteCodeLong.replace(/[^a-zA-Z0-9]/g, "");
-  let inviteCode = inviteCodeLong.slice(0, 12).toLocaleUpperCase();
-  return inviteCode;
+  let code = inviteCodeLong.slice(0, 12).toLocaleUpperCase();
+  return code;
 }
 
-// 保存一个新的邀请码到数据库
-export async function saveInviteCode(inviteCode, creator, expirationTime) {
-  if (!inviteCode) throw "未提供 inviteCode!";
-  await promiseDB.query(
-    `INSERT INTO invite_code (code, code_creator, expiration_time)
-        VALUES
-        (?, ?, ?)`,
-    [inviteCode, creator, expirationTime]
-  );
+export async function saveInviteCode(code, creator, expirationTime) {
+  if (!code) throw "未提供 inviteCode!";
+  await db.insert(inviteCode).values({
+    code,
+    code_creator: creator,
+    expiration_time: expirationTime,
+  });
 }
 
-// 测试邀请码是否可用
-export async function testInviteCode(inviteCode) {
-  if (!inviteCode) throw "未提供 inviteCode!";
-  let queryResult = await promiseDB.query(
-    "SELECT * FROM invite_code WHERE code = ?",
-    [inviteCode]
-  );
+export async function testInviteCode(code) {
+  if (!code) throw "未提供 inviteCode!";
+  let rows = await db
+    .select()
+    .from(inviteCode)
+    .where(eq(inviteCode.code, code));
 
-  if (queryResult[0].length) {
-    // 存在结果
+  if (rows.length) {
     let expired = false;
     let used = false;
-    if (queryResult[0][0].expiration_time !== null) {
-      // 有过期时间设置，判断是否过期
-      if (queryResult[0][0].expiration_time < new Date()) {
-        // 过期了
+    if (rows[0].expiration_time !== null) {
+      if (rows[0].expiration_time < new Date()) {
         expired = true;
       }
     }
-    if (queryResult[0][0].use_time) {
-      // 已经被标记了使用时间
+    if (rows[0].use_time) {
       used = true;
     }
     return { real: true, expired, used };
@@ -53,33 +47,30 @@ export async function testInviteCode(inviteCode) {
   }
 }
 
-// 使用邀请码
-export async function useInviteCode(inviteCode, user) {
-  if (!inviteCode || !user) throw "参数缺失";
+export async function useInviteCode(code, userId) {
+  if (!code || !userId) throw "参数缺失";
 
-  await promiseDB.query(
-    `UPDATE invite_code
-            SET code_user = ?, use_time = ?
-            WHERE code = ?`,
-    [user, new Date(), inviteCode]
-  );
+  await db
+    .update(inviteCode)
+    .set({ code_user: userId, use_time: new Date() })
+    .where(eq(inviteCode.code, code));
 
-  let testResult = await testInviteCode(inviteCode);
+  let testResult = await testInviteCode(code);
   if (testResult.real && testResult.used) return true;
   else throw "使用邀请码后验证失败";
 }
 
-// 查询某用户创建的索引验证码
 export async function getUserInviteCodes(userID) {
   if (!userID) throw "no id";
 
-  let findResult = await promiseDB.query(
-    "SELECT * FROM invite_code WHERE code_creator = ?",
-    [userID]
-  );
-  if (findResult[0].length) {
+  let rows = await db
+    .select()
+    .from(inviteCode)
+    .where(eq(inviteCode.code_creator, userID));
+
+  if (rows.length) {
     let result = [];
-    for (let inv of findResult[0]) {
+    for (let inv of rows) {
       result.push({
         code: inv.code,
         codeUser: (await findUserByID(inv.code_user)).name,
