@@ -3,8 +3,9 @@ import { viewHistory } from "../../../common/database/schema/view-history.js";
 import { anime } from "../../../common/database/schema/anime.js";
 import { sql, eq, desc, getTableColumns, count } from "drizzle-orm";
 import { parseAnime } from "../parser/anime.js";
+import type { ParsedAnime } from "../parser/anime.js";
 
-export async function getHotAnimes() {
+export async function getHotAnimes(): Promise<ParsedAnime[]> {
   const queryResult = await db
     .select({
       ...getTableColumns(anime),

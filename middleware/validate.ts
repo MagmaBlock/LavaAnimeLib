@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Request, Response, NextFunction } from "express";
+import type { ParsedQs } from "qs";
 import badRequest from "../common/response/bad-request.js";
 
 export function validateBody<T extends z.ZodType>(schema: T) {
@@ -25,7 +26,7 @@ export function validateQuery<T extends z.ZodType>(schema: T) {
         .join("; ");
       return badRequest(res, message);
     }
-    req.query = result.data as any;
+    req.query = result.data as ParsedQs;
     next();
   };
 }

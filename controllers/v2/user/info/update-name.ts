@@ -5,7 +5,7 @@ import serverError from "../../../../common/response/server-error.js";
 import { checkNameExists, updateUserName } from "../../../../services/v2/user/user.js";
 import { log } from "../../../../common/tools/logger.js";
 
-export async function updateName(req: Request, res: Response) {
+export async function updateName(req: Request, res: Response): Promise<void> {
   const { name } = req.body;
   const user = req.user!;
   if (user.name === name) {

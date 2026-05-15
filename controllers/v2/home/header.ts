@@ -5,7 +5,7 @@ import badRequest from "../../../common/response/bad-request.js";
 import serverError from "../../../common/response/server-error.js";
 import { log } from "../../../common/tools/logger.js";
 
-export async function getHeader(req: Request, res: Response) {
+export async function getHeader(req: Request, res: Response): Promise<void> {
   try {
     const data = await getHeaderService();
     success(res, data);
@@ -15,7 +15,7 @@ export async function getHeader(req: Request, res: Response) {
   }
 }
 
-export async function updateHeader(req: Request, res: Response) {
+export async function updateHeader(req: Request, res: Response): Promise<void> {
   try {
     const newData = req.body.data;
     await updateHeaderService(newData);

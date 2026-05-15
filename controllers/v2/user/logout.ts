@@ -5,7 +5,7 @@ import badRequest from "../../../common/response/bad-request.js";
 import serverError from "../../../common/response/server-error.js";
 import { removeToken } from "../../../services/v2/user/token.js";
 
-export async function userLogout(req: Request, res: Response) {
+export async function userLogout(req: Request, res: Response): Promise<void> {
   const { all } = req.body;
   const token = req.get("Authorization");
 

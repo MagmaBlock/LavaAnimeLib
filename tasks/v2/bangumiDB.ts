@@ -7,7 +7,7 @@ import { updateBangumiData } from "./updateBangumiData.js";
 import { log } from "../../common/tools/logger.js";
 import _ from "lodash";
 
-export async function findExpiredBangumiData() {
+export async function findExpiredBangumiData(): Promise<number[]> {
   const allBgmIDList = await db
     .select({
       bgmid: bangumiData.bgmid,
@@ -29,7 +29,7 @@ function isExpired(ts: Date | null): boolean {
   return cachedTime > 1000 * 60 * 60 * 24 * config.cache;
 }
 
-export async function getAllBgmIDInAnimeTable() {
+export async function getAllBgmIDInAnimeTable(): Promise<number[]> {
   const allBgmID = await db
     .select({ bgmid: anime.bgmid })
     .from(anime)
@@ -40,7 +40,7 @@ export async function getAllBgmIDInAnimeTable() {
   return _.compact(idList);
 }
 
-export async function getAllBgmIdInBangumiDataTable() {
+export async function getAllBgmIdInBangumiDataTable(): Promise<number[]> {
   const allBgmID = await db
     .select({
       bgmid: bangumiData.bgmid,
@@ -53,7 +53,7 @@ export async function getAllBgmIdInBangumiDataTable() {
   return _.compact(idList);
 }
 
-export async function insertBgmIDToDB(bgmID: number) {
+export async function insertBgmIDToDB(bgmID: number): Promise<void> {
   const isExist = await db
     .select({ bgmid: bangumiData.bgmid })
     .from(bangumiData)
@@ -67,7 +67,7 @@ export async function insertBgmIDToDB(bgmID: number) {
   }
 }
 
-export async function insertBgmIDBlankToDB(bgmID: number) {
+export async function insertBgmIDBlankToDB(bgmID: number): Promise<void> {
   const isExist = await db
     .select({ bgmid: bangumiData.bgmid })
     .from(bangumiData)

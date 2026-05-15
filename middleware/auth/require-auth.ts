@@ -2,7 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import forbidden from "../../common/response/forbidden.js";
 import unauthorized from "../../common/response/unauthorized.js";
 
-export function requireLogin(req: Request, res: Response, next: NextFunction) {
+export function requireLogin(req: Request, res: Response, next: NextFunction): void {
   if (req.user?.id) {
     next();
   } else {
@@ -10,7 +10,7 @@ export function requireLogin(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
   if (req.user?.data?.permission?.admin) {
     next();
   } else {

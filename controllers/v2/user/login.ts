@@ -43,7 +43,7 @@ function errorPasswordCounter(key: string, type: "ip" | "user") {
   }
 }
 
-export async function userLogin(req: Request, res: Response) {
+export async function userLogin(req: Request, res: Response): Promise<void> {
   const { account, password } = req.body;
 
   if (!account || !password) {
@@ -55,7 +55,7 @@ export async function userLogin(req: Request, res: Response) {
     return notFound(res, "用户不存在");
   }
 
-  if (countStore.ip[req.ip!]?.lock || countStore.user[user.id]?.lock) {
+  if (countStore.ip[req.ip ?? ""]?.lock || countStore.user[user.id]?.lock) {
     return forbidden(res, "请求错误次数过多, 请等一段时间再试");
   }
 
@@ -81,6 +81,6 @@ export async function userLogin(req: Request, res: Response) {
   } else {
     badRequest(res, "密码错误");
     errorPasswordCounter(String(user.id), "user");
-    errorPasswordCounter(req.ip!, "ip");
+    errorPasswordCounter(req.ip ?? "", "ip");
   }
 }

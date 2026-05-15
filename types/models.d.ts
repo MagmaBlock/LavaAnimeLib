@@ -12,6 +12,16 @@ export interface UserSettings {
   [key: string]: unknown;
 }
 
+export interface UserRow {
+  id: number;
+  email: string;
+  name: string;
+  password: string;
+  create_time: Date | null;
+  data: string | null;
+  settings: string | null;
+}
+
 export interface User {
   id: number;
   email: string;

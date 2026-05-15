@@ -27,13 +27,13 @@ export async function getIndexInfo(): Promise<IndexData> {
   }
 
   indexData.type = indexData.type.sort().sort((a, b) => {
-    return a.match(/\d{1,2}|./)![0] as unknown as number - (b.match(/\d{1,2}|./)![0] as unknown as number);
+    return Number(a.match(/\d{1,2}|./)?.[0]) - Number(b.match(/\d{1,2}|./)?.[0]);
   });
 
   return indexData;
 }
 
-export async function queryAnimeByIndex(year?: string, type?: string) {
+export async function queryAnimeByIndex(year?: string, type?: string): Promise<typeof anime.$inferSelect[]> {
   const conditions = [eq(anime.deleted, 0)];
   if (year) conditions.push(like(anime.year, year));
   if (type) conditions.push(like(anime.type, type));

@@ -1,11 +1,11 @@
 import { bangumiAPI } from "../../common/api-clients/bangumi.js";
 
-export async function getBangumiSubjects(bgmID: number) {
+export async function getBangumiSubjects(bgmID: number): Promise<unknown> {
   const thisSubject = await bangumiAPI.get("/v0/subjects/" + bgmID);
   return thisSubject.data;
 }
 
-export async function getBangumiRelations(bgmID: number, allBgmIDInAnimeTable: number[]) {
+export async function getBangumiRelations(bgmID: number, allBgmIDInAnimeTable: number[]): Promise<unknown[]> {
   const thisSubjectRelations = await bangumiAPI.get(
     "/v0/subjects/" + bgmID + "/subjects"
   );
@@ -20,7 +20,7 @@ export async function getBangumiRelations(bgmID: number, allBgmIDInAnimeTable: n
   return thisSubjectRealRelations;
 }
 
-export async function getBangumiCharacters(bgmID: number) {
+export async function getBangumiCharacters(bgmID: number): Promise<unknown> {
   const thisSubjectCharacters = await bangumiAPI.get(
     "/v0/subjects/" + bgmID + "/characters"
   );

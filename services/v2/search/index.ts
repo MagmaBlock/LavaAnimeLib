@@ -3,8 +3,9 @@ import { db } from "../../../common/database/connection.js";
 import { anime } from "../../../common/database/schema/anime.js";
 import { like, and, desc, eq } from "drizzle-orm";
 import { parseAnime } from "../parser/anime.js";
+import type { ParsedAnime } from "../parser/anime.js";
 
-export async function searchAnimes(value: string) {
+export async function searchAnimes(value: string): Promise<ParsedAnime[]> {
   const splitedValue = value.split(" ");
 
   const conditions = splitedValue.map((term) => {
@@ -32,10 +33,12 @@ export async function quickSearch(value: string): Promise<string[]> {
 
   const quickSearchResults: string[] = [];
   for (const i of queryResults) {
-    if (i.title!.startsWith(value)) quickSearchResults.push(i.title!);
+    if (!i.title) continue;
+    if (i.title.startsWith(value)) quickSearchResults.push(i.title);
   }
   for (const i of queryResults) {
-    if (!i.title!.startsWith(value)) quickSearchResults.push(i.title!);
+    if (!i.title) continue;
+    if (!i.title.startsWith(value)) quickSearchResults.push(i.title);
   }
   for (const i in quickSearchResults) {
     if (Number(i) >= 10) quickSearchResults[i] = "";

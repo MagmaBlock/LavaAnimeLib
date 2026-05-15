@@ -4,7 +4,7 @@ import success from "../../../../common/response/success.js";
 import serverError from "../../../../common/response/server-error.js";
 import { log } from "../../../../common/tools/logger.js";
 
-export async function deleteCodes(req: Request, res: Response) {
+export async function deleteCodes(req: Request, res: Response): Promise<void> {
   const codes = req.body.codes;
 
   try {

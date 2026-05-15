@@ -5,7 +5,7 @@ import notFound from "../../../common/response/not-found.js";
 import serverError from "../../../common/response/server-error.js";
 import { log } from "../../../common/tools/logger.js";
 
-export async function getSiteSetting(req: Request, res: Response) {
+export async function getSiteSetting(req: Request, res: Response): Promise<void> {
   const key = req.query.key as string;
 
   try {
@@ -21,7 +21,7 @@ export async function getSiteSetting(req: Request, res: Response) {
   }
 }
 
-export async function setSiteSetting(req: Request, res: Response) {
+export async function setSiteSetting(req: Request, res: Response): Promise<void> {
   const { key, value } = req.body;
 
   try {

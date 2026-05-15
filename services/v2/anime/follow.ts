@@ -85,7 +85,7 @@ export async function getAnimeFollowList(
     for (const followRecord of rows) {
       allRawResult.push({
         status: followRecord.status,
-        editTime: followRecord.edit_time!.getTime(),
+        editTime: followRecord.edit_time?.getTime() ?? 0,
         animeID: followRecord.anime_id,
       });
     }

@@ -2,7 +2,9 @@ import { db } from "../../../common/database/connection.js";
 import { settings } from "../../../common/database/schema/settings.js";
 import { eq } from "drizzle-orm";
 
-export async function getHeader(): Promise<unknown[]> {
+type HeaderItem = Record<string, unknown>;
+
+export async function getHeader(): Promise<HeaderItem[]> {
   const rows = await db
     .select()
     .from(settings)
@@ -10,7 +12,7 @@ export async function getHeader(): Promise<unknown[]> {
   if (rows.length === 0) {
     return [];
   } else {
-    return JSON.parse(rows[0].value!) as unknown[];
+    return JSON.parse(rows[0].value!) as HeaderItem[];
   }
 }
 

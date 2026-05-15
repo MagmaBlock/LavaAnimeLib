@@ -4,7 +4,7 @@ import success from "../../../common/response/success.js";
 import serverError from "../../../common/response/server-error.js";
 import { log } from "../../../common/tools/logger.js";
 
-export async function searchAnimes(req: Request, res: Response) {
+export async function searchAnimes(req: Request, res: Response): Promise<void> {
   const value = req.query.value as string;
 
   try {

@@ -4,7 +4,7 @@ import unauthorized from "../../../../common/response/unauthorized.js";
 import serverError from "../../../../common/response/server-error.js";
 import { getUserInviteCodes } from "../../../../services/v2/user/invite-code.js";
 
-export async function getUserInviteCode(req: Request, res: Response) {
+export async function getUserInviteCode(req: Request, res: Response): Promise<void> {
   if (!req.user) {
     return unauthorized(res);
   }

@@ -5,9 +5,9 @@ import notFound from "../../../common/response/not-found.js";
 import serverError from "../../../common/response/server-error.js";
 import { log } from "../../../common/tools/logger.js";
 
-export async function getAnimeByID(req: Request, res: Response) {
-  const laID = req.query.id as unknown as number;
-  const full = (req.query.full || false) as boolean;
+export async function getAnimeByID(req: Request, res: Response): Promise<void> {
+  const laID = Number(req.query.id);
+  const full = req.query.full === "true";
 
   try {
     const anime = await getAnimeByIDService(laID, full);

@@ -3,7 +3,7 @@ import { getAllValidCodes as getAllValidCodesService } from "../../../../service
 import success from "../../../../common/response/success.js";
 import serverError from "../../../../common/response/server-error.js";
 
-export async function getAllValidCodes(req: Request, res: Response) {
+export async function getAllValidCodes(req: Request, res: Response): Promise<void> {
   try {
     const result = await getAllValidCodesService();
     success(res, result);

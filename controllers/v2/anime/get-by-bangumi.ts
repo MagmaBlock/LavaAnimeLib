@@ -4,8 +4,8 @@ import success from "../../../common/response/success.js";
 import serverError from "../../../common/response/server-error.js";
 import { log } from "../../../common/tools/logger.js";
 
-export async function getAnimesByBgmID(req: Request, res: Response) {
-  const bgmID = req.query.bgmid as unknown as number;
+export async function getAnimesByBgmID(req: Request, res: Response): Promise<void> {
+  const bgmID = Number(req.query.bgmid);
 
   try {
     const result = await getAnimesByBgmIDService(bgmID);

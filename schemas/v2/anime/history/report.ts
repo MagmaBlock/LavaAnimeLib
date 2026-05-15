@@ -6,7 +6,7 @@ export const reportViewHistoryBodySchema = z.object({
   currentTime: z.number().min(0).max(43200),
   totalTime: z.number().min(0).max(43200),
   watchMethod: z.string().min(1),
-  useDrive: z.any().optional(),
+  useDrive: z.string().optional(),
 }).superRefine((data, ctx) => {
   if (data.currentTime > data.totalTime) {
     ctx.addIssue({

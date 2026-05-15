@@ -3,8 +3,7 @@ import { db } from "../../../common/database/connection.js";
 import { uploadMessage } from "../../../common/database/schema/upload-message.js";
 import { anime } from "../../../common/database/schema/anime.js";
 import { eq, desc } from "drizzle-orm";
-import { parseAnime } from "../parser/anime.js";
-import type { RawAnimeRow } from "../parser/anime.js";
+import { parseAnime, type RawAnimeRow } from "../parser/anime.js";
 
 interface RecentUpdateRecord {
   id: number;
@@ -71,7 +70,7 @@ export async function getRecentUpdates(
 
   for (const record of recentUpdates) {
     if (record.anime !== null)
-      record.anime = (await parseAnime(record.anime as RawAnimeRow))[0] as Record<string, unknown>;
+      record.anime = (await parseAnime(record.anime as unknown as RawAnimeRow))[0];
   }
 
   return recentUpdates;

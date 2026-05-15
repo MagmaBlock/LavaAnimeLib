@@ -1,4 +1,4 @@
-import type { User } from "../../../types/models.js";
+import type { User, UserRow } from "../../../types/models.js";
 import cache from "../../../common/cache.js";
 import { db } from "../../../common/database/connection.js";
 import { user } from "../../../common/database/schema/user.js";
@@ -10,7 +10,7 @@ export async function findUser(account: string): Promise<User | false> {
     .from(user)
     .where(or(eq(user.email, account), eq(user.name, account)));
   if (rows.length) {
-    return dbUserParser(rows[0] as unknown as User);
+    return dbUserParser(rows[0]);
   }
   return false;
 }
@@ -19,17 +19,17 @@ export async function findUserByID(userID: number): Promise<User | false> {
   if (!userID) return false;
 
   if (cache.user?.[userID]) {
-    return dbUserParser(cache.user[userID] as unknown as User);
+    return dbUserParser(cache.user[userID] as unknown as UserRow);
   }
 
   const rows = await db.select().from(user).where(eq(user.id, userID));
   if (rows[0]) {
     if (!cache.user) cache.user = {};
-    cache.user[userID] = rows[0] as unknown as Record<string, unknown>;
-    (cache.user[userID] as unknown as User).expirationTime = new Date(
-      new Date().getTime() + 1000 * 60 * 5
-    );
-    return dbUserParser(rows[0] as unknown as User);
+    cache.user[userID] = {
+      ...rows[0],
+      expirationTime: new Date(Date.now() + 1000 * 60 * 5),
+    };
+    return dbUserParser(rows[0]);
   } else {
     return false;
   }
@@ -56,11 +56,16 @@ export async function createUser(email: string, password: string, name: string):
   return result[0].affectedRows > 0;
 }
 
+interface AutoIncrementRow {
+  AUTO_INCREMENT: number;
+}
+
 export async function getNextUserID(): Promise<number> {
   const [rows] = await db.execute(
     sql`SELECT AUTO_INCREMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'user'`
   );
-  return (rows as unknown as Record<string, unknown>[])[0].AUTO_INCREMENT as number;
+  const autoIncrementRows = rows as unknown as AutoIncrementRow[];
+  return autoIncrementRows[0].AUTO_INCREMENT;
 }
 
 export async function updateUserName(userID: number, name: string): Promise<void> {
@@ -68,12 +73,12 @@ export async function updateUserName(userID: number, name: string): Promise<void
   delete cache.user[userID];
 }
 
-export function dbUserParser(userData: User): User {
+export function dbUserParser(userData: UserRow): User {
   try {
-    userData.data = JSON.parse(userData.data as unknown as string);
-    userData.settings = JSON.parse(userData.settings as unknown as string);
+    const data = JSON.parse(userData.data ?? "null") as User["data"];
+    const settings = JSON.parse(userData.settings ?? "null") as User["settings"];
+    return { ...userData, data, settings };
   } catch {
-    return userData;
+    return { ...userData, data: null, settings: null };
   }
-  return userData;
 }

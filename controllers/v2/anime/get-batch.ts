@@ -4,7 +4,7 @@ import success from "../../../common/response/success.js";
 import serverError from "../../../common/response/server-error.js";
 import { log } from "../../../common/tools/logger.js";
 
-export async function getAnimesByID(req: Request, res: Response) {
+export async function getAnimesByID(req: Request, res: Response): Promise<void> {
   const ids = req.body.ids;
   try {
     const result = await getAnimesByIDService(ids);

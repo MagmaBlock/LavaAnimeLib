@@ -33,17 +33,28 @@ interface ParsedAnime {
   [key: string]: unknown;
 }
 
+export type { ParsedAnime };
+
 interface BgmDataEntry {
   relations: Record<string, unknown>[];
   subjects: Record<string, unknown>;
   characters: unknown[];
 }
 
+interface BangumiImages {
+  small?: string;
+  grid?: string;
+  large?: string;
+  medium?: string;
+  common?: string;
+  [key: string]: string | undefined;
+}
+
 export async function parseAnime(rawData: RawAnimeRow | RawAnimeRow[], full = false): Promise<ParsedAnime[]> {
   if (!rawData) throw new Error("No data provide");
   if (typeof rawData !== "object") throw new Error("Data is not a Object");
 
-  let dataArray = _.castArray(rawData) as RawAnimeRow[];
+  let dataArray = Array.isArray(rawData) ? rawData : [rawData];
   dataArray = _.compact(dataArray);
   const bgmIDList = parseAllBgmID(dataArray);
   const bgmData = await getAllBangumiData(bgmIDList);
@@ -79,8 +90,8 @@ async function parseSingleAnimeData(
       nsfw: /\[NSFW\]/i.test(rawData.title || ""),
       },
       images: {
-        ...(thisbgmData.subjects.images as Record<string, string | undefined>),
-        poster: (thisbgmData.subjects.images as Record<string, string>).large + "/poster",
+        ...(thisbgmData.subjects.images as BangumiImages),
+        poster: (thisbgmData.subjects.images as BangumiImages).large + "/poster",
       },
       deleted: false,
     };
@@ -91,7 +102,7 @@ async function parseSingleAnimeData(
         ...thisAnimeData,
         relations: newRelations,
         characters: thisbgmData.characters,
-      } as unknown as ParsedAnime;
+      };
     }
     return thisAnimeData;
   }
@@ -140,20 +151,29 @@ async function getAllBangumiData(bgmIDList: number[]): Promise<Record<string, Bg
       .from(bangumiData)
       .where(inArray(bangumiData.bgmid, bgmIDList));
 
-    for (const i in queryResult) {
-      for (const j in queryResult[i]) {
-        const val = (queryResult[i] as Record<string, unknown>)[j];
-        if (typeof val === "string") {
-          (queryResult[i] as Record<string, unknown>)[j] = val.replace(
-            /https:\/\/lain\.bgm\.tv/gi,
-            config.bangumiImage.host
-          );
-        }
+    for (const row of queryResult) {
+      if (row.relations_anime) {
+        row.relations_anime = row.relations_anime.replace(
+          /https:\/\/lain\.bgm\.tv/gi,
+          config.bangumiImage.host
+        );
       }
-      bgmData[queryResult[i].bgmid] = {
-        relations: JSON.parse(queryResult[i].relations_anime!),
-        subjects: JSON.parse(queryResult[i].subjects!),
-        characters: JSON.parse(queryResult[i].characters!),
+      if (row.subjects) {
+        row.subjects = row.subjects.replace(
+          /https:\/\/lain\.bgm\.tv/gi,
+          config.bangumiImage.host
+        );
+      }
+      if (row.characters) {
+        row.characters = row.characters.replace(
+          /https:\/\/lain\.bgm\.tv/gi,
+          config.bangumiImage.host
+        );
+      }
+      bgmData[row.bgmid] = {
+        relations: JSON.parse(row.relations_anime!),
+        subjects: JSON.parse(row.subjects!),
+        characters: JSON.parse(row.characters!),
       };
     }
   }
@@ -163,7 +183,7 @@ async function getAllBangumiData(bgmIDList: number[]): Promise<Record<string, Bg
 async function parseBangumiRelations(relations: Record<string, unknown>[]) {
   const parsedRelations = [];
   for (const i in relations) {
-    const thisBgmIDAnimes = await getAnimesByBgmID(relations[i].id as number);
+    const thisBgmIDAnimes = await getAnimesByBgmID(Number(relations[i].id));
     for (const j in thisBgmIDAnimes) {
       parsedRelations.push({
         ...thisBgmIDAnimes[j],

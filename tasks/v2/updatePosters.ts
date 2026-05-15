@@ -6,7 +6,7 @@ import { eq, inArray } from "drizzle-orm";
 import { getAllBgmIDInAnimeTable } from "./bangumiDB.js";
 import { log } from "../../common/tools/logger.js";
 
-export async function updatePosters() {
+export async function updatePosters(): Promise<void> {
   const allBgmIDInAnime = await getAllBgmIDInAnimeTable();
   const dbResult = await db
     .select({

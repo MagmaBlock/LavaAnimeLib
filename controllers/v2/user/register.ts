@@ -7,7 +7,7 @@ import { getFormattedPassword } from "../../../services/v2/user/password.js";
 import { checkEmailExists, checkNameExists, createUser, getNextUserID } from "../../../services/v2/user/user.js";
 import { log } from "../../../common/tools/logger.js";
 
-export async function userRegister(req: Request, res: Response) {
+export async function userRegister(req: Request, res: Response): Promise<void> {
   const { email, password, name, inviteCode } = req.body;
 
   try {

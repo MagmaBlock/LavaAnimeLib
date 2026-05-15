@@ -32,10 +32,11 @@ setInterval(() => {
     const tableData = cache[table];
     if (Array.isArray(tableData)) return;
     Object.keys(tableData).forEach((key) => {
-      const entry = (tableData as Record<string, CacheTableItem>)[key];
-      if (entry && typeof entry === "object" && entry.expirationTime) {
-        if (new Date(entry.expirationTime) <= now) {
-          delete (tableData as Record<string, CacheTableItem>)[key];
+      const entry = tableData[key];
+      if (entry && typeof entry === "object" && "expirationTime" in entry) {
+        const expirationTime = (entry as CacheTableItem).expirationTime;
+        if (expirationTime && new Date(expirationTime) <= now) {
+          delete tableData[key];
         }
       }
     });

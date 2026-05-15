@@ -3,7 +3,7 @@ import { log } from "../../common/tools/logger.js";
 import forbidden from "../../common/response/forbidden.js";
 import config from "../../common/config.js";
 
-export function refererChecker(req: Request, res: Response, next: NextFunction) {
+export function refererChecker(req: Request, res: Response, next: NextFunction): void {
   const ref = req.get("Referer");
 
   if (!inRefererWhiteList(ref)) {

@@ -17,7 +17,7 @@ import { log } from "../../common/tools/logger.js";
 
 const reTry: Record<string, number> = {};
 
-export async function updateAllBangumiData() {
+export async function updateAllBangumiData(): Promise<void> {
   await repairBangumiDataID();
   const bgmIDListExpired = await findExpiredBangumiData();
   const bgmIDListInAnimeTable = await getAllBgmIDInAnimeTable();
@@ -34,7 +34,7 @@ export async function updateAllBangumiData() {
   log.info("Bangumi Data 刷新完成");
 }
 
-export async function repairBangumiDataID() {
+export async function repairBangumiDataID(): Promise<void> {
   const bgmIDInAnime = await getAllBgmIDInAnimeTable();
   const bgmIDInData = await getAllBgmIdInBangumiDataTable();
   const diff = _.difference(bgmIDInAnime, bgmIDInData);
@@ -43,7 +43,7 @@ export async function repairBangumiDataID() {
   for (const i in diff) await insertBgmIDBlankToDB(diff[i]);
 }
 
-export async function updateBangumiData(bgmID: number, bgmIDListInAnimeTable?: number[]) {
+export async function updateBangumiData(bgmID: number, bgmIDListInAnimeTable?: number[]): Promise<void> {
   if (!bgmID) throw new Error("No Bangumi ID provided!");
   if (!bgmIDListInAnimeTable)
     bgmIDListInAnimeTable = await getAllBgmIDInAnimeTable();

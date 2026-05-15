@@ -1,12 +1,12 @@
 import type { Request, Response, NextFunction } from "express";
 import { log } from "../../common/tools/logger.js";
 
-export function requestStartRecorder(req: Request, res: Response, next: NextFunction) {
+export function requestStartRecorder(req: Request, res: Response, next: NextFunction): void {
   req.queryStart = new Date();
   next();
 }
 
-export function requestLogger(req: Request, res: Response, next: NextFunction) {
+export function requestLogger(req: Request, res: Response, next: NextFunction): void {
   const ref = req.get("Referer") || "无 Referer";
 
   res.once("finish", () => {
@@ -16,7 +16,7 @@ export function requestLogger(req: Request, res: Response, next: NextFunction) {
       method: req.method,
       url: decodeURIComponent(req.originalUrl),
       referer: ref,
-      durationMs: new Date().getTime() - req.queryStart!.getTime(),
+      durationMs: new Date().getTime() - (req.queryStart?.getTime() ?? 0),
     });
   });
 

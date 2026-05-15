@@ -31,7 +31,7 @@ export async function getAllValidCodes(): Promise<ValidCodeResult[]> {
   }));
 }
 
-export async function deleteInviteCode(code: string) {
+export async function deleteInviteCode(code: string): Promise<unknown> {
   if (typeof code !== "string") throw new Error("邀请码不是 String!");
   return await db.delete(inviteCode).where(eq(inviteCode.code, code));
 }
