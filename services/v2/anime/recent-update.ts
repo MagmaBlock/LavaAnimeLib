@@ -4,8 +4,26 @@ import { uploadMessage } from "../../../common/database/schema/upload-message.js
 import { anime } from "../../../common/database/schema/anime.js";
 import { eq, desc } from "drizzle-orm";
 import { parseAnime } from "../parser/anime.js";
+import type { RawAnimeRow } from "../parser/anime.js";
 
-export async function getRecentUpdates(skip, take, ignoreDuplicate) {
+interface RecentUpdateRecord {
+  id: number;
+  index: string;
+  animeID: number | null;
+  bangumiID: number | null;
+  fileName: string | null;
+  parseResult: ReturnType<typeof parseFileName>;
+  messageSentStatus: number;
+  messageSkiped: number;
+  uploadTime: Date;
+  anime: Record<string, unknown> | null;
+}
+
+export async function getRecentUpdates(
+  skip: number,
+  take: number,
+  ignoreDuplicate?: boolean
+): Promise<RecentUpdateRecord[]> {
   let conditions = undefined;
 
   if (ignoreDuplicate) {
@@ -21,7 +39,7 @@ export async function getRecentUpdates(skip, take, ignoreDuplicate) {
     .limit(take)
     .offset(skip);
 
-  let recentUpdates = rows.map((row) => {
+  const recentUpdates: RecentUpdateRecord[] = rows.map((row) => {
     const um = row.upload_message;
     const a = row.anime;
     return {
@@ -30,10 +48,10 @@ export async function getRecentUpdates(skip, take, ignoreDuplicate) {
       animeID: um.animeID,
       bangumiID: um.bangumiID,
       fileName: um.fileName,
-      parseResult: parseFileName(um.fileName),
+      parseResult: parseFileName(um.fileName!),
       messageSentStatus: um.messageSentStatus,
       messageSkiped: um.messageSkiped,
-      uploadTime: um.uploadTime,
+      uploadTime: um.uploadTime!,
       anime: a
         ? {
             id: a.id,
@@ -51,9 +69,9 @@ export async function getRecentUpdates(skip, take, ignoreDuplicate) {
     };
   });
 
-  for (let record of recentUpdates) {
+  for (const record of recentUpdates) {
     if (record.anime !== null)
-      record.anime = (await parseAnime(record.anime))[0];
+      record.anime = (await parseAnime(record.anime as RawAnimeRow))[0] as Record<string, unknown>;
   }
 
   return recentUpdates;

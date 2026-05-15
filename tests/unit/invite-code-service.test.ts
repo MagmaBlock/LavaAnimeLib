@@ -75,6 +75,6 @@ describe("getUserInviteCodes", () => {
   });
 
   it("无 ID 应抛错", async () => {
-    await expect(getUserInviteCodes(null as any)).rejects.toBe("no id");
+    await expect(getUserInviteCodes(null as any)).rejects.toThrow("no id");
   });
 });

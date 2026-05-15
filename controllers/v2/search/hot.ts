@@ -1,7 +1,8 @@
-import { getHotAnimes as getHotAnimesService  } from "../../../services/v2/search/hot.js";
+import type { Request, Response } from "express";
+import { getHotAnimes as getHotAnimesService } from "../../../services/v2/search/hot.js";
 import success from "../../../common/response/success.js";
 
-export async function getHotAnimes(req, res) {
-  let result = await getHotAnimesService();
+export async function getHotAnimes(req: Request, res: Response) {
+  const result = await getHotAnimesService();
   success(res, result);
 }

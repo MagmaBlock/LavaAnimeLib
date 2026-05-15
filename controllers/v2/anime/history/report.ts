@@ -1,11 +1,11 @@
+import type { Request, Response } from "express";
 import { recordViewHistory } from "../../../../services/v2/anime/history.js";
 import success from "../../../../common/response/success.js";
 import serverError from "../../../../common/response/server-error.js";
 
-// 上报播放状态
-export async function reportViewHistory(req, res) {
-  let userID = req.user.id;
-  let { animeID, fileName, currentTime, totalTime, watchMethod, useDrive } =
+export async function reportViewHistory(req: Request, res: Response) {
+  const userID = req.user!.id;
+  const { animeID, fileName, currentTime, totalTime, watchMethod, useDrive } =
     req.body;
 
   try {
@@ -15,7 +15,7 @@ export async function reportViewHistory(req, res) {
       fileName,
       currentTime,
       totalTime,
-      req.ip,
+      req.ip || "",
       watchMethod,
       useDrive
     );

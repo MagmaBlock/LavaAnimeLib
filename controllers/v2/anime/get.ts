@@ -1,14 +1,15 @@
-import { getAnimeByID as getAnimeByIDService  } from "../../../services/v2/anime/index.js";
+import type { Request, Response } from "express";
+import { getAnimeByID as getAnimeByIDService } from "../../../services/v2/anime/index.js";
 import success from "../../../common/response/success.js";
 import notFound from "../../../common/response/not-found.js";
 import serverError from "../../../common/response/server-error.js";
 
-export async function getAnimeByID(req, res) {
-  let laID = req.query.id;
-  let full = req.query.full || false;
+export async function getAnimeByID(req: Request, res: Response) {
+  const laID = req.query.id as unknown as number;
+  const full = (req.query.full || false) as boolean;
 
   try {
-    let anime = await getAnimeByIDService(laID, full);
+    const anime = await getAnimeByIDService(laID, full);
     if (anime.deleted) return notFound(res);
 
     success(res, anime);

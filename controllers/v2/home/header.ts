@@ -1,11 +1,12 @@
-import { getHeader as getHeaderService, updateHeader as updateHeaderService   } from "../../../services/v2/home/header.js";
+import type { Request, Response } from "express";
+import { getHeader as getHeaderService, updateHeader as updateHeaderService } from "../../../services/v2/home/header.js";
 import success from "../../../common/response/success.js";
 import badRequest from "../../../common/response/bad-request.js";
 import serverError from "../../../common/response/server-error.js";
 
-export async function getHeader(req, res) {
+export async function getHeader(req: Request, res: Response) {
   try {
-    let data = await getHeaderService();
+    const data = await getHeaderService();
     success(res, data);
   } catch (error) {
     console.error(error);
@@ -13,13 +14,13 @@ export async function getHeader(req, res) {
   }
 }
 
-export async function updateHeader(req, res) {
+export async function updateHeader(req: Request, res: Response) {
   try {
-    let newData = req.body.data;
+    const newData = req.body.data;
     await updateHeaderService(newData);
     success(res, undefined);
   } catch (error) {
-    if (error.message === "数据必须为数组") {
+    if (error instanceof Error && error.message === "数据必须为数组") {
       return badRequest(res);
     }
     console.error(error);

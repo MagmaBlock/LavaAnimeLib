@@ -3,11 +3,11 @@ import { db } from "../../../common/database/connection.js";
 import { anime } from "../../../common/database/schema/anime.js";
 import { bangumiData } from "../../../common/database/schema/bangumi-data.js";
 import { uploadMessage } from "../../../common/database/schema/upload-message.js";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
-export async function reportUploadMessage(index, fileName) {
-  let filePath = path.normalize(index).split(/\\|\//);
-  let trueIndex = filePath.slice(-3);
+export async function reportUploadMessage(index: string, fileName: string): Promise<boolean> {
+  const filePath = path.normalize(index).split(/\\|\//);
+  const trueIndex = filePath.slice(-3);
 
   const animeRows = await db
     .select()
@@ -20,11 +20,11 @@ export async function reportUploadMessage(index, fileName) {
       )
     )
     .limit(1);
-  let possibleAnime = animeRows[0] || null;
+  const possibleAnime = animeRows[0] || null;
 
   let bangumiID: string | number | null =
     trueIndex.slice(-1)[0].match(/(?<= )\d{1,6}$/)?.[0] ?? null;
-  let parseBangumiID = Number.parseInt(String(bangumiID));
+  const parseBangumiID = Number.parseInt(String(bangumiID));
   if (!isNaN(parseBangumiID)) {
     bangumiID = parseBangumiID;
   }
@@ -33,7 +33,7 @@ export async function reportUploadMessage(index, fileName) {
     .select()
     .from(bangumiData)
     .where(eq(bangumiData.bgmid, Number(bangumiID)));
-  let bgmData = bgmRows[0] || null;
+  const bgmData = bgmRows[0] || null;
 
   if (bgmData === null) {
     bangumiID = null;

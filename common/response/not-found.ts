@@ -1,11 +1,6 @@
-/**
- * 404 Not Found
- * @param {Express.Response} res
- * @param {String} message
- */
+import type { Response } from "express";
 
-export default function notFound(res, message = "Not Found 找不到资源") {
-  // 传入 res, 直接回复 404
+export default function notFound(res: Response, message = "Not Found 找不到资源") {
   if (!res) throw new Error("No res provide");
   res.status(404).send({ code: 404, message });
 }

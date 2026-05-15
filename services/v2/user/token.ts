@@ -4,14 +4,14 @@ import { token } from "../../../common/database/schema/token.js";
 import { eq, and } from "drizzle-orm";
 import cache from "../../../common/cache.js";
 
-export function createToken() {
-  let createTime = new Date();
+export function createToken(): string {
+  const createTime = new Date();
 
-  let tokenRaw =
+  const tokenRaw =
     createTime.getTime() *
     Math.floor(Math.random() * 1000) *
     Math.floor(Math.random() * 1000);
-  let tokenStr = createHash("sha256")
+  const tokenStr = createHash("sha256")
     .update(tokenRaw.toString())
     .update(tokenRaw.toString())
     .digest("base64url")
@@ -19,8 +19,8 @@ export function createToken() {
   return tokenStr;
 }
 
-export async function saveToken(tokenStr, userID, expirationTime) {
-  if (!tokenStr || !userID || !expirationTime) throw "参数错误";
+export async function saveToken(tokenStr: string, userID: number, expirationTime: Date): Promise<void> {
+  if (!tokenStr || !userID || !expirationTime) throw new Error("参数错误");
 
   await db.insert(token).values({
     token: tokenStr,
@@ -29,9 +29,9 @@ export async function saveToken(tokenStr, userID, expirationTime) {
   });
 }
 
-let tokenCache = cache.token;
+const tokenCache = cache.token;
 
-export async function useToken(tokenStr) {
+export async function useToken(tokenStr: string): Promise<number | false> {
   if (!tokenStr) return false;
 
   if (tokenCache[tokenStr]) {
@@ -42,13 +42,13 @@ export async function useToken(tokenStr) {
     }
   }
 
-  let rows = await db
+  const rows = await db
     .select()
     .from(token)
     .where(eq(token.token, tokenStr));
 
   if (rows[0]) {
-    if (rows[0].status == 1 && rows[0].expiration_time > new Date()) {
+    if (rows[0].status === 1 && rows[0].expiration_time > new Date()) {
       tokenCache[rows[0].token] = {
         user: rows[0].user,
         expirationTime: new Date(rows[0].expiration_time),
@@ -62,14 +62,14 @@ export async function useToken(tokenStr) {
   }
 }
 
-export async function removeToken(tokenStr, all = false) {
-  if (!tokenStr) throw "缺失参数";
+export async function removeToken(tokenStr: string, all = false): Promise<boolean> {
+  if (!tokenStr) throw new Error("缺失参数");
 
-  let userID = await useToken(tokenStr);
+  const userID = await useToken(tokenStr);
   if (userID) {
     if (all) {
       Object.keys(tokenCache).forEach((cacheKey) => {
-        if (tokenCache[cacheKey].user == userID) {
+        if (tokenCache[cacheKey].user === userID) {
           delete tokenCache[cacheKey];
         }
       });

@@ -1,12 +1,13 @@
+import type { Request, Response } from "express";
 import success from "../../../../common/response/success.js";
 import badRequest from "../../../../common/response/bad-request.js";
 import serverError from "../../../../common/response/server-error.js";
 import { checkNameExists, updateUserName } from "../../../../services/v2/user/user.js";
 
-export async function updateName(req, res) {
-  let { name } = req.body;
-  let user = req.user;
-  if (user.name == name) {
+export async function updateName(req: Request, res: Response) {
+  const { name } = req.body;
+  const user = req.user!;
+  if (user.name === name) {
     return badRequest(res, "更改的用户名不能和之前的相同");
   }
 

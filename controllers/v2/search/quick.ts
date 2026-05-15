@@ -1,12 +1,13 @@
-import { quickSearch as quickSearchService  } from "../../../services/v2/search/index.js";
+import type { Request, Response } from "express";
+import { quickSearch as quickSearchService } from "../../../services/v2/search/index.js";
 import success from "../../../common/response/success.js";
 import serverError from "../../../common/response/server-error.js";
 
-export async function quickSearch(req, res) {
-  let value = req.query.value;
+export async function quickSearch(req: Request, res: Response) {
+  const value = req.query.value as string;
 
   try {
-    let searchResults = await quickSearchService(value);
+    const searchResults = await quickSearchService(value);
     success(res, searchResults);
   } catch (error) {
     console.error(error);

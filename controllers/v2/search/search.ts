@@ -1,12 +1,13 @@
-import { searchAnimes as searchAnimesService  } from "../../../services/v2/search/index.js";
+import type { Request, Response } from "express";
+import { searchAnimes as searchAnimesService } from "../../../services/v2/search/index.js";
 import success from "../../../common/response/success.js";
 import serverError from "../../../common/response/server-error.js";
 
-export async function searchAnimes(req, res) {
-  let value = req.query.value;
+export async function searchAnimes(req: Request, res: Response) {
+  const value = req.query.value as string;
 
   try {
-    let searchResults = await searchAnimesService(value);
+    const searchResults = await searchAnimesService(value);
     success(res, searchResults);
   } catch (error) {
     console.error(error);

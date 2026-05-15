@@ -1,16 +1,24 @@
+import type { Request, Response } from "express";
+import type { User } from "../../../../types/models.js";
 import success from "../../../../common/response/success.js";
 import unauthorized from "../../../../common/response/unauthorized.js";
 import { findUserByID } from "../../../../services/v2/user/user.js";
 
-export async function getUserInfo(req, res) {
+export async function getUserInfo(req: Request, res: Response) {
   if (!req.user) {
     return unauthorized(res);
   }
-  let { userID } = req.query;
+  const userID = req.query.userID as unknown as number | undefined;
   if (!userID) {
-    success(res, { ...req.user, password: undefined });
+    const { password, ...safeUser } = req.user as User;
+    success(res, safeUser);
   } else {
-    let userData = await findUserByID(userID);
-    success(res, { ...userData, password: undefined });
+    const userData = await findUserByID(userID);
+    if (userData) {
+      const { password, ...safeUser } = userData;
+      success(res, safeUser);
+    } else {
+      success(res, null);
+    }
   }
 }

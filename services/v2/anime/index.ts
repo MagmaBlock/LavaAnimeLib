@@ -3,18 +3,25 @@ import { anime } from "../../../common/database/schema/anime.js";
 import { eq, and } from "drizzle-orm";
 import { parseAnime } from "../parser/anime.js";
 
-export async function getAnimeByID(laID, full = false) {
+interface AnimeSummary {
+  id: number;
+  title: string;
+  deleted: boolean;
+  [key: string]: unknown;
+}
+
+export async function getAnimeByID(laID: number, full = false): Promise<AnimeSummary> {
   if (!isFinite(laID)) throw new Error("ID 无法解析为数字或不存在");
 
   try {
-    let rows = await db
+    const rows = await db
       .select()
       .from(anime)
       .where(and(eq(anime.id, laID), eq(anime.deleted, 0)));
 
     if (rows.length) {
-      let parsedAnime = await parseAnime(rows[0], full);
-      return parsedAnime[0];
+      const parsedAnime = await parseAnime(rows[0], full);
+      return parsedAnime[0] as AnimeSummary;
     } else {
       return { id: laID, title: "已失效的番剧", deleted: true };
     }
@@ -23,24 +30,24 @@ export async function getAnimeByID(laID, full = false) {
   }
 }
 
-export async function getAnimesByID(array) {
-  let resultList = [];
-  for (let id of array) {
+export async function getAnimesByID(array: number[]): Promise<AnimeSummary[]> {
+  const resultList: AnimeSummary[] = [];
+  for (const id of array) {
     resultList.push(await getAnimeByID(id));
   }
   return resultList;
 }
 
-export async function getAnimesByBgmID(bgmID) {
+export async function getAnimesByBgmID(bgmID: number): Promise<AnimeSummary[]> {
   if (!isFinite(bgmID)) throw new Error("ID 无法解析为数字或不存在");
 
   try {
-    let rows = await db
+    const rows = await db
       .select()
       .from(anime)
       .where(and(eq(anime.bgmid, String(bgmID)), eq(anime.deleted, 0)));
 
-    return parseAnime(rows);
+    return (await parseAnime(rows)) as AnimeSummary[];
   } catch (error) {
     throw error;
   }

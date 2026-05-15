@@ -1,14 +1,14 @@
+import type { Request, Response } from "express";
 import { getUserViewHistory } from "../../../../services/v2/anime/history.js";
 import { getAnimeByID } from "../../../../services/v2/anime/index.js";
 import success from "../../../../common/response/success.js";
 import serverError from "../../../../common/response/server-error.js";
 
-// 获取我的观看历史记录
-export async function getMyViewHistory(req, res) {
-  let { page, pageSize, animeID, withAnimeData, latestOnly } = req.body;
-  let userID = req.user.id;
+export async function getMyViewHistory(req: Request, res: Response) {
+  const { page, pageSize, animeID, withAnimeData, latestOnly } = req.body;
+  const userID = req.user!.id;
   try {
-    let historyData = await getUserViewHistory(
+    const historyData = await getUserViewHistory(
       userID,
       page,
       pageSize,
@@ -16,10 +16,9 @@ export async function getMyViewHistory(req, res) {
       latestOnly
     );
 
-    // 需要附带动画信息
     if (withAnimeData) {
-      for (let record of historyData) {
-        record.animeData = await getAnimeByID(record.animeID);
+      for (const record of historyData) {
+        (record as Record<string, unknown>).animeData = await getAnimeByID(record.animeID as number);
       }
     }
 

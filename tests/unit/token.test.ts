@@ -23,9 +23,9 @@ describe("createToken", () => {
 
 describe("saveToken", () => {
   it("缺少参数应抛出异常", async () => {
-    await expect(saveToken("", 1, new Date())).rejects.toBe("参数错误");
-    await expect(saveToken("abc", null, new Date())).rejects.toBe("参数错误");
-    await expect(saveToken("abc", 1, null)).rejects.toBe("参数错误");
+    await expect(saveToken("", 1, new Date())).rejects.toThrow("参数错误");
+    await expect(saveToken("abc", null, new Date())).rejects.toThrow("参数错误");
+    await expect(saveToken("abc", 1, null)).rejects.toThrow("参数错误");
   });
 });
 
@@ -47,7 +47,7 @@ describe("removeToken", () => {
   });
 
   it("空值应抛出异常", async () => {
-    await expect(removeToken("")).rejects.toBe("缺失参数");
+    await expect(removeToken("")).rejects.toThrow("缺失参数");
   });
 });
 

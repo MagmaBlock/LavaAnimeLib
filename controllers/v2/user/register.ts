@@ -1,3 +1,4 @@
+import type { Request, Response } from "express";
 import success from "../../../common/response/success.js";
 import badRequest from "../../../common/response/bad-request.js";
 import serverError from "../../../common/response/server-error.js";
@@ -5,8 +6,8 @@ import { testInviteCode, useInviteCode } from "../../../services/v2/user/invite-
 import { getFormattedPassword } from "../../../services/v2/user/password.js";
 import { checkEmailExists, checkNameExists, createUser, getNextUserID } from "../../../services/v2/user/user.js";
 
-export async function userRegister(req, res) {
-  let { email, password, name, inviteCode } = req.body;
+export async function userRegister(req: Request, res: Response) {
+  const { email, password, name, inviteCode } = req.body;
 
   try {
     if (await checkEmailExists(email)) {
@@ -17,20 +18,20 @@ export async function userRegister(req, res) {
       return badRequest(res, "昵称已存在，请更换一个");
     }
 
-    let inviteCodeStatus = await testInviteCode(inviteCode);
+    const inviteCodeStatus = await testInviteCode(inviteCode);
     if (
       inviteCodeStatus.real &&
       !inviteCodeStatus.used &&
       !inviteCodeStatus.expired
     ) {
-      let nextUserID = await getNextUserID();
+      const nextUserID = await getNextUserID();
       await useInviteCode(inviteCode, nextUserID);
     } else {
       return badRequest(res, "邀请码不可用");
     }
 
-    let saltyPassword = getFormattedPassword(password);
-    let successCreate = await createUser(email, saltyPassword, name);
+    const saltyPassword = getFormattedPassword(password);
+    const successCreate = await createUser(email, saltyPassword, name);
     if (successCreate) {
       success(res, undefined, "注册成功");
     } else {

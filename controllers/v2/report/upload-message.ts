@@ -1,9 +1,10 @@
-import { reportUploadMessage as reportUploadMessageService  } from "../../../services/v2/report/upload-message.js";
+import type { Request, Response } from "express";
+import { reportUploadMessage as reportUploadMessageService } from "../../../services/v2/report/upload-message.js";
 import success from "../../../common/response/success.js";
 import serverError from "../../../common/response/server-error.js";
 
-export async function reportUploadMessage(req, res) {
-  let { index, fileName } = req.body;
+export async function reportUploadMessage(req: Request, res: Response) {
+  const { index, fileName } = req.body;
 
   try {
     await reportUploadMessageService(index, fileName);

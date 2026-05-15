@@ -56,8 +56,8 @@ describe("testPassword", () => {
     expect(testPassword("wrong_password", hash)).toBe(false);
   });
 
-  it("非 sha256 格式应返回 undefined", () => {
-    expect(testPassword("any", "md5:salt:hash")).toBeUndefined();
-    expect(testPassword("any", "invalid_format")).toBeUndefined();
+  it("非 sha256 格式应返回 false", () => {
+    expect(testPassword("any", "md5:salt:hash")).toBe(false);
+    expect(testPassword("any", "invalid_format")).toBe(false);
   });
 });

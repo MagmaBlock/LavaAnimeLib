@@ -1,20 +1,19 @@
+import type { Request, Response } from "express";
 import success from "../../../../common/response/success.js";
 import serverError from "../../../../common/response/server-error.js";
 import { updateUserData } from "../../../../services/v2/user/profile.js";
 
-export async function updateAvatar(req, res) {
-  let { url } = req.body;
+export async function updateAvatar(req: Request, res: Response) {
+  const { url } = req.body;
 
-  let newUserData;
-  if (req.user.data == null) newUserData = {};
-  else newUserData = req.user.data;
+  let newUserData: Record<string, unknown>;
+  if (req.user!.data == null) newUserData = {};
+  else newUserData = req.user!.data;
 
-  newUserData.avatar = {
-    url,
-  };
+  newUserData.avatar = { url };
 
   try {
-    await updateUserData(newUserData, req.user.id);
+    await updateUserData(newUserData, req.user!.id);
     success(res, undefined);
   } catch (error) {
     console.error(error);

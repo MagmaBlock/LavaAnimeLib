@@ -1,24 +1,20 @@
-import { getFilesByID as getFilesByIDService  } from "../../../services/v2/anime/file.js";
+import type { Request, Response } from "express";
+import { getFilesByID as getFilesByIDService } from "../../../services/v2/anime/file.js";
 import success from "../../../common/response/success.js";
 import notFound from "../../../common/response/not-found.js";
 import forbidden from "../../../common/response/forbidden.js";
 import serverError from "../../../common/response/server-error.js";
 
-// 提供 laID 和 drive 获取番剧内容的 API
-export async function getFilesByID(req, res) {
-  let laID = req.query.id;
-  let drive = req.query.drive;
+export async function getFilesByID(req: Request, res: Response) {
+  const laID = req.query.id as unknown as number;
+  const drive = req.query.drive as string | undefined;
 
   try {
-    let files = await getFilesByIDService(laID, drive);
+    const files = await getFilesByIDService(laID, drive);
 
-    // 正常返回 Array
     if (Array.isArray(files)) {
       return success(res, files);
-    }
-
-    // 出错返回的是 String
-    else if (typeof files == "string") {
+    } else if (typeof files === "string") {
       if (["此 laID 不存在", "存储节点不存在"].includes(files)) {
         return notFound(res, files);
       }

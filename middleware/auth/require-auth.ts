@@ -1,8 +1,8 @@
+import type { Request, Response, NextFunction } from "express";
 import forbidden from "../../common/response/forbidden.js";
 import unauthorized from "../../common/response/unauthorized.js";
 
-// 如果请求未携带 req.user.id 将会回复 401
-export function requireLogin(req, res, next) {
+export function requireLogin(req: Request, res: Response, next: NextFunction) {
   if (req.user?.id) {
     next();
   } else {
@@ -10,9 +10,8 @@ export function requireLogin(req, res, next) {
   }
 }
 
-// 如果请求的 req.user.data.permission.admin 为假或不存在将会回复 403
-export function requireAdmin(req, res, next) {
-  if (req.user.data?.permission?.admin) {
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (req.user?.data?.permission?.admin) {
     next();
   } else {
     return forbidden(res, "没有管理员权限");

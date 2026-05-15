@@ -1,28 +1,27 @@
 import { bangumiAPI } from "../../common/api-clients/bangumi.js";
 
-// Bangumi API 信息获取
-export async function getBangumiSubjects(bgmID) {
-  let thisSubject = await bangumiAPI.get("/v0/subjects/" + bgmID);
+export async function getBangumiSubjects(bgmID: number) {
+  const thisSubject = await bangumiAPI.get("/v0/subjects/" + bgmID);
   return thisSubject.data;
 }
-export async function getBangumiRelations(bgmID, allBgmIDInAnimeTable) {
-  let thisSubjectRelations = await bangumiAPI.get(
+
+export async function getBangumiRelations(bgmID: number, allBgmIDInAnimeTable: number[]) {
+  const thisSubjectRelations = await bangumiAPI.get(
     "/v0/subjects/" + bgmID + "/subjects"
   );
-  let thisSubjectRealRelations = new Array(); // 存储找到的关联番剧
+  const thisSubjectRealRelations = [];
 
-  for (let i in thisSubjectRelations.data) {
-    // 查找关联番剧
-    let thisRelation = thisSubjectRelations.data[i];
+  for (const i in thisSubjectRelations.data) {
+    const thisRelation = thisSubjectRelations.data[i];
     if (allBgmIDInAnimeTable.includes(thisRelation.id)) {
-      // 关联的作品是否存在于番剧库
-      thisSubjectRealRelations.push(thisRelation); // 推送
+      thisSubjectRealRelations.push(thisRelation);
     }
   }
   return thisSubjectRealRelations;
 }
-export async function getBangumiCharacters(bgmID) {
-  let thisSubjectCharacters = await bangumiAPI.get(
+
+export async function getBangumiCharacters(bgmID: number) {
+  const thisSubjectCharacters = await bangumiAPI.get(
     "/v0/subjects/" + bgmID + "/characters"
   );
   return thisSubjectCharacters.data;

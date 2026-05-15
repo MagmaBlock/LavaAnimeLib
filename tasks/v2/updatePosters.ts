@@ -7,8 +7,8 @@ import { getAllBgmIDInAnimeTable } from "./bangumiDB.js";
 import { logger } from "../../common/tools/logger.js";
 
 export async function updatePosters() {
-  let allBgmIDInAnime = await getAllBgmIDInAnimeTable();
-  let dbResult = await db
+  const allBgmIDInAnime = await getAllBgmIDInAnimeTable();
+  const dbResult = await db
     .select({
       bgmid: bangumiData.bgmid,
       subjects: bangumiData.subjects,
@@ -16,20 +16,18 @@ export async function updatePosters() {
     .from(bangumiData)
     .where(inArray(bangumiData.bgmid, allBgmIDInAnime));
 
-  let subjectsByBgmId: Record<string, any> = {};
-  for (let row of dbResult) {
-    subjectsByBgmId[row.bgmid] = JSON.parse(row.subjects);
+  const subjectsByBgmId: Record<string, Record<string, unknown>> = {};
+  for (const row of dbResult) {
+    subjectsByBgmId[row.bgmid] = JSON.parse(row.subjects!);
   }
 
-  for (let bgmId of allBgmIDInAnime) {
+  for (const bgmId of allBgmIDInAnime) {
     try {
-      let subject = subjectsByBgmId[bgmId];
+      const subject = subjectsByBgmId[bgmId];
       if (subject?.images) {
-        let thisPoster =
-          subject.images.large.replace(
-            "https://lain.bgm.tv",
-            config.bangumiImage.host
-          ) + "/poster" || "";
+        const images = subject.images as Record<string, string>;
+        const thisPoster =
+          images.large.replace("https://lain.bgm.tv", config.bangumiImage.host) + "/poster";
         await db
           .update(anime)
           .set({ poster: thisPoster })

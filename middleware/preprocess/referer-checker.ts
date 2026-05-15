@@ -1,12 +1,12 @@
 import chalk from "chalk";
+import type { Request, Response, NextFunction } from "express";
 import { logger } from "../../common/tools/logger.js";
 import forbidden from "../../common/response/forbidden.js";
 import config from "../../common/config.js";
 
-export async function refererChecker(req, res, next) {
-  let ref = req.get("Referer");
+export function refererChecker(req: Request, res: Response, next: NextFunction) {
+  const ref = req.get("Referer");
 
-  // 如果不在 Referer 白名单中
   if (!inRefererWhiteList(ref)) {
     logger("拦截了 Referer:", chalk.dim(ref ?? "空 Referer Header"));
     logger("UA:", chalk.dim(req.get("user-agent")));
@@ -16,17 +16,15 @@ export async function refererChecker(req, res, next) {
   next();
 }
 
-function inRefererWhiteList(referer) {
+function inRefererWhiteList(referer: string | undefined): boolean {
   if (config.security.enableRefererWhiteList) {
-    // 空 Referer
     if (referer === undefined && config.security.allowEmptyReferer) return true;
-    // 匹配 Referer
-    for (let rule of config.security.refererWhiteList) {
+    for (const rule of config.security.refererWhiteList) {
       if (referer?.match(rule)) {
-        return true; // 匹配到
+        return true;
       }
     }
-    return false; // 未匹配到
+    return false;
   }
-  return true; // 未启用
+  return true;
 }

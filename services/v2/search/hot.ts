@@ -5,7 +5,7 @@ import { sql, eq, desc, getTableColumns, count } from "drizzle-orm";
 import { parseAnime } from "../parser/anime.js";
 
 export async function getHotAnimes() {
-  let queryResult = await db
+  const queryResult = await db
     .select({
       ...getTableColumns(anime),
       animeID: viewHistory.animeID,

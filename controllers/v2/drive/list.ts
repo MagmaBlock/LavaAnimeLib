@@ -1,7 +1,8 @@
+import type { Request, Response } from "express";
 import success from "../../../common/response/success.js";
-import { getDriveList as getDriveListService  } from "../../../services/v2/drive/index.js";
+import { getDriveList as getDriveListService } from "../../../services/v2/drive/index.js";
 
-export async function getDriveList(req, res) {
+export async function getDriveList(req: Request, res: Response) {
   const latestDriveList = getDriveListService();
   success(res, latestDriveList);
 }

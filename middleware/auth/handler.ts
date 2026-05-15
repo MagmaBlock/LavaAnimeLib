@@ -1,23 +1,13 @@
+import type { Request, Response, NextFunction } from "express";
 import { findUserByID } from "../../services/v2/user/user.js";
 import { useToken } from "../../services/v2/user/token.js";
 
-export async function handleAuth(req, res, next) {
-  // 尝试验证登录
-  let authHeader = req.get("Authorization");
+export async function handleAuth(req: Request, res: Response, next: NextFunction) {
+  const authHeader = req.get("Authorization");
   if (authHeader) {
-    let userID = await useToken(authHeader);
+    const userID = await useToken(authHeader);
     if (userID) {
-      req.user = await findUserByID(userID);
-      /*
-        req.user = {
-            id: Number, email: String,
-            name: String, password: String,
-            create_time: Date,
-            data: Object || null,
-            settings: Object || null ,
-            expirationTime: Date (如果是从缓存中读取，此项存在)
-        }
-      */
+      req.user = await findUserByID(userID) || undefined;
     }
   }
 
