@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import success from "../../../../common/response/success.js";
 import serverError from "../../../../common/response/server-error.js";
 import { updateUserData } from "../../../../services/v2/user/profile.js";
+import { log } from "../../../../common/tools/logger.js";
 
 export async function updateAvatar(req: Request, res: Response) {
   const { url } = req.body;
@@ -16,7 +17,7 @@ export async function updateAvatar(req: Request, res: Response) {
     await updateUserData(newUserData, req.user!.id);
     success(res, undefined);
   } catch (error) {
-    console.error(error);
+    log.error(error);
     return serverError(res);
   }
 }

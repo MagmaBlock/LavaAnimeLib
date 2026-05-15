@@ -5,6 +5,7 @@ import {
   generateInviteCode,
   saveInviteCode,
 } from "../../../../services/v2/user/invite-code.js";
+import { log } from "../../../../common/tools/logger.js";
 
 export async function createUserInviteCode(req: Request, res: Response) {
   if (!req.user!.data?.permission?.admin) {
@@ -25,7 +26,7 @@ export async function createUserInviteCode(req: Request, res: Response) {
     try {
       await saveInviteCode(code.code, req.user!.id, code.expirationTime);
     } catch (error) {
-      console.error(error);
+      log.error(error);
       inviteCodes = inviteCodes.filter((ele) => {
         return ele.code !== code.code;
       });

@@ -4,6 +4,7 @@ import success from "../../../common/response/success.js";
 import notFound from "../../../common/response/not-found.js";
 import forbidden from "../../../common/response/forbidden.js";
 import serverError from "../../../common/response/server-error.js";
+import { log } from "../../../common/tools/logger.js";
 
 export async function getFilesByID(req: Request, res: Response) {
   const laID = req.query.id as unknown as number;
@@ -26,7 +27,7 @@ export async function getFilesByID(req: Request, res: Response) {
       }
     }
   } catch (error) {
-    console.error(error);
+    log.error(error);
     return serverError(res);
   }
 }

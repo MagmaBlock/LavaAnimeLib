@@ -3,6 +3,7 @@ import success from "../../../../common/response/success.js";
 import badRequest from "../../../../common/response/bad-request.js";
 import serverError from "../../../../common/response/server-error.js";
 import { checkNameExists, updateUserName } from "../../../../services/v2/user/user.js";
+import { log } from "../../../../common/tools/logger.js";
 
 export async function updateName(req: Request, res: Response) {
   const { name } = req.body;
@@ -16,7 +17,7 @@ export async function updateName(req: Request, res: Response) {
       return badRequest(res, "昵称已存在，请更换一个");
     }
   } catch (error) {
-    console.error(error);
+    log.error(error);
     return serverError(res);
   }
 
@@ -24,7 +25,7 @@ export async function updateName(req: Request, res: Response) {
     await updateUserName(user.id, name);
     success(res, null, "更改成功");
   } catch (error) {
-    console.error(error);
+    log.error(error);
     return serverError(res);
   }
 }

@@ -3,6 +3,7 @@ import { getAnimeFollowList as getAnimeFollowListService } from "../../../../ser
 import { getAnimeByID } from "../../../../services/v2/anime/index.js";
 import success from "../../../../common/response/success.js";
 import serverError from "../../../../common/response/server-error.js";
+import { log } from "../../../../common/tools/logger.js";
 
 export async function getAnimeFollowList(req: Request, res: Response) {
   const { status, page, pageSize } = req.body;
@@ -15,7 +16,7 @@ export async function getAnimeFollowList(req: Request, res: Response) {
     }
     success(res, allRawResult);
   } catch (error) {
-    console.error(error);
+    log.error(error);
     return serverError(res);
   }
 }

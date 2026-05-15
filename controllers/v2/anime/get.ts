@@ -3,6 +3,7 @@ import { getAnimeByID as getAnimeByIDService } from "../../../services/v2/anime/
 import success from "../../../common/response/success.js";
 import notFound from "../../../common/response/not-found.js";
 import serverError from "../../../common/response/server-error.js";
+import { log } from "../../../common/tools/logger.js";
 
 export async function getAnimeByID(req: Request, res: Response) {
   const laID = req.query.id as unknown as number;
@@ -14,7 +15,7 @@ export async function getAnimeByID(req: Request, res: Response) {
 
     success(res, anime);
   } catch (error) {
-    console.error(error);
+    log.error(error);
     return serverError(res);
   }
 }

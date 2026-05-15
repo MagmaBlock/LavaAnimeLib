@@ -3,13 +3,14 @@ import { getHeader as getHeaderService, updateHeader as updateHeaderService } fr
 import success from "../../../common/response/success.js";
 import badRequest from "../../../common/response/bad-request.js";
 import serverError from "../../../common/response/server-error.js";
+import { log } from "../../../common/tools/logger.js";
 
 export async function getHeader(req: Request, res: Response) {
   try {
     const data = await getHeaderService();
     success(res, data);
   } catch (error) {
-    console.error(error);
+    log.error(error);
     return serverError(res);
   }
 }
@@ -23,7 +24,7 @@ export async function updateHeader(req: Request, res: Response) {
     if (error instanceof Error && error.message === "数据必须为数组") {
       return badRequest(res);
     }
-    console.error(error);
+    log.error(error);
     return serverError(res);
   }
 }

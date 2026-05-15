@@ -3,6 +3,7 @@ import { editAnimeFollow as editAnimeFollowService } from "../../../../services/
 import success from "../../../../common/response/success.js";
 import badRequest from "../../../../common/response/bad-request.js";
 import serverError from "../../../../common/response/server-error.js";
+import { log } from "../../../../common/tools/logger.js";
 
 export async function editAnimeFollow(req: Request, res: Response) {
   const { id: laID, status, remove } = req.body;
@@ -15,7 +16,7 @@ export async function editAnimeFollow(req: Request, res: Response) {
     }
     return success(res, undefined);
   } catch (error) {
-    console.error(error);
+    log.error(error);
     return serverError(res);
   }
 }

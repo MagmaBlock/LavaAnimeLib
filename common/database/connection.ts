@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import { migrate } from "drizzle-orm/mysql2/migrator";
 import path from "path";
 import config from "../config.js";
-import { logger } from "../tools/logger.js";
+import { log } from "../tools/logger.js";
 
 const { database: _database, ...initConfig } = config.mysql;
 const initConn = mysql.createConnection(initConfig);
@@ -21,12 +21,9 @@ try {
   await migrate(initDb, {
     migrationsFolder: path.resolve(process.cwd(), "drizzle"),
   });
-  logger("数据库迁移完成");
+  log.info("数据库迁移完成");
 } catch (error) {
-  console.error(
-    "数据库初始化失败:",
-    error instanceof Error ? error.message : error
-  );
+  log.error(error, "数据库初始化失败");
   throw error;
 } finally {
   await initConn.end();

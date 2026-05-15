@@ -3,7 +3,7 @@ import { anime } from "../../../common/database/schema/anime.js";
 import { viewHistory } from "../../../common/database/schema/view-history.js";
 import { eq, and, sql, count, desc } from "drizzle-orm";
 import parseFileName from "anime-file-parser";
-import { logger } from "../../../common/tools/logger.js";
+import { log } from "../../../common/tools/logger.js";
 
 export async function recordViewHistory(
   userID: number,
@@ -24,7 +24,7 @@ export async function recordViewHistory(
           .where(and(eq(anime.id, animeID), eq(anime.deleted, 0)));
       }
     })
-    .catch(console.error);
+    .catch((e) => log.error(e, "isNewView 更新计数失败"));
 
   await db
     .insert(viewHistory)
@@ -112,7 +112,7 @@ export async function isNewView(userID: number, animeID: number, fileName: strin
     if (Number(row.count) === 1) return false;
     return null;
   } catch (error) {
-    logger("[ViewHistory] isNewView 查询失败:", error);
+    log.error(error, "[ViewHistory] isNewView 查询失败");
     return null;
   }
 }

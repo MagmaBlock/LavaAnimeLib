@@ -13,7 +13,7 @@ import {
   getAllBgmIdInBangumiDataTable,
   insertBgmIDBlankToDB,
 } from "./bangumiDB.js";
-import { logger } from "../../common/tools/logger.js";
+import { log } from "../../common/tools/logger.js";
 
 const reTry: Record<string, number> = {};
 
@@ -22,7 +22,7 @@ export async function updateAllBangumiData() {
   const bgmIDListExpired = await findExpiredBangumiData();
   const bgmIDListInAnimeTable = await getAllBgmIDInAnimeTable();
   const chunkedbgmIDList = _.chunk(bgmIDListExpired, 9);
-  logger("[Bangumi Data] 需要刷新的 BgmID 列表", JSON.stringify(chunkedbgmIDList));
+  log.info("需要刷新的 BgmID 列表: %j", chunkedbgmIDList);
 
   for (const i in chunkedbgmIDList) {
     const task = [];
@@ -31,7 +31,7 @@ export async function updateAllBangumiData() {
     }
     await Promise.all(task);
   }
-  logger("[Bangumi Data] Bangumi Data 刷新完成");
+  log.info("Bangumi Data 刷新完成");
 }
 
 export async function repairBangumiDataID() {
@@ -39,7 +39,7 @@ export async function repairBangumiDataID() {
   const bgmIDInData = await getAllBgmIdInBangumiDataTable();
   const diff = _.difference(bgmIDInAnime, bgmIDInData);
 
-  logger(`[Bangumi Data] 修复缺失 BgmID: ${diff}`);
+  log.info("修复缺失 BgmID: %s", diff);
   for (const i in diff) await insertBgmIDBlankToDB(diff[i]);
 }
 
@@ -71,22 +71,22 @@ export async function updateBangumiData(bgmID: number, bgmIDListInAnimeTable?: n
       update_time: new Date(),
     })
     .where(eq(bangumiData.bgmid, bgmID));
-  logger(`[Bangumi Data] 成功刷新 bgm${bgmID}`);
+  log.info("成功刷新 bgm%d", bgmID);
   reTry[bgmID] = 0;
 }
 
 async function errorHanding(error: unknown, bgmID: number, bgmIDListInAnimeTable?: number[]) {
   const err = error as { request?: unknown; response?: { status?: number; data?: unknown } };
   if (err.request || err.response) {
-    logger(err?.response?.status, err?.response?.data);
+    log.warn({ status: err?.response?.status, data: err?.response?.data }, "Bangumi API 请求出错");
     if (!reTry[bgmID] || reTry[bgmID] < 10) {
       reTry[bgmID] = (reTry[bgmID] || 0) + 1;
-      logger(`[Bangumi Data] bgm${bgmID} 抓取出错，准备重试 (${reTry[bgmID]})`);
+      log.warn("bgm%d 抓取出错，准备重试 (%d)", bgmID, reTry[bgmID]);
       setTimeout(() => {
         updateBangumiData(bgmID, bgmIDListInAnimeTable);
       }, 1000);
     } else {
-      logger(`[Bangumi Data] bgm${bgmID} 抓取出错超 10 次, 已放弃.`, error);
+      log.error(error, "bgm%d 抓取出错超 10 次, 已放弃", bgmID);
     }
   }
 }

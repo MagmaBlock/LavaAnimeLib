@@ -4,3 +4,4 @@ dist/
 common/config.js
 common/config.ts
 .env
+logs/

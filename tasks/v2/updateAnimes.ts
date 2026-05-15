@@ -2,7 +2,7 @@ import _ from "lodash";
 import { db } from "../../common/database/connection.js";
 import { anime } from "../../common/database/schema/anime.js";
 import { eq, and } from "drizzle-orm";
-import { logger } from "../../common/tools/logger.js";
+import { log } from "../../common/tools/logger.js";
 import { getDefaultDrive, getDrive } from "../../services/v2/drive/index.js";
 import alistGetter from "./tools/alistGetter.js";
 import { repairBangumiDataID } from "./updateBangumiData.js";
@@ -21,7 +21,7 @@ export default async function updateAnimes() {
   const drivePath = drive.path;
 
   const allYears = await getYears(drivePath);
-  logger(`[番剧更新] 获取到 ${allYears.length} 个年份`);
+  log.info("获取到 %d 个年份", allYears.length);
 
   for (const i in allYears) {
     const thisYear = allYears[i];
@@ -31,7 +31,7 @@ export default async function updateAnimes() {
       const thisType = allTypes[j];
 
       const allAnimes = await getAnimes(drivePath, thisYear, thisType);
-      logger(`[番剧更新] 成功获取 ${thisYear} ${thisType}`);
+      log.info("成功获取 %s %s", thisYear, thisType);
       const allDBAnimes = await getThisTypeDB(thisYear, thisType);
 
       const newAnimes = _.difference(allAnimes, allDBAnimes);
@@ -43,11 +43,11 @@ export default async function updateAnimes() {
 
         if (isNew && !isDeleted) {
           insertAnimeToDB(thisYear, thisType, thisAnime);
-          logger(`[番剧更新] 新入库 ${thisYear} ${thisType} ${thisAnime}`);
+          log.info("新入库 %s %s %s", thisYear, thisType, thisAnime);
         }
         if (!isNew && isDeleted) {
           changeDelete(thisYear, thisType, thisAnime, false);
-          logger(`[番剧更新] 移除删除标记 ${thisYear} ${thisType} ${thisAnime}`);
+          log.info("移除删除标记 %s %s %s", thisYear, thisType, thisAnime);
         }
         allNewAnimes.push({ year: thisYear, type: thisType, name: thisAnime });
       }
@@ -57,15 +57,15 @@ export default async function updateAnimes() {
       for (const k in deletedAnimes) {
         const thisAnime = deletedAnimes[k];
         changeDelete(thisYear, thisType, thisAnime, true);
-        logger(`[番剧更新] 发现番剧被删除! 增加删除标记 ${thisYear} ${thisType} ${thisAnime}`);
+        log.warn("发现番剧被删除! 增加删除标记 %s %s %s", thisYear, thisType, thisAnime);
         allDeletedAnimes.push({ year: thisYear, type: thisType, name: thisAnime });
       }
     }
   }
   await repairBangumiDataID();
 
-  logger("[番剧更新] 发现的 Alist 新番剧: ", allNewAnimes);
-  logger("[番剧更新] 发现的 Alist 被删除的番剧: ", allDeletedAnimes);
+  log.info("发现的 Alist 新番剧: %j", allNewAnimes);
+  log.info("发现的 Alist 被删除的番剧: %j", allDeletedAnimes);
 }
 
 async function getYears(drivePath: string) {

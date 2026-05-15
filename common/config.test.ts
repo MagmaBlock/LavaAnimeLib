@@ -55,6 +55,11 @@ export default {
     },
   },
   cache: 3,
+  log: {
+    level: "info" as const,
+    dir: "logs",
+    file: "app.log",
+  },
   security: {
     trustProxy: true,
     enableRefererWhiteList: false,

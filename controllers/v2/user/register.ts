@@ -5,6 +5,7 @@ import serverError from "../../../common/response/server-error.js";
 import { testInviteCode, useInviteCode } from "../../../services/v2/user/invite-code.js";
 import { getFormattedPassword } from "../../../services/v2/user/password.js";
 import { checkEmailExists, checkNameExists, createUser, getNextUserID } from "../../../services/v2/user/user.js";
+import { log } from "../../../common/tools/logger.js";
 
 export async function userRegister(req: Request, res: Response) {
   const { email, password, name, inviteCode } = req.body;
@@ -38,7 +39,7 @@ export async function userRegister(req: Request, res: Response) {
       return serverError(res, "服务器错误，注册失败");
     }
   } catch (error) {
-    console.error(error);
+    log.error(error);
     return serverError(res);
   }
 }

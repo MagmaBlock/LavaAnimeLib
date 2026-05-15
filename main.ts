@@ -1,13 +1,9 @@
 import type { AddressInfo } from "net";
 
 import app from "./app.js";
-import { logger } from "./common/tools/logger.js";
+import { log } from "./common/tools/logger.js";
 
 const server = app.listen(8090, () => {
   const address = server.address() as AddressInfo;
-  logger(
-    "服务器已在",
-    address.address + ":" + address.port,
-    "上启动."
-  );
+  log.info("服务器已在 %s:%s 上启动", address.address, address.port);
 });

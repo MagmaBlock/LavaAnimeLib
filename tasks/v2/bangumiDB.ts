@@ -4,7 +4,7 @@ import { anime } from "../../common/database/schema/anime.js";
 import { eq, and, sql } from "drizzle-orm";
 import config from "../../common/config.js";
 import { updateBangumiData } from "./updateBangumiData.js";
-import { logger } from "../../common/tools/logger.js";
+import { log } from "../../common/tools/logger.js";
 import _ from "lodash";
 
 export async function findExpiredBangumiData() {
@@ -62,7 +62,7 @@ export async function insertBgmIDToDB(bgmID: number) {
 
   if (isExist.length === 0) {
     await db.insert(bangumiData).values({ bgmid: bgmID });
-    logger(`[Bangumi Data] 插入 bgm${bgmID} 到 Bangumi Data`);
+    log.info("插入 bgm%d 到 Bangumi Data", bgmID);
     await updateBangumiData(bgmID, undefined);
   }
 }
@@ -79,6 +79,6 @@ export async function insertBgmIDBlankToDB(bgmID: number) {
       bgmid: bgmID,
       update_time: new Date(100000000),
     });
-    logger(`[Bangumi Data] 插入Blank bgm${bgmID} 到 Bangumi Data`);
+    log.info("插入Blank bgm%d 到 Bangumi Data", bgmID);
   }
 }

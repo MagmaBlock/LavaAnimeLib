@@ -3,6 +3,7 @@ import { getUserViewHistory } from "../../../../services/v2/anime/history.js";
 import { getAnimeByID } from "../../../../services/v2/anime/index.js";
 import success from "../../../../common/response/success.js";
 import serverError from "../../../../common/response/server-error.js";
+import { log } from "../../../../common/tools/logger.js";
 
 export async function getMyViewHistory(req: Request, res: Response) {
   const { page, pageSize, animeID, withAnimeData, latestOnly } = req.body;
@@ -24,7 +25,7 @@ export async function getMyViewHistory(req: Request, res: Response) {
 
     return success(res, historyData);
   } catch (error) {
-    console.error(error);
+    log.error(error);
     return serverError(res);
   }
 }

@@ -3,6 +3,7 @@ import parseFileName from "anime-file-parser";
 
 import { getDefaultDrive, getDrive } from "../drive/index.js";
 import { getAnimeByID } from "./index.js";
+import { log } from "../../../common/tools/logger.js";
 
 interface FileItem {
   name: string;
@@ -81,7 +82,7 @@ export async function getFilesByID(laID: number, drive?: string): Promise<FileIt
       return [];
     }
 
-    console.error(alistAPIResult, `\nError: 请求 ${thisDrive.id} 节点时, AList 返回了非 200.`);
+    log.error(alistAPIResult, "请求 %s 节点时, AList 返回了非 200", thisDrive.id);
     return "请求存储节点时服务端发生意外错误";
   }
 }

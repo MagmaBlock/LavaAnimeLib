@@ -4,7 +4,7 @@ import { anime } from "../../common/database/schema/anime.js";
 import { bangumiData } from "../../common/database/schema/bangumi-data.js";
 import { eq, inArray } from "drizzle-orm";
 import { getAllBgmIDInAnimeTable } from "./bangumiDB.js";
-import { logger } from "../../common/tools/logger.js";
+import { log } from "../../common/tools/logger.js";
 
 export async function updatePosters() {
   const allBgmIDInAnime = await getAllBgmIDInAnimeTable();
@@ -39,7 +39,7 @@ export async function updatePosters() {
           .where(eq(anime.bgmid, String(bgmId)));
       }
     } catch (error) {
-      logger("[Poster 更新] 出错:", error);
+      log.error(error, "[Poster 更新] 出错");
     }
   }
 }

@@ -3,6 +3,7 @@ import { getSiteSetting as getSiteSettingService, setSiteSetting as setSiteSetti
 import success from "../../../common/response/success.js";
 import notFound from "../../../common/response/not-found.js";
 import serverError from "../../../common/response/server-error.js";
+import { log } from "../../../common/tools/logger.js";
 
 export async function getSiteSetting(req: Request, res: Response) {
   const key = req.query.key as string;
@@ -15,7 +16,7 @@ export async function getSiteSetting(req: Request, res: Response) {
       return notFound(res);
     }
   } catch (error) {
-    console.error(error);
+    log.error(error);
     return serverError(res);
   }
 }
@@ -27,7 +28,7 @@ export async function setSiteSetting(req: Request, res: Response) {
     await setSiteSettingService(key, value);
     return success(res, undefined);
   } catch (error) {
-    console.error(error);
+    log.error(error);
     return serverError(res);
   }
 }
