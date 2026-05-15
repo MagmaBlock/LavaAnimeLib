@@ -17,8 +17,8 @@ metadata:
 - 区分出新增、修改、删除的文件，按分层分组（routes / controllers / services / common / tasks / tests）。
 
 ### 2. 检查测试覆盖
-- 对每个新增或修改的源文件（controllers / services / routes / middleware / common），检查 `tests/` 下是否有对应的测试文件。
-  - 镜像源路径：例如 `services/v2/anime/list.ts` → `tests/unit/services/v2/anime/list.test.ts` 或 `tests/integration/`。
+- 对每个新增或修改的源文件（controllers / services / routes / middleware / common / schemas），检查 `tests/` 下是否有对应的测试文件。
+  - 镜像源路径：例如 `services/v2/anime/file.ts` → `tests/unit/file-service.test.ts` 或 `tests/integration/`。测试文件使用扁平命名（如 `tests/unit/user.test.ts`、`tests/unit/password.test.ts`），不严格对应源文件层级。
 - 如果测试存在，验证其是否覆盖了变更的逻辑（新函数、新分支）。
 - 如果有重要的新逻辑但没有对应测试，标记为警告。
 

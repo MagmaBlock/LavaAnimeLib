@@ -59,13 +59,13 @@ npm run dev
 启动后，程序会自动执行以下操作：
 1. **创建数据库** `CREATE DATABASE IF NOT EXISTS lavaanime`
 2. **设置数据库默认字符集和排序规则** `utf8mb4` / `utf8mb4_uca1400_as_ci`
-3. **创建 10 张表**（读取 `sql/init.sql`）
-4. **连接健康检查** `SELECT * FROM anime LIMIT 10`
+3. **执行 Drizzle ORM 迁移**（读取 `drizzle/` 目录下的迁移文件，自动创建 10 张表）
+4. **连接健康检查**
 
 看到以下日志表示成功：
 
 ```
-数据库表初始化完成
+数据库迁移完成
 成功连接到数据库
 服务器已在 :::8090 上启动.
 ```
@@ -96,10 +96,28 @@ upload_message
 | 现象 | 原因 | 解决 |
 |---|---|---|
 | `Access denied` | 用户名或密码错误 | 检查 `config.mysql.user` 和 `config.mysql.password` |
-| 数据库表初始化失败 | 用户没有 CREATE DATABASE 权限 | `GRANT ALL ON *.* TO 'your_user'@'localhost';` |
+| 数据库迁移失败 | 用户没有 CREATE DATABASE 权限 | `GRANT ALL ON *.* TO 'your_user'@'localhost';` |
 | `Unknown collation: 'utf8mb4_uca1400_as_ci'` | MariaDB 版本过旧，或正在连接 MySQL | 使用支持 UCA 14.0 collation 的 MariaDB 版本 |
 
-## 6. 同步任务
+## 6. 数据库迁移
+
+修改 `common/database/schema/` 下的表定义后，需要生成新的迁移文件：
+
+```bash
+npm run db:generate
+```
+
+生成后可通过以下方式执行迁移：
+- 重启应用（启动时自动执行迁移）
+- 手动执行：`npm run db:migrate`
+
+也可以直接推送 schema 到数据库（跳过生成迁移文件）：
+
+```bash
+npm run db:push
+```
+
+## 7. 同步任务
 
 需要刷新番剧、Bangumi 数据等任务时运行：
 
@@ -109,7 +127,7 @@ npm run sync
 
 该命令使用 `tsx` 直接执行 `tasks/v2/main.ts`，因此需要保留 devDependencies。若生产环境使用 `npm install --omit=dev`，请先把同步脚本改为运行编译后的 `dist/tasks/v2/main.js`，或在生产环境安装 devDependencies。
 
-## 7. Docker Compose 开发调试
+## 8. Docker Compose 开发调试
 
 开发调试可以用 Docker Compose 只启动 MariaDB，并在宿主机裸机运行 Node.js 服务：
 
@@ -124,13 +142,7 @@ npm run dev
 http://localhost:8090
 ```
 
-首次使用时，复制配置模板：
-
-```bash
-cp common/configTemplate.ts common/config.ts
-```
-
-然后将 `common/config.ts` 里的 MariaDB 配置改为：
+将 `common/config.ts` 里的 MariaDB 配置改为：
 
 ```ts
 mysql: {

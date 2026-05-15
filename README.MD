@@ -13,7 +13,9 @@
 
 ## 主要 npm 依赖
 * Express 4
+* Drizzle ORM（数据库 ORM）
 * mysql2（用于连接 MariaDB）
+* Zod（请求参数校验）
 * Axios
 * lodash
 * TypeScript
@@ -107,7 +109,7 @@ npm run test:db:down
 npm run test:db:reset
 ```
 
-测试数据库使用独立的 `compose.test.yml`，端口 **3307**，数据库名 `lavaanime_test`，与开发环境（3306）互不干扰。测试启动时自动执行建表（`sql/init.sql`）、加载种子数据（`tests/seed.sql`），每次测试文件运行前自动重置全局缓存。
+测试数据库使用独立的 `compose.test.yml`，端口 **3307**，数据库名 `lavaanime_test`，与开发环境（3306）互不干扰。测试启动时自动执行 Drizzle 迁移、加载种子数据（`tests/seed.sql`），每次测试文件运行前自动重置全局缓存。
 
 ## 测试配置
 
