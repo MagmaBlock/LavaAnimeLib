@@ -1,64 +1,21 @@
 {
-  "name": "lavaanime",
-  "version": "2.0.0",
-  "description": "熔岩番剧库后端",
-  "main": "dist/main.js",
-  "type": "module",
-  "packageManager": "pnpm@10.12.1",
+  "private": true,
   "scripts": {
-    "build": "tsc",
-    "typecheck": "tsc --noEmit",
-    "start": "node dist/main.js",
-    "dev": "tsx watch main.ts",
-    "sync": "tsx ./tasks/v2/main.ts",
-    "db:generate": "drizzle-kit generate",
-    "db:push": "drizzle-kit push",
-    "db:migrate": "drizzle-kit migrate",
-    "update": "git pull",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:db:up": "docker compose -f compose.test.yml up -d",
-    "test:db:down": "docker compose -f compose.test.yml down",
-    "test:db:reset": "docker compose -f compose.test.yml down -v && docker compose -f compose.test.yml up -d"
+    "dev": "pnpm --filter @lavaanime/server dev",
+    "dev:web": "pnpm --filter @lavaanime/web dev",
+    "build": "pnpm --filter @lavaanime/shared build && pnpm --filter @lavaanime/server build",
+    "build:web": "pnpm --filter @lavaanime/web build",
+    "typecheck": "pnpm -r typecheck",
+    "start": "pnpm --filter @lavaanime/server start",
+    "test": "pnpm --filter @lavaanime/server test",
+    "test:watch": "pnpm --filter @lavaanime/server test:watch",
+    "sync": "pnpm --filter @lavaanime/server sync",
+    "db:generate": "pnpm --filter @lavaanime/server db:generate",
+    "db:push": "pnpm --filter @lavaanime/server db:push",
+    "db:migrate": "pnpm --filter @lavaanime/server db:migrate"
   },
-  "repository": {
-    "type": "git",
-    "url": "LavaAnime"
-  },
-  "author": "MagmaBlock",
-  "license": "ISC",
-  "dependencies": {
-    "aniep": "^0.6.0",
-    "anime-file-parser": "^1.0.9",
-    "axios": "^1.13.2",
-    "cookie-parser": "^1.4.6",
-    "drizzle-orm": "^0.45.2",
-    "express": "^4.17.3",
-    "lodash": "^4.17.21",
-    "mysql2": "^3.16.0",
-    "pino": "^10.3.1",
-    "rotating-file-stream": "^3.2.9",
-    "zod": "^4.4.3"
-  },
-  "prettier": {
-    "singleQuote": false
-  },
+  "packageManager": "pnpm@10.12.1",
   "pnpm": {
     "onlyBuiltDependencies": ["esbuild"]
-  },
-  "devDependencies": {
-    "@types/cookie-parser": "^1.4.10",
-    "@types/express": "^5.0.6",
-    "@types/lodash": "^4.17.24",
-    "@types/node": "^25.8.0",
-    "@types/qs": "^6.9.18",
-    "@types/supertest": "^7.2.0",
-    "drizzle-kit": "^0.31.10",
-    "nodemon": "^3.1.9",
-    "pino-pretty": "^13.1.3",
-    "supertest": "^7.2.2",
-    "tsx": "^4.21.0",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
   }
 }

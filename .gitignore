@@ -1,7 +1,10 @@
 .vscode/
 node_modules/
 dist/
-common/config.js
-common/config.ts
 .env
 logs/
+*.tsbuildinfo
+
+# Server config (sensitive, from template)
+packages/server/common/config.js
+packages/server/common/config.ts
