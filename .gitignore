@@ -8,3 +8,8 @@ logs/
 # Server config (sensitive, from template)
 packages/server/common/config.js
 packages/server/common/config.ts
+
+# Nuxt
+.nuxt/
+.output/
+
