@@ -145,16 +145,16 @@ tasks → services / common
 ## 关键命令
 
 ```bash
-npm run dev         # 开发模式（tsx watch）
-npm run build       # 编译 TypeScript → dist/
-npm run typecheck   # 仅类型检查
-npm start           # 运行编译产物 dist/main.js
-npm run sync        # 运行同步任务（tasks/v2/main.ts）
-npm run db:generate # 生成 Drizzle 迁移文件
-npm run db:push     # 直接推送 schema 到数据库
-npm run db:migrate  # 执行 Drizzle 迁移
-npm run test        # 运行全部测试（vitest run）
-npm run test:watch  # 测试监听模式
+pnpm dev         # 开发模式（tsx watch）
+pnpm build       # 编译 TypeScript → dist/
+pnpm typecheck   # 仅类型检查
+pnpm start       # 运行编译产物 dist/main.js
+pnpm sync        # 运行同步任务（tasks/v2/main.ts）
+pnpm db:generate # 生成 Drizzle 迁移文件
+pnpm db:push     # 直接推送 schema 到数据库
+pnpm db:migrate  # 执行 Drizzle 迁移
+pnpm test        # 运行全部测试（vitest run）
+pnpm test:watch  # 测试监听模式
 ```
 
 ## 配置文件
@@ -173,8 +173,8 @@ npm run test:watch  # 测试监听模式
 开发环境可用 `docker compose -f compose.dev.yml up` 启动 MariaDB。
 
 Drizzle 表定义位于 `common/database/schema/`，每张表一个文件。数据库迁移由 `drizzle-kit` 管理：
-- 修改 schema 后运行 `npm run db:generate` 生成迁移文件
-- 运行 `npm run db:migrate` 执行迁移（或重启应用自动执行）
+- 修改 schema 后运行 `pnpm db:generate` 生成迁移文件
+- 运行 `pnpm db:migrate` 执行迁移（或重启应用自动执行）
 
 ## 请求参数校验
 

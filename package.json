@@ -4,6 +4,7 @@
   "description": "熔岩番剧库后端",
   "main": "dist/main.js",
   "type": "module",
+  "packageManager": "pnpm@10.12.1",
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
@@ -41,6 +42,9 @@
   },
   "prettier": {
     "singleQuote": false
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

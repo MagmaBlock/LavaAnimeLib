@@ -3,7 +3,7 @@
 ## 1. 环境要求
 
 - Node.js >= 18
-- npm
+- pnpm
 - MariaDB >= 10.10.1（需要支持 `utf8mb4_uca1400_as_ci` collation）
 
 ## 2. 克隆 & 安装依赖
@@ -11,7 +11,7 @@
 ```bash
 git clone <仓库地址>
 cd LavaAnimeLibServerV2
-npm install
+pnpm install
 ```
 
 ## 3. 配置
@@ -41,19 +41,19 @@ mysql: {
 先编译 TypeScript：
 
 ```bash
-npm run build
+pnpm build
 ```
 
 再启动生产服务：
 
 ```bash
-npm start
+pnpm start
 ```
 
-`npm start` 实际运行的是编译产物 `dist/main.js`。如果是开发环境，可以使用：
+`pnpm start` 实际运行的是编译产物 `dist/main.js`。如果是开发环境，可以使用：
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 启动后，程序会自动执行以下操作：
@@ -104,17 +104,17 @@ upload_message
 修改 `common/database/schema/` 下的表定义后，需要生成新的迁移文件：
 
 ```bash
-npm run db:generate
+pnpm db:generate
 ```
 
 生成后可通过以下方式执行迁移：
 - 重启应用（启动时自动执行迁移）
-- 手动执行：`npm run db:migrate`
+- 手动执行：`pnpm db:migrate`
 
 也可以直接推送 schema 到数据库（跳过生成迁移文件）：
 
 ```bash
-npm run db:push
+pnpm db:push
 ```
 
 ## 7. 同步任务
@@ -122,10 +122,10 @@ npm run db:push
 需要刷新番剧、Bangumi 数据等任务时运行：
 
 ```bash
-npm run sync
+pnpm sync
 ```
 
-该命令使用 `tsx` 直接执行 `tasks/v2/main.ts`，因此需要保留 devDependencies。若生产环境使用 `npm install --omit=dev`，请先把同步脚本改为运行编译后的 `dist/tasks/v2/main.js`，或在生产环境安装 devDependencies。
+该命令使用 `tsx` 直接执行 `tasks/v2/main.ts`，因此需要保留 devDependencies。若生产环境使用 `pnpm install --prod`，请先把同步脚本改为运行编译后的 `dist/tasks/v2/main.js`，或在生产环境安装 devDependencies。
 
 ## 8. Docker Compose 开发调试
 
@@ -133,7 +133,7 @@ npm run sync
 
 ```bash
 docker compose -f compose.dev.yml up
-npm run dev
+pnpm dev
 ```
 
 服务地址：
