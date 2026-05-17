@@ -1,3 +1,6 @@
+import { existsSync } from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
 import express from "express";
 
@@ -24,5 +27,15 @@ app.use(handleAuth);
 app.use(requestLogger);
 
 app.use(router);
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const nuxtDist = path.resolve(__dirname, "../../apps/web/.output/public");
+
+if (existsSync(nuxtDist)) {
+  app.use(express.static(nuxtDist));
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(nuxtDist, "index.html"));
+  });
+}
 
 export default app;

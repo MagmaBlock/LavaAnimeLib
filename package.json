@@ -5,6 +5,7 @@
     "dev:web": "pnpm --filter @lavaanime/web dev",
     "build": "pnpm --filter @lavaanime/shared build && pnpm --filter @lavaanime/server build",
     "build:web": "pnpm --filter @lavaanime/web build",
+    "build:prod": "pnpm --filter @lavaanime/shared build && pnpm --filter @lavaanime/web build && pnpm --filter @lavaanime/server build",
     "typecheck": "pnpm -r typecheck",
     "start": "pnpm --filter @lavaanime/server start",
     "test": "pnpm --filter @lavaanime/server test",
