@@ -25,27 +25,6 @@
 ├── .gitignore
 │
 ├── packages/
-│   ├── server/                 # @lavaanime/server  Express 后端
-│   │   ├── main.ts             # Express 入口：监听端口、启动服务
-│   │   ├── app.ts              # Express 应用创建：挂载中间件、路由、生产态静态文件
-│   │   ├── common/             # 底层工具与基础设施（禁止依赖上层）
-│   │   │   ├── database/
-│   │   │   │   ├── connection.ts   # DB 连接（Drizzle ORM + mysql2 + 自动迁移）
-│   │   │   │   └── schema/         # Drizzle ORM 表定义（10 张表）
-│   │   │   ├── api-clients/        # Bangumi / AList API 客户端
-│   │   │   ├── response/           # 统一 HTTP 响应封装 (200/400/401/403/404/500)
-│   │   │   ├── cache.ts            # 内存缓存 + GC
-│   │   │   └── tools/              # logger, validate 等
-│   │   ├── middleware/             # auth, logger, preprocess, validate
-│   │   ├── routes/v2/              # 路由注册（只导入 Controller + Middleware）
-│   │   ├── controllers/v2/         # HTTP 请求处理（不直接操作 SQL）
-│   │   ├── services/v2/            # 业务逻辑与数据访问（禁止操作 req/res）
-│   │   ├── schemas/v2/             # Zod 请求参数校验
-│   │   ├── tasks/v2/               # 定时/手动同步脚本
-│   │   ├── tests/                  # Vitest 测试（241 用例）
-│   │   ├── drizzle/                # Drizzle ORM 迁移文件
-│   │   └── drizzle.config.ts
-│   │
 │   └── shared/                  # @lavaanime/shared  前后端共享类型
 │       ├── src/
 │       │   ├── api.ts           # ApiResponse<T>, PaginatedData<T>
@@ -54,6 +33,27 @@
 │       └── tsconfig.json
 │
 └── apps/
+    ├── server/                 # @lavaanime/server  Express 后端
+    │   ├── main.ts             # Express 入口：监听端口、启动服务
+    │   ├── app.ts              # Express 应用创建：挂载中间件、路由、生产态静态文件
+    │   ├── common/             # 底层工具与基础设施（禁止依赖上层）
+    │   │   ├── database/
+    │   │   │   ├── connection.ts   # DB 连接（Drizzle ORM + mysql2 + 自动迁移）
+    │   │   │   └── schema/         # Drizzle ORM 表定义（10 张表）
+    │   │   ├── api-clients/        # Bangumi / AList API 客户端
+    │   │   ├── response/           # 统一 HTTP 响应封装 (200/400/401/403/404/500)
+    │   │   ├── cache.ts            # 内存缓存 + GC
+    │   │   └── tools/              # logger, validate 等
+    │   ├── middleware/             # auth, logger, preprocess, validate
+    │   ├── routes/v2/              # 路由注册（只导入 Controller + Middleware）
+    │   ├── controllers/v2/         # HTTP 请求处理（不直接操作 SQL）
+    │   ├── services/v2/            # 业务逻辑与数据访问（禁止操作 req/res）
+    │   ├── schemas/v2/             # Zod 请求参数校验
+    │   ├── tasks/v2/               # 定时/手动同步脚本
+    │   ├── tests/                  # Vitest 测试（241 用例）
+    │   ├── drizzle/                # Drizzle ORM 迁移文件
+    │   └── drizzle.config.ts
+    │
     └── web/                     # @lavaanime/web      Nuxt 3 前端 SPA (ssr: false)
         ├── nuxt.config.ts
         ├── app.vue
@@ -131,12 +131,12 @@ pnpm start            # Express :8090 → API + 前端静态文件（同端口�
 复制配置模板：
 
 ```bash
-cp packages/server/common/configTemplate.ts packages/server/common/config.ts
+cp apps/server/common/configTemplate.ts apps/server/common/config.ts
 ```
 
 编辑其中的数据库、AList、Bangumi 等配置。
 
-测试环境使用 `packages/server/common/config.test.ts`。
+测试环境使用 `apps/server/common/config.test.ts`。
 
 ## 数据库
 

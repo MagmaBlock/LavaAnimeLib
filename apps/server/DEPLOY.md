@@ -19,10 +19,10 @@ pnpm install
 复制配置模板（路径相对于仓库根目录）：
 
 ```bash
-cp packages/server/common/configTemplate.ts packages/server/common/config.ts
+cp apps/server/common/configTemplate.ts apps/server/common/config.ts
 ```
 
-编辑 `packages/server/common/config.ts`，修改 MariaDB 配置部分：
+编辑 `apps/server/common/config.ts`，修改 MariaDB 配置部分：
 
 ```ts
 mysql: {
@@ -58,7 +58,7 @@ pnpm build:prod
 pnpm start
 ```
 
-`pnpm start` 实际运行的是编译产物 `packages/server/dist/main.js`。启动后如果检测到前端已构建（`apps/web/.output/public/`），Express 会自动托管前端静态文件，实现前后端同端口（:8090）服务。
+`pnpm start` 实际运行的是编译产物 `apps/server/dist/main.js`。启动后如果检测到前端已构建（`apps/web/.output/public/`），Express 会自动托管前端静态文件，实现前后端同端口（:8090）服务。
 
 启动后，程序会自动执行以下操作：
 1. **创建数据库** `CREATE DATABASE IF NOT EXISTS lavaanime`
@@ -144,7 +144,7 @@ pnpm dev
 http://localhost:8090
 ```
 
-将 `packages/server/common/config.ts` 里的 MariaDB 配置改为：
+将 `apps/server/common/config.ts` 里的 MariaDB 配置改为：
 
 ```ts
 mysql: {
