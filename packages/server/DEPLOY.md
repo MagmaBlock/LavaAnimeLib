@@ -16,13 +16,13 @@ pnpm install
 
 ## 3. 配置
 
-复制配置模板：
+复制配置模板（路径相对于仓库根目录）：
 
 ```bash
-cp common/configTemplate.ts common/config.ts
+cp packages/server/common/configTemplate.ts packages/server/common/config.ts
 ```
 
-编辑 `common/config.ts`，修改 MariaDB 配置部分：
+编辑 `packages/server/common/config.ts`，修改 MariaDB 配置部分：
 
 ```ts
 mysql: {
@@ -38,23 +38,27 @@ mysql: {
 
 ## 4. 启动 & 验证自动建表
 
-先编译 TypeScript：
+### 纯后端开发模式
 
 ```bash
-pnpm build
+pnpm dev
 ```
 
-再启动生产服务：
+### 生产模式（单端口：后端 API + 前端静态文件）
+
+先构建全部包：
+
+```bash
+pnpm build:prod
+```
+
+再启动：
 
 ```bash
 pnpm start
 ```
 
-`pnpm start` 实际运行的是编译产物 `dist/main.js`。如果是开发环境，可以使用：
-
-```bash
-pnpm dev
-```
+`pnpm start` 实际运行的是编译产物 `packages/server/dist/main.js`。启动后如果检测到前端已构建（`apps/web/.output/public/`），Express 会自动托管前端静态文件，实现前后端同端口（:8090）服务。
 
 启动后，程序会自动执行以下操作：
 1. **创建数据库** `CREATE DATABASE IF NOT EXISTS lavaanime`
@@ -125,8 +129,6 @@ pnpm db:push
 pnpm sync
 ```
 
-该命令使用 `tsx` 直接执行 `tasks/v2/main.ts`，因此需要保留 devDependencies。若生产环境使用 `pnpm install --prod`，请先把同步脚本改为运行编译后的 `dist/tasks/v2/main.js`，或在生产环境安装 devDependencies。
-
 ## 8. Docker Compose 开发调试
 
 开发调试可以用 Docker Compose 只启动 MariaDB，并在宿主机裸机运行 Node.js 服务：
@@ -142,7 +144,7 @@ pnpm dev
 http://localhost:8090
 ```
 
-将 `common/config.ts` 里的 MariaDB 配置改为：
+将 `packages/server/common/config.ts` 里的 MariaDB 配置改为：
 
 ```ts
 mysql: {

@@ -1,10 +1,24 @@
 # 简介
 
-熔岩番剧库后端，提供番剧库的后端服务。
+熔岩番剧库后端，提供番剧库的后端服务。本仓库是 pnpm Monorepo，包含后端、前端和共享类型包。
+
+## 项目结构
+
+```
+LavaAnimeLibServerV2/
+├── packages/
+│   ├── server/        # @lavaanime/server   Express 后端 API
+│   └── shared/        # @lavaanime/shared   共享 TypeScript 类型
+├── apps/
+│   └── web/           # @lavaanime/web      Nuxt 3 前端 SPA
+├── compose.dev.yml / compose.test.yml
+└── pnpm-workspace.yaml
+```
 
 # 主要实现
-* Node.js
+* Node.js + Express
 * MariaDB
+* Nuxt 3（前端）
 
 ## 第三方依赖
 
@@ -12,46 +26,43 @@
 * 基于 [Bangumi 番组计划](http://bgm.tv/)及其 [API](https://bangumi.github.io/api/#/) 提供的番剧百科资料信息和番剧封面图。
 
 ## 主要 npm 依赖
+
+**后端**
 * Express 4
 * Drizzle ORM（数据库 ORM）
 * mysql2（用于连接 MariaDB）
 * Zod（请求参数校验）
-* Axios
-* lodash
-* TypeScript
+* Axios / lodash / TypeScript
 
-## 开发与部署
+**前端**
+* Nuxt 3 / Vue 3
+* TailwindCSS / NaiveUI
+* Pinia / PWA
 
-本项目源码使用 TypeScript。开发环境可直接运行：
-
-```bash
-npm run dev
-```
-
-生产环境需要先编译：
+## 开发
 
 ```bash
-npm install
-npm run build
-npm start
+pnpm install          # 安装所有包依赖
+pnpm dev              # 启动后端（tsx watch，端口 8090）
+pnpm dev:web          # 启动前端（Nuxt dev，端口 3000）
 ```
 
-`npm start` 会运行编译后的 `dist/main.js`。本地配置文件为 `common/config.ts`，可从 `common/configTemplate.ts` 复制生成。
+两个端口同时启动后，前端 `http://localhost:3000` 通过 `SERVER_BASE_URL=http://localhost:8090` 环境变量调用后端 API。
 
-也可以使用 Docker Compose 只启动开发数据库，然后在宿主机裸机运行 app：
+开发时复制配置模板：
+
+```bash
+cp packages/server/common/configTemplate.ts packages/server/common/config.ts
+```
+
+然后将 `packages/server/common/config.ts` 里的 MariaDB 配置改为相应值。
+
+也可以使用 Docker Compose 只启动开发数据库：
 
 ```bash
 docker compose -f compose.dev.yml up
-npm run dev
+pnpm dev
 ```
-
-该配置只启动 MariaDB。首次使用时，复制配置模板：
-
-```bash
-cp common/configTemplate.ts common/config.ts
-```
-
-然后将 `common/config.ts` 里的 MariaDB 配置改为 `host: "localhost"`、`port: 3306`、`user: "LavaAnime"`、`password: "password"`、`database: "lavaanime"`。
 
 停止并保留数据库数据：
 
@@ -64,6 +75,17 @@ docker compose -f compose.dev.yml down
 ```bash
 docker compose -f compose.dev.yml down -v
 ```
+
+## 生产构建（单端口）
+
+Nuxt 前端构建为纯静态文件，Express 同时托管 API 和前端：
+
+```bash
+pnpm build:prod        # shared → web（nuxt generate） → server（tsc）
+pnpm start             # 启动 Express :8090，同时提供 API + 前端静态文件
+```
+
+不需要设置 `SERVER_BASE_URL`，前端自动使用同源请求。
 
 # 测试
 
@@ -88,28 +110,28 @@ tests/
 └── vitest.config.ts               # Vitest 配置
 ```
 
-共 **101 个测试用例**，覆盖全部 34 个 API 端点的正常路径与异常路径。
+共 **241 个测试用例**，覆盖全部 34 个 API 端点的正常路径与异常路径。
 
 ## 运行测试
 
 ```bash
 # 启动测试数据库（首次需要）
-npm run test:db:up
+pnpm test:db:up
 
 # 运行全部测试
-npm run test
+pnpm test
 
 # 监听模式（开发时使用）
-npm run test:watch
+pnpm test:watch
 
 # 停止测试数据库
-npm run test:db:down
+pnpm test:db:down
 
 # 清空并重建测试数据库
-npm run test:db:reset
+pnpm test:db:reset
 ```
 
-测试数据库使用独立的 `compose.test.yml`，端口 **3307**，数据库名 `lavaanime_test`，与开发环境（3306）互不干扰。测试启动时自动执行 Drizzle 迁移、加载种子数据（`tests/seed.sql`），每次测试文件运行前自动重置全局缓存。
+测试数据库使用独立的 `compose.test.yml`（仓库根目录），端口 **3307**，数据库名 `lavaanime_test`，与开发环境（3306）互不干扰。测试启动时自动执行 Drizzle 迁移、加载种子数据（`tests/seed.sql`），每次测试文件运行前自动重置全局缓存。
 
 ## 测试配置
 

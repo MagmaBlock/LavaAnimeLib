@@ -2,121 +2,66 @@
 
 ## 项目概览
 
-熔岩番剧库后端，基于 Express + TypeScript + MariaDB + Drizzle ORM，提供番剧索引、搜索、播放、用户系统、追番、管理员等 API。
+熔岩番剧库 Monorepo，基于 pnpm Workspace。包含 Express 后端、Nuxt 前端和共享类型包。
 
 ## 技术栈
 
 - **Runtime**: Node.js 18+
-- **Framework**: Express 4
-- **Language**: TypeScript (target ES2022, module NodeNext)
+- **Frontend**: Nuxt 3 + Vue 3 + TailwindCSS
+- **Backend**: Express 4 + TypeScript (ES2022, NodeNext)
 - **Database**: MariaDB (via mysql2 + Drizzle ORM)
 - **Validation**: Zod
-- **Dev Runner**: tsx watch
+- **Package Manager**: pnpm 10+ (Workspace Monorepo)
+- **Dev Runner**: tsx watch (server), Vite (web)
 
-## 目录结构
+## Monorepo 目录结构
 
 ```
 .
-├── main.ts                     # Express 入口：监听端口、启动服务
-├── app.ts                      # Express 应用创建：挂载中间件与路由
-├── config/
-│   └── index.ts                # 应用配置（纯对象，无业务逻辑）
-├── common/                     # 底层工具与基础设施（禁止依赖上层）
-│   ├── database/
-│   │   ├── connection.ts       # 数据库连接（Drizzle ORM + mysql2 连接池 + 自动迁移）
-│   │   └── schema/             # Drizzle ORM 表定义（10 张表，每表一个文件）
-│   ├── api-clients/
-│   │   ├── bangumi.ts          # Bangumi API 客户端
-│   │   └── alist.ts            # AList API 客户端工厂函数
-│   ├── response/               # 统一 HTTP 响应封装
-│   │   ├── success.ts          # 200
-│   │   ├── bad-request.ts      # 400
-│   │   ├── unauthorized.ts     # 401
-│   │   ├── forbidden.ts        # 403
-│   │   ├── not-found.ts        # 404
-│   │   └── server-error.ts     # 500
-│   ├── cache.ts                # 内存缓存 + GC
-│   └── tools/
-│       └── logger.ts           # 带时间戳的彩色日志
-├── middleware/                 # 横切关注点
-│   ├── auth/
-│   │   ├── handler.ts          # Token 解析、用户注入
-│   │   └── require-auth.ts     # loginRequire / adminRequire
-│   ├── logger/
-│   │   └── request-logger.ts
-│   └── preprocess/
-│       ├── headers.ts          # CORS 头 + OPTIONS 处理
-│       └── referer-checker.ts
-├── schemas/                    # Zod 请求参数校验
-│   └── v2/
-│       ├── admin/
-│       ├── anime/
-│       ├── index/
-│       ├── search/
-│       ├── site/
-│       └── user/
-├── routes/                     # 路由注册层（只导入 Controller 和 Middleware）
-│   └── v2/
-│       ├── index.ts            # v2 总路由，挂载各子路由
-│       ├── anime.ts
-│       ├── user.ts
-│       ├── search.ts
-│       ├── index-router.ts     # 业务模块名为 index，文件避免重名
-│       ├── home.ts
-│       ├── drive.ts
-│       ├── admin.ts
-│       ├── site.ts
-│       └── report.ts
-├── controllers/                # HTTP 请求处理层（只处理 req/res，不直接操作 SQL）
-│   └── v2/
-│       ├── anime/
-│       ├── user/
-│       ├── search/
-│       ├── index/
-│       ├── home/
-│       ├── drive/
-│       ├── admin/
-│       ├── site/
-│       └── report/
-├── services/                   # 业务逻辑与数据访问层（禁止操作 req/res）
-│   └── v2/
-│       ├── anime/
-│       ├── user/
-│       ├── search/
-│       ├── index/
-│       ├── home/
-│       ├── drive/
-│       ├── admin/
-│       ├── site/
-│       ├── report/
-│       └── parser/
-│           └── anime.ts        # 番剧数据解析器（关联 Bangumi Data）
-├── types/                      # TypeScript 类型定义
-│   ├── express.d.ts            # Express Request 扩展（req.user, req.queryStart）
-│   ├── models.d.ts             # 数据库表对应的类型
-│   └── ...
-├── tasks/                      # 定时/手动同步脚本（复用 services/）
-│   └── v2/
-│       ├── main.ts             # 同步任务入口
-│       ├── updateAnimes.ts     # 从 AList 刷新番剧列表
-│       ├── updateBangumiData.ts
-│       ├── updatePosters.ts
-│       ├── bangumiAPI.ts
-│       ├── bangumiDB.ts
-│       └── tools/
-├── drizzle/                    # Drizzle ORM 迁移文件
-│   ├── 0000_*.sql              # 数据库迁移 SQL
-│   └── meta/                   # 迁移元数据
-├── tests/                      # 测试
-│   ├── unit/                   # 单元测试（service 层纯逻辑）
-│   ├── integration/            # 集成测试（supertest × 完整 HTTP 请求）
-│   ├── seed.sql                # 测试种子数据
-│   └── setup.ts                # 全局测试配置
-├── drizzle.config.ts           # Drizzle Kit 配置
-└── vitest.config.ts            # Vitest 测试配置
+├── package.json                # 根：workspace 脚本
+├── pnpm-workspace.yaml         # packages/* + apps/*
+├── compose.dev.yml              # 开发数据库
+├── compose.test.yml             # 测试数据库
+├── .gitignore
+│
+├── packages/
+│   ├── server/                 # @lavaanime/server  Express 后端
+│   │   ├── main.ts             # Express 入口：监听端口、启动服务
+│   │   ├── app.ts              # Express 应用创建：挂载中间件、路由、生产态静态文件
+│   │   ├── common/             # 底层工具与基础设施（禁止依赖上层）
+│   │   │   ├── database/
+│   │   │   │   ├── connection.ts   # DB 连接（Drizzle ORM + mysql2 + 自动迁移）
+│   │   │   │   └── schema/         # Drizzle ORM 表定义（10 张表）
+│   │   │   ├── api-clients/        # Bangumi / AList API 客户端
+│   │   │   ├── response/           # 统一 HTTP 响应封装 (200/400/401/403/404/500)
+│   │   │   ├── cache.ts            # 内存缓存 + GC
+│   │   │   └── tools/              # logger, validate 等
+│   │   ├── middleware/             # auth, logger, preprocess, validate
+│   │   ├── routes/v2/              # 路由注册（只导入 Controller + Middleware）
+│   │   ├── controllers/v2/         # HTTP 请求处理（不直接操作 SQL）
+│   │   ├── services/v2/            # 业务逻辑与数据访问（禁止操作 req/res）
+│   │   ├── schemas/v2/             # Zod 请求参数校验
+│   │   ├── tasks/v2/               # 定时/手动同步脚本
+│   │   ├── tests/                  # Vitest 测试（241 用例）
+│   │   ├── drizzle/                # Drizzle ORM 迁移文件
+│   │   └── drizzle.config.ts
+│   │
+│   └── shared/                  # @lavaanime/shared  前后端共享类型
+│       ├── src/
+│       │   ├── api.ts           # ApiResponse<T>, PaginatedData<T>
+│       │   ├── models.ts        # AnimeItem, UserInfo, BangumiData, etc.
+│       │   └── index.ts         # barrel export
+│       └── tsconfig.json
+│
+└── apps/
+    └── web/                     # @lavaanime/web      Nuxt 3 前端 SPA (ssr: false)
+        ├── nuxt.config.ts
+        ├── app.vue
+        ├── pages/ / components/ / composables/
+        └── package.json
 ```
 
-## 分层职责与依赖规则
+## 分层职责与依赖规则（server 包内部）
 
 ```
 routes → controllers → services → common
@@ -129,9 +74,8 @@ tasks → services / common
 - Controller 禁止直接执行 SQL 或调用外部 HTTP API。
 - Service 禁止操作 `req` / `res`。
 - 路由层只导入 Controller 和 Middleware。
-- Controller 应在调用 Service 前使用 `schemas/v2/` 下的 Zod schema 校验输入参数。
 
-## 命名规范
+## 命名规范（server 包内部）
 
 | 层级 | 文件命名 | 函数/变量命名 |
 |------|----------|--------------|
@@ -144,24 +88,55 @@ tasks → services / common
 
 ## 关键命令
 
+所有命令在仓库根目录执行：
+
 ```bash
-pnpm dev         # 开发模式（tsx watch）
-pnpm build       # 编译 TypeScript → dist/
-pnpm typecheck   # 仅类型检查
-pnpm start       # 运行编译产物 dist/main.js
-pnpm sync        # 运行同步任务（tasks/v2/main.ts）
-pnpm db:generate # 生成 Drizzle 迁移文件
-pnpm db:push     # 直接推送 schema 到数据库
-pnpm db:migrate  # 执行 Drizzle 迁移
-pnpm test        # 运行全部测试（vitest run）
-pnpm test:watch  # 测试监听模式
+# 开发
+pnpm dev              # 启动后端（tsx watch，:8090）
+pnpm dev:web          # 启动前端（Nuxt dev，:3000）
+
+# 构建
+pnpm build            # 构建 shared + server
+pnpm build:web        # 构建前端（nuxt generate）
+pnpm build:prod       # 全量生产构建（shared → web → server）
+
+# 类型 / 测试
+pnpm typecheck        # 所有包类型检查
+pnpm start            # 生产启动（:8090，自动托管前端静态文件）
+pnpm test             # 运行全部测试（241 用例）
+pnpm test:watch       # 测试监听模式
+
+# 数据库
+pnpm db:generate      # 生成 Drizzle 迁移文件
+pnpm db:push          # 直接推送 schema
+pnpm db:migrate       # 执行 Drizzle 迁移
+
+# 同步
+pnpm sync             # 刷新番剧/Bangumi 数据
 ```
+
+## 生产部署
+
+Nuxt 前端构建为纯静态文件（`ssr: false`），Express 自动托管：
+
+```bash
+pnpm build:prod       # 一次性构建所有包
+pnpm start            # Express :8090 → API + 前端静态文件（同端口）
+```
+
+前端 API 调用使用同源相对路径，无需配置 `SERVER_BASE_URL`。
 
 ## 配置文件
 
-复制 `common/configTemplate.ts` 为 `common/config.ts`，然后修改其中的数据库、AList、Bangumi 等配置。
+复制配置模板：
 
-测试环境使用 `common/config.test.ts`，启动测试数据库后自动生效。
+```bash
+cp packages/server/common/configTemplate.ts packages/server/common/config.ts
+```
+
+编辑其中的数据库、AList、Bangumi 等配置。
+
+测试环境使用 `packages/server/common/config.test.ts`。
 
 ## 数据库
 
@@ -172,17 +147,9 @@ pnpm test:watch  # 测试监听模式
 
 开发环境可用 `docker compose -f compose.dev.yml up` 启动 MariaDB。
 
-Drizzle 表定义位于 `common/database/schema/`，每张表一个文件。数据库迁移由 `drizzle-kit` 管理：
-- 修改 schema 后运行 `pnpm db:generate` 生成迁移文件
-- 运行 `pnpm db:migrate` 执行迁移（或重启应用自动执行）
-
-## 请求参数校验
-
-Controller 应在调用 Service 前使用 Zod schema 校验输入。Schema 文件统一放在 `schemas/v2/` 下，按业务模块分目录。校验通过 `common/tools/validate.ts` 中的中间件执行。
-
 ## 注意事项
 
 - 所有 API 响应使用 `common/response/` 的统一函数，格式为 `{ code, message, data? }`。
 - 外部 API 调用统一封装在 `common/api-clients/` 下。
 - `tasks/` 中的脚本应尽量复用 `services/` 的逻辑，避免直接写 SQL。
-- 测试共 **101 个用例**，覆盖全部 API 端点的正常与异常路径。
+- 前端通过 `@lavaanime/shared` 包引用后端类型，修改 schema 时同步更新 shared 包类型。
