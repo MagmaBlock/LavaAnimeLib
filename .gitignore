@@ -6,10 +6,11 @@ logs/
 *.tsbuildinfo
 
 # Server config (sensitive, from template)
-packages/server/common/config.js
-packages/server/common/config.ts
+apps/server/common/config.js
+apps/server/common/config.ts
 
 # Nuxt
 .nuxt/
 .output/
+apps/web/dist
 

@@ -16,7 +16,7 @@
     "main.ts",
     "drizzle.config.ts",
     "common/**/*.ts",
-    "config/**/*.ts",
+
     "controllers/**/*.ts",
     "middleware/**/*.ts",
     "routes/**/*.ts",

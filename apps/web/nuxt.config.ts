@@ -575,6 +575,7 @@ export default defineNuxtConfig({
     },
     workbox: {
       globPatterns: ["**/*.{js,css,ico,png,svg}"],
+      maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
     },
     devOptions: {
       enabled: false,

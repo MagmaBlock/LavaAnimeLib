@@ -29,7 +29,8 @@ app.use(requestLogger);
 app.use(router);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const nuxtDist = path.resolve(__dirname, "../../apps/web/.output/public");
+const pkgRoot = __dirname.endsWith(`${path.sep}dist`) ? path.resolve(__dirname, "..") : __dirname;
+const nuxtDist = path.resolve(pkgRoot, "../web/.output/public");
 
 if (existsSync(nuxtDist)) {
   app.use(express.static(nuxtDist));

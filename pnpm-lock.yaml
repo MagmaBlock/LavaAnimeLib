@@ -8,6 +8,85 @@ importers:
 
   .: {}
 
+  apps/server:
+    dependencies:
+      '@lavaanime/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      aniep:
+        specifier: ^0.6.0
+        version: 0.6.0
+      anime-file-parser:
+        specifier: ^1.0.9
+        version: 1.0.10
+      axios:
+        specifier: ^1.13.2
+        version: 1.16.1
+      cookie-parser:
+        specifier: ^1.4.6
+        version: 1.4.7
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(mysql2@3.22.3(@types/node@25.8.0))
+      express:
+        specifier: ^4.17.3
+        version: 4.22.2
+      lodash:
+        specifier: ^4.17.21
+        version: 4.18.1
+      mysql2:
+        specifier: ^3.16.0
+        version: 3.22.3(@types/node@25.8.0)
+      pino:
+        specifier: ^10.3.1
+        version: 10.3.1
+      rotating-file-stream:
+        specifier: ^3.2.9
+        version: 3.2.9
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      '@types/cookie-parser':
+        specifier: ^1.4.10
+        version: 1.4.10(@types/express@5.0.6)
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
+      '@types/lodash':
+        specifier: ^4.17.24
+        version: 4.17.24
+      '@types/node':
+        specifier: ^25.8.0
+        version: 25.8.0
+      '@types/qs':
+        specifier: ^6.9.18
+        version: 6.15.1
+      '@types/supertest':
+        specifier: ^7.2.0
+        version: 7.2.0
+      drizzle-kit:
+        specifier: ^0.31.10
+        version: 0.31.10
+      nodemon:
+        specifier: ^3.1.9
+        version: 3.1.14
+      pino-pretty:
+        specifier: ^13.1.3
+        version: 13.1.3
+      supertest:
+        specifier: ^7.2.2
+        version: 7.2.2
+      tsx:
+        specifier: ^4.21.0
+        version: 4.22.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^4.1.6
+        version: 4.1.6(@types/node@25.8.0)(vite@8.0.13)
+
   apps/web:
     dependencies:
       '@bg-dev/nuxt-naiveui':
@@ -98,85 +177,6 @@ importers:
       vue-router:
         specifier: ^4.3.0
         version: 4.6.4(vue@3.5.34(typescript@6.0.3))
-
-  packages/server:
-    dependencies:
-      '@lavaanime/shared':
-        specifier: workspace:*
-        version: link:../shared
-      aniep:
-        specifier: ^0.6.0
-        version: 0.6.0
-      anime-file-parser:
-        specifier: ^1.0.9
-        version: 1.0.10
-      axios:
-        specifier: ^1.13.2
-        version: 1.16.1
-      cookie-parser:
-        specifier: ^1.4.6
-        version: 1.4.7
-      drizzle-orm:
-        specifier: ^0.45.2
-        version: 0.45.2(mysql2@3.22.3(@types/node@25.8.0))
-      express:
-        specifier: ^4.17.3
-        version: 4.22.2
-      lodash:
-        specifier: ^4.17.21
-        version: 4.18.1
-      mysql2:
-        specifier: ^3.16.0
-        version: 3.22.3(@types/node@25.8.0)
-      pino:
-        specifier: ^10.3.1
-        version: 10.3.1
-      rotating-file-stream:
-        specifier: ^3.2.9
-        version: 3.2.9
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@types/cookie-parser':
-        specifier: ^1.4.10
-        version: 1.4.10(@types/express@5.0.6)
-      '@types/express':
-        specifier: ^5.0.6
-        version: 5.0.6
-      '@types/lodash':
-        specifier: ^4.17.24
-        version: 4.17.24
-      '@types/node':
-        specifier: ^25.8.0
-        version: 25.8.0
-      '@types/qs':
-        specifier: ^6.9.18
-        version: 6.15.1
-      '@types/supertest':
-        specifier: ^7.2.0
-        version: 7.2.0
-      drizzle-kit:
-        specifier: ^0.31.10
-        version: 0.31.10
-      nodemon:
-        specifier: ^3.1.9
-        version: 3.1.14
-      pino-pretty:
-        specifier: ^13.1.3
-        version: 13.1.3
-      supertest:
-        specifier: ^7.2.2
-        version: 7.2.2
-      tsx:
-        specifier: ^4.21.0
-        version: 4.22.1
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: ^4.1.6
-        version: 4.1.6(@types/node@25.8.0)(vite@8.0.13)
 
   packages/shared:
     devDependencies:
