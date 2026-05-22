@@ -14,10 +14,14 @@ export async function getIndexInfo(): Promise<IndexData> {
   };
 
   const allYears = await db
-    .select({ year: anime.year })
+    .selectDistinct({ year: anime.year })
     .from(anime)
+    .where(eq(anime.deleted, 0))
     .orderBy(anime.year);
-  const allTypes = await db.select({ type: anime.type }).from(anime);
+  const allTypes = await db
+    .selectDistinct({ type: anime.type })
+    .from(anime)
+    .where(eq(anime.deleted, 0));
 
   for (const i of allYears) {
     indexData.year.push(i.year);
