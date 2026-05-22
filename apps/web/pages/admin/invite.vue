@@ -1,131 +1,293 @@
 <template>
-  <ContainerPageLeftMenuRightContent>
-    <template #left>
-      <NForm>
-        <NFormItem label="生成数量">
-          <NInputNumber
-            v-model:value="amount"
-            placeholder="生成数量"
-            clearable
-          />
-        </NFormItem>
-        <NFormItem label="开启到期时间">
-          <NSwitch v-model:value="timeLimit" />
-        </NFormItem>
-        <NFormItem label="快速设定几天后失效" v-if="timeLimit">
-          <NInputNumber
-            v-model:value="lateDays"
-            placeholder="晚几天"
-            clearable
-          />
-        </NFormItem>
-        <NFormItem label="失效时间" v-if="timeLimit">
-          <NDatePicker
-            v-model:value="expirationTime"
-            type="datetime"
-            clearable
-          />
-        </NFormItem>
-        <NButton secondary @click="send">确认生成</NButton>
-      </NForm>
-    </template>
-    <template #right>
-      <NTable v-if="allCodes.length">
-        <thead>
-          <tr>
-            <th>邀请码</th>
-            <th>截至</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="code in allCodes">
-            <td class="select-text">{{ code.code }}</td>
-            <td class="select-text">
-              <NTime v-if="code.expirationTime" :time="code.expirationTime" />
-            </td>
-            <td>
+  <div>
+    <NPageHeader subtitle="用户管理" @back="router.back()">
+      <template #title>
+        <span class="text-xl font-semibold">邀请码管理</span>
+      </template>
+    </NPageHeader>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+      <div class="lg:col-span-1">
+        <NCard title="生成邀请码" :bordered="false" class="!rounded-xl">
+          <NForm label-placement="top">
+            <NFormItem label="生成数量" required>
+              <NInputNumber v-model:value="amount" :min="1" :max="100" class="!w-full" />
+            </NFormItem>
+            <NFormItem label="开启到期时间">
+              <NSwitch v-model:value="timeLimit" />
+            </NFormItem>
+            <NFormItem label="快速设定几天后失效" v-if="timeLimit">
+              <NInputNumber v-model:value="lateDays" :min="1" class="!w-full" />
+            </NFormItem>
+            <NFormItem label="失效时间" v-if="timeLimit">
+              <NDatePicker
+                v-model:value="expirationTime"
+                type="datetime"
+                class="!w-full"
+              />
+            </NFormItem>
+            <NButton
+              block
+              type="primary"
+              :loading="generating"
+              @click="send"
+            >
+              {{ timeLimit ? "生成限时邀请码" : "生成永久邀请码" }}
+            </NButton>
+          </NForm>
+        </NCard>
+      </div>
+
+      <div class="lg:col-span-2">
+        <NCard
+          :title="`有效邀请码（${checkedRowKeys.length > 0 ? `已选 ${checkedRowKeys.length} 项` : allCodes.length}）`"
+          :bordered="false"
+          class="!rounded-xl"
+        >
+          <template #header-extra>
+            <NSpace size="small">
               <NButton
+                v-if="allCodes.length > 0"
                 size="small"
-                type="error"
                 secondary
-                @click="deleteCode(code.code)"
-                >删除</NButton
+                @click="copyAllCodes"
               >
-            </td>
-          </tr>
-        </tbody>
-      </NTable>
-    </template>
-  </ContainerPageLeftMenuRightContent>
+                <template #icon>
+                  <Icon icon="fluent:clipboard-multiple-24-regular" width="16" height="16" />
+                </template>
+                复制全部
+              </NButton>
+              <NPopconfirm
+                v-if="checkedRowKeys.length > 0"
+                @positive-click="batchDelete"
+              >
+                <template #trigger>
+                  <NButton size="small" type="error" secondary>
+                    <template #icon>
+                      <Icon icon="fluent:delete-24-regular" width="16" height="16" />
+                    </template>
+                    删除选中
+                  </NButton>
+                </template>
+                确定删除选中的 {{ checkedRowKeys.length }} 个邀请码？
+              </NPopconfirm>
+              <NButton size="small" @click="allValidCodes" :loading="loading">
+                <template #icon>
+                  <Icon icon="fluent:arrow-sync-24-regular" width="16" height="16" />
+                </template>
+              </NButton>
+            </NSpace>
+          </template>
+
+          <NSpin :show="loading">
+            <NEmpty v-if="!loading && allCodes.length === 0" description="暂无有效的邀请码" />
+
+            <NDataTable
+              v-else
+              :columns="columns"
+              :data="allCodes"
+              :row-key="rowKey"
+              :checked-row-keys="checkedRowKeys"
+              :single-line="false"
+              size="small"
+              :scroll-x="600"
+              max-height="480"
+              virtual-scroll
+              @update:checked-row-keys="handleCheck"
+            />
+          </NSpin>
+        </NCard>
+      </div>
+    </div>
+  </div>
 </template>
 
-<script>
+<script lang="ts" setup>
+import { Icon } from "@iconify/vue";
+import { useClipboard } from "@vueuse/core";
+import { h } from "vue";
+import dayjs from "dayjs";
+import {
+  NSpace,
+  NButton,
+  NPopconfirm,
+  type DataTableColumns,
+} from "naive-ui";
+
 definePageMeta({
   layout: "admin",
 });
 
-export default {
-  data() {
-    return {
-      amount: 1,
-      timeLimit: false,
-      lateDays: 3,
-      expirationTime: null,
-      allCodes: [],
-    };
+useHead({ title: "邀请码管理" });
+
+const router = useRouter();
+const message = useMessage();
+const { copy } = useClipboard();
+
+const amount = ref(1);
+const timeLimit = ref(false);
+const lateDays = ref(3);
+const expirationTime = ref<number | null>(null);
+const allCodes = ref<{ code: string; expirationTime: number | null }[]>([]);
+const checkedRowKeys = ref<string[]>([]);
+const loading = ref(true);
+const generating = ref(false);
+
+interface CodeItem {
+  code: string;
+  expirationTime: number | null;
+}
+
+const columns: DataTableColumns<CodeItem> = [
+  {
+    type: "selection",
   },
-  methods: {
-    async send() {
-      if (this.amount < 1) return;
-      try {
-        let add = await LavaAnimeAPI.post("/v2/user/invite/new", {
-          amount: this.amount,
-          expirationTime: this.timeLimit ? this.expirationTime : undefined,
-        });
-        if ((add.data.code = 200)) {
-          $message.success(add.data.message);
-          this.allVaildCodes();
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    },
-    setTimeDays(day) {
-      this.expirationTime = new Date().getTime() + 1000 * 60 * 60 * 24 * day;
-    },
-    async allVaildCodes() {
-      try {
-        let result = await LavaAnimeAPI.get("/v2/admin/invite/all-valid-codes");
-        if (result.data?.code == 200) {
-          this.allCodes = result.data.data;
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    },
-    async deleteCode(code) {
-      try {
-        let result = await LavaAnimeAPI.post("/v2/admin/invite/delete-codes", {
-          codes: [code],
-        });
-        if (result.data?.code == 200) $message.success("成功");
-      } catch (error) {
-        console.error(error);
-        $message.error("删除失败");
-      }
-      this.allVaildCodes();
+  {
+    title: "邀请码",
+    key: "code",
+    ellipsis: { tooltip: true },
+  },
+  {
+    title: "有效期至",
+    key: "expirationTime",
+    width: 200,
+    render(row: CodeItem) {
+      return row.expirationTime
+        ? h("span", dayjs(row.expirationTime).format("YYYY-MM-DD HH:mm"))
+        : h("span", { class: "text-gray-400" }, "永久有效");
     },
   },
-  mounted() {
-    useHead({ title: "邀请码管理" });
-    this.setTimeDays(1);
-    this.allVaildCodes();
-  },
-  watch: {
-    lateDays(day) {
-      this.setTimeDays(day);
+  {
+    title: "操作",
+    key: "actions",
+    width: 160,
+    render(row: CodeItem) {
+      return h(NSpace, { size: "small" }, () => [
+        h(
+          NButton,
+          {
+            size: "tiny",
+            secondary: true,
+            onClick: () => copyCode(row.code),
+          },
+          () => "复制"
+        ),
+        h(
+          NPopconfirm,
+          {
+            onPositiveClick: () => deleteCode(row.code),
+          },
+          {
+            trigger: () =>
+              h(
+                NButton,
+                {
+                  size: "tiny",
+                  type: "error",
+                  secondary: true,
+                },
+                () => "删除"
+              ),
+            default: () => "确定删除该邀请码？",
+          }
+        ),
+      ]);
     },
   },
-};
+];
+
+function rowKey(row: { code: string }) {
+  return row.code;
+}
+
+function handleCheck(keys: string[]) {
+  checkedRowKeys.value = keys;
+}
+
+function setTimeDays(day: number) {
+  expirationTime.value = new Date().getTime() + 1000 * 60 * 60 * 24 * day;
+}
+
+async function send() {
+  if (amount.value < 1) return;
+  generating.value = true;
+  try {
+    const add = await LavaAnimeAPI.post("/v2/user/invite/new", {
+      amount: amount.value,
+      expirationTime: timeLimit.value ? expirationTime.value : undefined,
+    });
+    if (add.data.code === 200) {
+      message.success(add.data.message);
+      await allValidCodes();
+    }
+  } catch (_error) {
+    message.error("生成邀请码失败");
+  } finally {
+    generating.value = false;
+  }
+}
+
+async function allValidCodes() {
+  loading.value = true;
+  try {
+    const result = await LavaAnimeAPI.get("/v2/admin/invite/all-valid-codes");
+    if (result.data?.code === 200) {
+      allCodes.value = result.data.data || [];
+    }
+  } catch (_error) {
+    message.error("获取邀请码列表失败");
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function deleteCode(code: string) {
+  try {
+    const result = await LavaAnimeAPI.post("/v2/admin/invite/delete-codes", {
+      codes: [code],
+    });
+    if (result.data?.code === 200) {
+      message.success("删除成功");
+      checkedRowKeys.value = checkedRowKeys.value.filter((k) => k !== code);
+    }
+  } catch (_error) {
+    message.error("删除失败");
+  }
+  await allValidCodes();
+}
+
+async function batchDelete() {
+  try {
+    const result = await LavaAnimeAPI.post("/v2/admin/invite/delete-codes", {
+      codes: checkedRowKeys.value,
+    });
+    if (result.data?.code === 200) {
+      message.success(`成功删除 ${checkedRowKeys.value.length} 个邀请码`);
+      checkedRowKeys.value = [];
+    }
+  } catch (_error) {
+    message.error("批量删除失败");
+  }
+  await allValidCodes();
+}
+
+function copyCode(code: string) {
+  copy(code);
+  message.success("已复制到剪贴板");
+}
+
+function copyAllCodes() {
+  const text = allCodes.value.map((c) => c.code).join("\n");
+  copy(text);
+  message.success(`已复制 ${allCodes.value.length} 个邀请码`);
+}
+
+watch(lateDays, (day) => {
+  setTimeDays(day);
+});
+
+onMounted(() => {
+  setTimeDays(1);
+  allValidCodes();
+});
 </script>
