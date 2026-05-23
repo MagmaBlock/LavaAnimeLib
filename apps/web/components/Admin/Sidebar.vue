@@ -35,6 +35,7 @@ import { h } from "vue";
 
 const route = useRoute();
 const router = useRouter();
+const emit = defineEmits<{ navigate: [] }>();
 
 function renderIcon(icon: string) {
   return () => h(Icon, { icon });
@@ -79,6 +80,7 @@ const activeKey = computed(() => {
 function handleMenuClick(key: string) {
   if (key === "content-group") return;
   router.push({ name: key });
+  emit("navigate");
 }
 
 function handleExpandedKeys(keys: string[]) {
