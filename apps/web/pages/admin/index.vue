@@ -112,6 +112,12 @@
             </template>
             管理邀请码
           </NButton>
+          <NButton @click="router.push({ name: 'admin-drive' })" class="!justify-start" size="large">
+            <template #icon>
+              <Icon icon="fluent:server-24-regular" width="18" height="18" />
+            </template>
+            管理存储节点
+          </NButton>
           <NButton @click="router.push({ name: 'index' })" tag="a" target="_blank" class="!justify-start" size="large">
             <template #icon>
               <Icon icon="fluent:open-24-regular" width="18" height="18" />

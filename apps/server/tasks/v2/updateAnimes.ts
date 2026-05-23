@@ -17,7 +17,8 @@ export default async function updateAnimes() {
   const allNewAnimes: NewAnimeEntry[] = [];
   const allDeletedAnimes: NewAnimeEntry[] = [];
 
-  const drive = getDrive(getDefaultDrive())!;
+  const drive = await getDrive(await getDefaultDrive());
+  if (!drive) throw new Error("默认存储节点不存在");
   const drivePath = drive.path;
 
   const allYears = await getYears(drivePath);

@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 import axios from "axios";
 import type Artplayer from "artplayer";
 import { useMessage } from "naive-ui";
+import type { DriveListResult } from "@lavaanime/shared";
 
 // 类型定义
 export interface ParseResult {
@@ -140,19 +141,7 @@ export type AnimeData = {
   characters: any[];
 };
 
-export type DriveData = {
-  default: string;
-  list: {
-    id: string;
-    name: string;
-    type: string;
-    status: string;
-    capacity: number;
-    used: number;
-    available: number;
-    lastUpdate: string;
-  }[];
-};
+export type DriveData = DriveListResult;
 
 declare global {
   interface Window {

@@ -20,7 +20,7 @@ export async function getFilesByID(laID: number, drive?: string): Promise<FileIt
   const anime = await getAnimeByID(laID);
   if (anime.deleted) return "此 laID 不存在";
 
-  const thisDrive = getDrive(drive ?? getDefaultDrive());
+  const thisDrive = await getDrive(drive ?? await getDefaultDrive());
   if (!thisDrive) return "存储节点不存在";
   const animeType = anime.type as { nsfw?: boolean } | undefined;
   if (animeType?.nsfw && thisDrive?.banNSFW)

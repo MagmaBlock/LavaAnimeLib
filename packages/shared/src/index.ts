@@ -8,4 +8,7 @@ export type {
   BangumiData,
   FollowItem,
   ViewHistoryItem,
+  DriveInfo,
+  DriveListResult,
+  DriveRecord,
 } from "./models.js";

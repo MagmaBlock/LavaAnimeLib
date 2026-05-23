@@ -7,23 +7,7 @@ export default {
     database: "lavaanime",
     password: "password",
   },
-  // Alist 存储节点相关配置
-  // 用于番剧库的视频播放和刷新
-  drive: {
-    default: "1A",
-    list: [
-      {
-        id: "1A",
-        name: "存储节点名称",
-        description: "这是存储节点的简介",
-        banNSFW: false,
-        type: "alist",
-        host: "https://alist.com",
-        path: "/1A/LavaAnimeLib",
-        password: "",
-      },
-    ],
-  },
+  // 存储节点已迁移到数据库 drives 表，请通过管理员后台或运维脚本维护。
   // Bangumi API 域名
   // 用于抓取 Bangumi 番组计划的番剧资料
   bangumi: {

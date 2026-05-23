@@ -72,3 +72,28 @@ export interface ViewHistoryItem {
   lastReportTime: string | null;
   useDrive: string | null;
 }
+
+export interface DriveInfo {
+  id: string;
+  name: string;
+  description: string;
+  banNSFW: boolean;
+  disableDownload: boolean;
+}
+
+export interface DriveListResult {
+  default: string;
+  list: DriveInfo[];
+}
+
+export interface DriveRecord extends DriveInfo {
+  type: "alist";
+  host: string;
+  path: string;
+  password: string;
+  enabled: boolean;
+  isDefault: boolean;
+  sortOrder: number;
+  createdAt: string | Date | null;
+  updatedAt: string | Date | null;
+}

@@ -6,21 +6,6 @@ export default {
     database: "lavaanime_test",
     password: "test_password",
   },
-  drive: {
-    default: "1A",
-    list: [
-      {
-        id: "1A",
-        name: "测试存储节点",
-        description: "测试用存储节点",
-        banNSFW: false,
-        type: "alist",
-        host: "https://alist.example.com",
-        path: "/test/LavaAnimeLib",
-        password: "",
-      },
-    ],
-  },
   bangumi: {
     host: "https://api.bgm.tv",
   },

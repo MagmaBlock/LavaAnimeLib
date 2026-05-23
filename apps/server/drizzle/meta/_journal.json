@@ -8,6 +8,13 @@
       "when": 1778778710857,
       "tag": "0000_daily_virginia_dare",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1779517633333,
+      "tag": "0001_black_mimic",
+      "breakpoints": true
     }
   ]
 }
