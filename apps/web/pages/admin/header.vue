@@ -1,28 +1,27 @@
 <template>
   <div>
-    <NPageHeader subtitle="内容管理" @back="router.back()">
-      <template #title>
-        <span class="text-xl font-semibold">主页头图管理</span>
-      </template>
-      <template #extra>
-        <NSpace>
-          <NButton @click="add" type="primary" secondary>
-            <template #icon>
-              <Icon icon="fluent:add-24-regular" width="16" height="16" />
-            </template>
-            添加头图
-          </NButton>
-          <NButton @click="submitData" type="primary" :loading="submitting">
-            <template #icon>
-              <Icon icon="fluent:cloud-arrow-up-24-regular" width="16" height="16" />
-            </template>
-            提交更新
-          </NButton>
-        </NSpace>
-      </template>
-    </NPageHeader>
+    <div class="mb-6 flex flex-col gap-3 px-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <div class="text-sm text-gray-500 dark:text-gray-400">内容管理</div>
+        <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">主页头图管理</h1>
+      </div>
+      <NSpace size="small">
+        <NButton @click="add" type="primary" secondary>
+          <template #icon>
+            <Icon icon="fluent:add-24-regular" width="16" height="16" />
+          </template>
+          添加头图
+        </NButton>
+        <NButton @click="submitData" type="primary" :loading="submitting">
+          <template #icon>
+            <Icon icon="fluent:cloud-arrow-up-24-regular" width="16" height="16" />
+          </template>
+          提交更新
+        </NButton>
+      </NSpace>
+    </div>
 
-    <div class="mt-4 mb-6">
+    <div class="mb-6">
       <NCard title="预览" :bordered="false" size="small" class="!rounded-xl">
         <div class="h-44 sm:h-52 lg:h-64">
           <HomeHeaderPicture
@@ -125,7 +124,6 @@ definePageMeta({
 
 useHead({ title: "主页头图管理" });
 
-const router = useRouter();
 const message = useMessage();
 
 const headers = ref<any[]>([]);

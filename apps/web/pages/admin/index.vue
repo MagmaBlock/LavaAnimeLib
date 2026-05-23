@@ -1,12 +1,11 @@
 <template>
   <div>
-    <NPageHeader subtitle="概览" @back="router.back()">
-      <template #title>
-        <span class="text-xl font-semibold">管理员仪表盘</span>
-      </template>
-    </NPageHeader>
+    <div class="mb-6 px-3">
+      <div class="text-sm text-gray-500 dark:text-gray-400">概览</div>
+      <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">管理员仪表盘</h1>
+    </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mt-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
       <NCard :bordered="false" class="!rounded-xl">
         <NSpace align="center" :wrap="false">
           <div

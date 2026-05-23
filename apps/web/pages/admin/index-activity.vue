@@ -1,24 +1,23 @@
 <template>
   <div>
-    <NPageHeader subtitle="内容管理" @back="router.back()">
-      <template #title>
-        <span class="text-xl font-semibold">索引页活动管理</span>
-      </template>
-      <template #extra>
-        <NButton
-          type="primary"
-          :loading="submitting"
-          @click="handleSubmit"
-        >
-          <template #icon>
-            <Icon icon="fluent:cloud-arrow-up-24-regular" width="16" height="16" />
-          </template>
-          提交更新
-        </NButton>
-      </template>
-    </NPageHeader>
+    <div class="mb-6 flex flex-col gap-3 px-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <div class="text-sm text-gray-500 dark:text-gray-400">内容管理</div>
+        <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">索引页活动管理</h1>
+      </div>
+      <NButton
+        type="primary"
+        :loading="submitting"
+        @click="handleSubmit"
+      >
+        <template #icon>
+          <Icon icon="fluent:cloud-arrow-up-24-regular" width="16" height="16" />
+        </template>
+        提交更新
+      </NButton>
+    </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-7 gap-4 mt-4">
+    <div class="grid grid-cols-1 lg:grid-cols-7 gap-4">
       <div class="lg:col-span-3">
         <NCard title="样式预览" :bordered="false" class="!rounded-xl">
           <template #header-extra>
@@ -95,7 +94,6 @@ definePageMeta({
 
 useHead({ title: "索引页活动管理" });
 
-const router = useRouter();
 const store = useIndexStore();
 const message = useMessage();
 const submitting = ref(false);

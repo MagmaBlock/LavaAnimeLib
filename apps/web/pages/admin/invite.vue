@@ -1,12 +1,11 @@
 <template>
   <div>
-    <NPageHeader subtitle="用户管理" @back="router.back()">
-      <template #title>
-        <span class="text-xl font-semibold">邀请码管理</span>
-      </template>
-    </NPageHeader>
+    <div class="mb-6 px-3">
+      <div class="text-sm text-gray-500 dark:text-gray-400">用户管理</div>
+      <h1 class="text-xl font-semibold text-gray-900 dark:text-gray-100">邀请码管理</h1>
+    </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div class="lg:col-span-1">
         <NCard title="生成邀请码" :bordered="false" class="!rounded-xl">
           <NForm label-placement="top">
@@ -120,7 +119,6 @@ definePageMeta({
 
 useHead({ title: "邀请码管理" });
 
-const router = useRouter();
 const message = useMessage();
 const { copy } = useClipboard();
 
