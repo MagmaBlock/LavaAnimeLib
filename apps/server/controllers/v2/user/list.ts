@@ -5,7 +5,8 @@ import { listUsers } from "../../../services/v2/user/admin.js";
 import { log } from "../../../common/tools/logger.js";
 
 export async function userList(req: Request, res: Response): Promise<void> {
-  const { page, pageSize } = req.query as unknown as { page: number; pageSize: number };
+  const page = Number(req.query.page);
+  const pageSize = Number(req.query.pageSize);
   const offset = (page - 1) * pageSize;
 
   try {

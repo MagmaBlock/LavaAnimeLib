@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "dev": "pnpm -r --parallel dev",
-    "build": "pnpm --filter @lavaanime/shared build && pnpm --filter @lavaanime/web build & pnpm --filter @lavaanime/server build & wait",
+    "build": "pnpm --filter @lavaanime/shared build && pnpm -r --parallel --filter @lavaanime/web --filter @lavaanime/server build",
     "typecheck": "pnpm -r typecheck",
     "start": "pnpm --filter @lavaanime/server start",
     "test": "pnpm --filter @lavaanime/server test",

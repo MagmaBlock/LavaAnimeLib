@@ -1,12 +1,18 @@
 import type { Request, Response } from "express";
 import success from "../../../common/response/success.js";
 import serverError from "../../../common/response/server-error.js";
+import notFound from "../../../common/response/not-found.js";
 import { getFormattedPassword } from "../../../services/v2/user/password.js";
 import { changeUserPassword } from "../../../services/v2/user/profile.js";
+import { findUserByID } from "../../../services/v2/user/user.js";
 import { log } from "../../../common/tools/logger.js";
 
 export async function adminChangePassword(req: Request, res: Response): Promise<void> {
   try {
+    const targetUser = await findUserByID(req.body.userID);
+    if (!targetUser) {
+      return notFound(res, "用户不存在");
+    }
     await changeUserPassword(req.body.userID, getFormattedPassword(req.body.password));
     return success(res, null, "修改成功");
   } catch (error) {

@@ -176,7 +176,11 @@ function openPasswordModal(row: UserItem) {
 async function submitPasswordChange() {
   if (!selectedUser.value) return;
   if (!newPassword.value || newPassword.value.length < 7) {
-    message.error("密码至少 7 位且包含字母");
+    message.error("密码至少 7 位");
+    return;
+  }
+  if (!/[a-zA-Z]/.test(newPassword.value)) {
+    message.error("密码需包含字母");
     return;
   }
 

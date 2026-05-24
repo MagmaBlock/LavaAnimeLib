@@ -15,8 +15,3 @@ export async function listUsers(offset: number, limit: number): Promise<{ list: 
 
   return { list, total };
 }
-
-export async function countUsers(): Promise<number> {
-  const rows = await db.select({ count: sql<number>`COUNT(*)` }).from(user);
-  return rows[0]?.count ?? 0;
-}
