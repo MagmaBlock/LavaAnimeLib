@@ -11,17 +11,30 @@
           :columns="columns"
           :data="userList"
           :row-key="rowKey"
-          :pagination="pagination"
           :single-line="false"
           size="small"
           :scroll-x="800"
           max-height="640"
-          @update:page="handlePageChange"
-          @update:page-size="handlePageSizeChange"
+          :pagination="false"
         />
         <template #empty>
           <NEmpty description="暂无用户数据" />
         </template>
+        <div v-if="total > 0" class="flex justify-end mt-4">
+          <NPagination
+            v-model:page="page"
+            :page-size="pageSize"
+            :item-count="total"
+            :page-sizes="[10, 20, 50]"
+            show-size-picker
+            @update:page="fetchUsers"
+            @update:page-size="handlePageSizeChange"
+          >
+            <template #prefix>
+              共 {{ total }} 人
+            </template>
+          </NPagination>
+        </div>
       </NSpin>
     </NCard>
 
@@ -49,6 +62,7 @@ import {
   NForm,
   NFormItem,
   NInput,
+  NPagination,
   type DataTableColumns,
 } from "naive-ui";
 
@@ -70,16 +84,9 @@ interface UserItem {
 
 const userList = ref<UserItem[]>([]);
 const loading = ref(true);
-const pagination = reactive({
-  page: 1,
-  pageSize: 20,
-  itemCount: 0,
-  showSizePicker: true,
-  pageSizes: [10, 20, 50] as number[],
-  prefix({ itemCount }: { itemCount: number }) {
-    return `共 ${itemCount} 人`;
-  },
-});
+const page = ref(1);
+const pageSize = ref(20);
+const total = ref(0);
 
 const showPasswordModal = ref(false);
 const selectedUser = ref<UserItem | null>(null);
@@ -154,14 +161,9 @@ function rowKey(row: UserItem) {
   return row.id;
 }
 
-function handlePageChange(p: number) {
-  pagination.page = p;
-  fetchUsers();
-}
-
 function handlePageSizeChange(ps: number) {
-  pagination.pageSize = ps;
-  pagination.page = 1;
+  pageSize.value = ps;
+  page.value = 1;
   fetchUsers();
 }
 
@@ -198,11 +200,11 @@ async function fetchUsers() {
   loading.value = true;
   try {
     const result = await LavaAnimeAPI.get("/v2/user/list", {
-      params: { page: pagination.page, pageSize: pagination.pageSize },
+      params: { page: page.value, pageSize: pageSize.value },
     });
     if (result.data?.code === 200) {
       userList.value = result.data.data.list || [];
-      pagination.itemCount = result.data.data.total || 0;
+      total.value = result.data.data.total || 0;
     }
   } catch (_error) {
     message.error("获取用户列表失败");
