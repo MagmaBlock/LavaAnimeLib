@@ -19,6 +19,10 @@ import { updateAvatarBodySchema } from "../../schemas/v2/user/info/update-avatar
 import { updateNameBodySchema } from "../../schemas/v2/user/info/update-name.js";
 import { updatePermissionBodySchema } from "../../schemas/v2/user/info/update-permission.js";
 import { createInviteCodeBodySchema } from "../../schemas/v2/user/invite-code/new.js";
+import { userList } from "../../controllers/v2/user/list.js";
+import { adminChangePassword } from "../../controllers/v2/user/admin-change-password.js";
+import { listUsersQuerySchema } from "../../schemas/v2/user/list.js";
+import { adminChangePasswordBodySchema } from "../../schemas/v2/user/admin-change-password.js";
 
 const router = Router();
 
@@ -32,5 +36,8 @@ router.get("/info", validateQuery(getUserInfoQuerySchema), getUserInfo);
 router.post("/info/avatar", requireLogin, validateBody(updateAvatarBodySchema), updateAvatar);
 router.post("/info/name", requireLogin, validateBody(updateNameBodySchema), updateName);
 router.post("/info/permission", requireLogin, requireAdmin, validateBody(updatePermissionBodySchema), updatePermission);
+
+router.get("/list", requireLogin, requireAdmin, validateQuery(listUsersQuerySchema), userList);
+router.post("/adminchangepassword", requireLogin, requireAdmin, validateBody(adminChangePasswordBodySchema), adminChangePassword);
 
 export default router;

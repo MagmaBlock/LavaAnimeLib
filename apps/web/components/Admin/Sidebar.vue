@@ -66,6 +66,15 @@ const menuOptions = [
     key: "d2",
   },
   {
+    label: "用户管理",
+    key: "admin-user",
+    icon: renderIcon("fluent:people-24-regular"),
+  },
+  {
+    type: "divider" as const,
+    key: "d3",
+  },
+  {
     label: "邀请码管理",
     key: "admin-invite",
     icon: renderIcon("fluent:key-24-regular"),
