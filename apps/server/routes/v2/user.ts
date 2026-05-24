@@ -38,6 +38,6 @@ router.post("/info/name", requireLogin, validateBody(updateNameBodySchema), upda
 router.post("/info/permission", requireLogin, requireAdmin, validateBody(updatePermissionBodySchema), updatePermission);
 
 router.get("/list", requireLogin, requireAdmin, validateQuery(listUsersQuerySchema), userList);
-router.post("/adminchangepassword", requireLogin, requireAdmin, validateBody(adminChangePasswordBodySchema), adminChangePassword);
+router.post("/admin-change-password", requireLogin, requireAdmin, validateBody(adminChangePasswordBodySchema), adminChangePassword);
 
 export default router;

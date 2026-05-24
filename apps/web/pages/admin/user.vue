@@ -185,7 +185,7 @@ async function submitPasswordChange() {
   }
 
   try {
-    const result = await LavaAnimeAPI.post("/v2/user/adminchangepassword", {
+    const result = await LavaAnimeAPI.post("/v2/user/admin-change-password", {
       userID: selectedUser.value.id,
       password: newPassword.value,
     });
