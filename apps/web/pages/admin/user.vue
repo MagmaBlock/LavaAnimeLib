@@ -16,10 +16,11 @@
           :scroll-x="800"
           max-height="640"
           :pagination="false"
-        />
-        <template #empty>
-          <NEmpty description="暂无用户数据" />
-        </template>
+        >
+          <template #empty>
+            <NEmpty description="暂无用户数据" />
+          </template>
+        </NDataTable>
         <div v-if="total > 0" class="flex justify-end mt-4">
           <NPagination
             v-model:page="page"
