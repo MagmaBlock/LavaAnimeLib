@@ -15,10 +15,7 @@
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "test:db:up": "docker compose -f ../../compose.test.yml up -d",
-    "test:db:down": "docker compose -f ../../compose.test.yml down",
-    "test:db:reset": "docker compose -f ../../compose.test.yml down -v && docker compose -f ../../compose.test.yml up -d"
+    "test:watch": "vitest"
   },
   "repository": {
     "type": "git",

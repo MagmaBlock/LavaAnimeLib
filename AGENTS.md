@@ -92,19 +92,16 @@ tasks → services / common
 
 ```bash
 # 开发
-pnpm dev              # 启动后端（tsx watch，:8090）
-pnpm dev:web          # 启动前端（Nuxt dev，:3000）
+pnpm dev              # 并行启动前后端（Server tsx watch :8090 + Web Nuxt :3000）
 
 # 构建
-pnpm build            # 构建 shared + server
-pnpm build:web        # 构建前端（nuxt generate）
-pnpm build:prod       # 全量生产构建（shared → web → server）
+pnpm build            # 全量构建（shared → web → server），构建后 pnpm start 即可启动
 
 # 类型 / 测试
 pnpm typecheck        # 所有包类型检查
 pnpm start            # 生产启动（:8090，自动托管前端静态文件）
-pnpm test             # 运行全部测试（241 用例）
-pnpm test:watch       # 测试监听模式
+pnpm test             # 运行全部测试
+pnpm test:full        # 全流程测试（启动 test db → 运行测试 → 停止清理）
 
 # 数据库
 pnpm db:generate      # 生成 Drizzle 迁移文件
@@ -120,8 +117,8 @@ pnpm sync             # 刷新番剧/Bangumi 数据
 Nuxt 前端构建为纯静态文件（`ssr: false`），Express 自动托管：
 
 ```bash
-pnpm build:prod       # 一次性构建所有包
-pnpm start            # Express :8090 → API + 前端静态文件（同端口）
+pnpm build             # 一次性构建所有包
+pnpm start             # Express :8090 → API + 前端静态文件（同端口）
 ```
 
 前端 API 调用使用同源相对路径，无需配置 `SERVER_BASE_URL`。
