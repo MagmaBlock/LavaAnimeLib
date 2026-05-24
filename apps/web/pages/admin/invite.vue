@@ -194,12 +194,12 @@ const columns: DataTableColumns<CodeItem> = [
   },
 ];
 
-function rowKey(row: { code: string }) {
+function rowKey(row: CodeItem) {
   return row.code;
 }
 
-function handleCheck(keys: string[]) {
-  checkedRowKeys.value = keys;
+function handleCheck(keys: (string | number)[]) {
+  checkedRowKeys.value = keys as string[];
 }
 
 function setTimeDays(day: number) {

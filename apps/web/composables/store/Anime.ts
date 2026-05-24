@@ -96,7 +96,7 @@ export type AnimeData = {
   summary: string;
   name: string;
   name_cn: string;
-  tags: string[];
+  tags: { name: string; count: number }[];
   bgmID: number;
   rating: {
     rank: number;
@@ -139,6 +139,14 @@ export type AnimeData = {
   dropped: number;
   plan_to_watch: number;
   characters: any[];
+  title?: string;
+  views?: number;
+  eps?: number;
+  index?: {
+    year?: string;
+    type?: string;
+    name?: string;
+  };
 };
 
 export type DriveData = DriveListResult;

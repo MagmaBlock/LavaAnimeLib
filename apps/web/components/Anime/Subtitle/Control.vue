@@ -38,7 +38,7 @@
             <NButton
               v-if="animeStore.subtitleData.localSubtitle"
               size="small"
-              type
+              type="error"
               @click="handleClearLocalSubtitle"
             >
               <template #icon>
