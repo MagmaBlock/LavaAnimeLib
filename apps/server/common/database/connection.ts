@@ -17,11 +17,29 @@ try {
   );
   await initConn.promise().query(`USE \`${config.mysql.database}\``);
 
+  let migrationCountBefore = 0;
+  try {
+    const [rows] = await initConn.promise().query(
+      "SELECT COUNT(*) as count FROM `__drizzle_migrations`"
+    );
+    migrationCountBefore = (rows as Array<{ count: number }>)[0].count;
+  } catch {
+    /* 表尚不存在，首次迁移 */
+  }
+
   const initDb = drizzle({ client: initConn });
   await migrate(initDb, {
     migrationsFolder: path.resolve(process.cwd(), "drizzle"),
   });
-  log.info("数据库迁移完成");
+
+  const [rowsAfter] = await initConn.promise().query(
+    "SELECT COUNT(*) as count FROM `__drizzle_migrations`"
+  );
+  const migrationCountAfter = (rowsAfter as Array<{ count: number }>)[0].count;
+
+  if (migrationCountAfter > migrationCountBefore) {
+    log.info("数据库迁移完成");
+  }
 } catch (error) {
   log.error(error, "数据库初始化失败");
   throw error;
