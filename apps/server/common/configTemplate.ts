@@ -18,8 +18,6 @@ export default {
   bangumiImage: {
     host: "https://lain.bgm.tv/",
   },
-  // 缓存天数，管理 Bangumi Data 数据会被缓存多少天后刷新
-  cache: 3,
   // 日志相关配置
   log: {
     level: "info" as const,

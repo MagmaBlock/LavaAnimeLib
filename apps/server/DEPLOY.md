@@ -123,7 +123,7 @@ pnpm db:push
 
 ## 7. 同步任务
 
-需要刷新番剧、Bangumi 数据等任务时运行：
+需要刷新 AList 番剧列表，并补齐 Bangumi cache 行时运行：
 
 ```bash
 pnpm sync

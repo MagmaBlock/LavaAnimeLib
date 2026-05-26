@@ -109,7 +109,7 @@ pnpm db:push          # 直接推送 schema
 pnpm db:migrate       # 执行 Drizzle 迁移
 
 # 同步
-pnpm sync             # 刷新番剧/Bangumi 数据
+pnpm sync             # 刷新 AList 番剧列表，并补齐 Bangumi cache 行
 ```
 
 ## 生产部署

@@ -59,6 +59,7 @@ const menuOptions = [
       { label: "主页头图", key: "admin-header" },
       { label: "索引页活动", key: "admin-index-activity" },
       { label: "存储节点", key: "admin-drive" },
+      { label: "Bangumi 缓存", key: "admin-bangumi-cache" },
     ],
   },
   {

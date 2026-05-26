@@ -7,6 +7,15 @@ import { newDrive } from "../../controllers/v2/admin/drive/new.js";
 import { updateDriveInfo } from "../../controllers/v2/admin/drive/update.js";
 import { removeDrive } from "../../controllers/v2/admin/drive/delete.js";
 import { setDefaultDriveController } from "../../controllers/v2/admin/drive/set-default.js";
+import { listBangumiCache } from "../../controllers/v2/admin/bangumi-cache/list.js";
+import {
+  refreshBangumiCacheController,
+  refreshExpiredBangumiCacheController,
+} from "../../controllers/v2/admin/bangumi-cache/refresh.js";
+import {
+  getBangumiCacheSettingsController,
+  updateBangumiCacheSettingsController,
+} from "../../controllers/v2/admin/bangumi-cache/settings.js";
 import { requireAdmin } from "../../middleware/auth/require-auth.js";
 
 const router = Router();
@@ -23,5 +32,22 @@ router.post(
   requireAdmin,
   setDefaultDriveController
 );
+router.get(
+  "/bangumi-cache/list",
+  requireAdmin,
+  listBangumiCache
+);
+router.get("/bangumi-cache/settings", requireAdmin, getBangumiCacheSettingsController);
+router.post(
+  "/bangumi-cache/settings",
+  requireAdmin,
+  updateBangumiCacheSettingsController
+);
+router.post(
+  "/bangumi-cache/refresh",
+  requireAdmin,
+  refreshBangumiCacheController
+);
+router.post("/bangumi-cache/refresh-expired", requireAdmin, refreshExpiredBangumiCacheController);
 
 export default router;

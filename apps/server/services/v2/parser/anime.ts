@@ -4,6 +4,7 @@ import { db } from "../../../common/database/connection.js";
 import { bangumiData } from "../../../common/database/schema/bangumi-data.js";
 import { inArray } from "drizzle-orm";
 import { getAnimesByBgmID } from "../anime/index.js";
+import { ensureBangumiCache } from "../bangumi/cache.js";
 
 interface RawAnimeRow {
   id: number | string;
@@ -74,6 +75,10 @@ async function parseSingleAnimeData(
 ): Promise<ParsedAnime> {
   if (parseInt(String(rawData.bgmid))) {
     const thisbgmData = bgmData[Number(rawData.bgmid)];
+    if (!thisbgmData?.subjects) {
+      await ensureBangumiCache(Number(rawData.bgmid));
+      return parseSingleAnimeWithoutBangumiData(rawData);
+    }
 
     const thisAnimeData: ParsedAnime = {
       id: parseInt(String(rawData.id)),
@@ -85,9 +90,9 @@ async function parseSingleAnimeData(
       },
       views: rawData.views,
       title: (rawData.title || "").replace(/\[BDRip\]|\[NSFW\]/gi, ""),
-    type: {
-      bdrip: /\[BDRip\]/i.test(rawData.title || ""),
-      nsfw: /\[NSFW\]/i.test(rawData.title || ""),
+      type: {
+        bdrip: /\[BDRip\]/i.test(rawData.title || ""),
+        nsfw: /\[NSFW\]/i.test(rawData.title || ""),
       },
       images: {
         ...(thisbgmData.subjects.images as BangumiImages),
@@ -107,8 +112,13 @@ async function parseSingleAnimeData(
     return thisAnimeData;
   }
 
+  return parseSingleAnimeWithoutBangumiData(rawData);
+}
+
+function parseSingleAnimeWithoutBangumiData(rawData: RawAnimeRow): ParsedAnime {
   const thisAnimeData: ParsedAnime = {
     id: parseInt(String(rawData.id)),
+    bgmID: parseInt(String(rawData.bgmid)) || undefined,
     index: {
       year: rawData.year,
       type: rawData.type,

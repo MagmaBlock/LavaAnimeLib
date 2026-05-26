@@ -5,7 +5,7 @@ import { eq, and } from "drizzle-orm";
 import { log } from "../../common/tools/logger.js";
 import { getDefaultDrive, getDrive } from "../../services/v2/drive/index.js";
 import alistGetter from "./tools/alistGetter.js";
-import { repairBangumiDataID } from "./updateBangumiData.js";
+import { ensureAllAnimeBangumiCaches } from "../../services/v2/bangumi/cache.js";
 
 interface NewAnimeEntry {
   year: string;
@@ -63,7 +63,7 @@ export default async function updateAnimes() {
       }
     }
   }
-  await repairBangumiDataID();
+  await ensureAllAnimeBangumiCaches();
 
   log.info("发现的 Alist 新番剧: %j", allNewAnimes);
   log.info("发现的 Alist 被删除的番剧: %j", allDeletedAnimes);
