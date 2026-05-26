@@ -1,4 +1,6 @@
 import type { Request, Response } from "express";
+import { parseBody } from "../../../../common/tools/parse-request.js";
+import { updateDriveBodySchema } from "../../../../schemas/v2/admin/drive.js";
 import success from "../../../../common/response/success.js";
 import notFound from "../../../../common/response/not-found.js";
 import serverError from "../../../../common/response/server-error.js";
@@ -6,8 +8,10 @@ import { updateDrive } from "../../../../services/v2/admin/drive.js";
 import { log } from "../../../../common/tools/logger.js";
 
 export async function updateDriveInfo(req: Request, res: Response): Promise<void> {
+  const body = parseBody(updateDriveBodySchema, req, res);
+  if (!body) return;
   try {
-    await updateDrive(req.body);
+    await updateDrive(body);
     success(res, undefined, "更新成功");
   } catch (error) {
     if (error instanceof Error && error.message === "存储节点不存在") {

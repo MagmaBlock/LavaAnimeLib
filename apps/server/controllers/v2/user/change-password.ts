@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import type { User } from "../../../types/models.js";
+import { parseBody } from "../../../common/tools/parse-request.js";
+import { changePasswordBodySchema } from "../../../schemas/v2/user/change-password.js";
 import success from "../../../common/response/success.js";
 import serverError from "../../../common/response/server-error.js";
 import { getFormattedPassword } from "../../../services/v2/user/password.js";
@@ -8,8 +10,11 @@ import { log } from "../../../common/tools/logger.js";
 
 export async function changePassword(req: Request, res: Response): Promise<void> {
   const user = req.user as User;
+  const body = parseBody(changePasswordBodySchema, req, res);
+  if (!body) return;
+  const { password } = body;
   try {
-    await changeUserPassword(user.id, getFormattedPassword(req.body.password));
+    await changeUserPassword(user.id, getFormattedPassword(password));
     return success(res, null, "修改成功");
   } catch (error) {
     log.error(error, "用户密码修改时发生错误!");

@@ -1,4 +1,6 @@
 import type { Request, Response } from "express";
+import { parseQuery } from "../../../common/tools/parse-request.js";
+import { getFilesByIDQuerySchema } from "../../../schemas/v2/anime/file.js";
 import { getFilesByID as getFilesByIDService } from "../../../services/v2/anime/file.js";
 import success from "../../../common/response/success.js";
 import notFound from "../../../common/response/not-found.js";
@@ -7,8 +9,9 @@ import serverError from "../../../common/response/server-error.js";
 import { log } from "../../../common/tools/logger.js";
 
 export async function getFilesByID(req: Request, res: Response): Promise<void> {
-  const laID = Number(req.query.id);
-  const drive = req.query.drive as string | undefined;
+  const query = parseQuery(getFilesByIDQuerySchema, req, res);
+  if (!query) return;
+  const { id: laID, drive } = query;
 
   try {
     const files = await getFilesByIDService(laID, drive);

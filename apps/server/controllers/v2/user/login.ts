@@ -1,4 +1,6 @@
 import type { Request, Response } from "express";
+import { parseBody } from "../../../common/tools/parse-request.js";
+import { userLoginBodySchema } from "../../../schemas/v2/user/login.js";
 import config from "../../../common/config.js";
 import success from "../../../common/response/success.js";
 import forbidden from "../../../common/response/forbidden.js";
@@ -44,11 +46,9 @@ function errorPasswordCounter(key: string, type: "ip" | "user") {
 }
 
 export async function userLogin(req: Request, res: Response): Promise<void> {
-  const { account, password } = req.body;
-
-  if (!account || !password) {
-    return badRequest(res, "缺失参数");
-  }
+  const body = parseBody(userLoginBodySchema, req, res);
+  if (!body) return;
+  const { account, password } = body;
 
   const user = await findUser(account);
   if (!user) {
@@ -59,7 +59,7 @@ export async function userLogin(req: Request, res: Response): Promise<void> {
     return forbidden(res, "请求错误次数过多, 请等一段时间再试");
   }
 
-    const testPWResult = testPassword(password as string, user.password);
+    const testPWResult = testPassword(password, user.password);
   if (testPWResult) {
     const token = createToken();
     const expirationTime = new Date(

@@ -2,9 +2,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getFilesByID } from "../../services/v2/anime/file.js";
 
 vi.mock("axios", () => {
+  const mockInstance = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+  };
   return {
     default: {
-      post: vi.fn(),
+      ...mockInstance,
+      create: vi.fn(() => mockInstance),
     },
   };
 });

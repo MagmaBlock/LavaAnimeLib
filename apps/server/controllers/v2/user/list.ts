@@ -1,12 +1,15 @@
 import type { Request, Response } from "express";
+import { parseQuery } from "../../../common/tools/parse-request.js";
+import { listUsersQuerySchema } from "../../../schemas/v2/user/list.js";
 import success from "../../../common/response/success.js";
 import serverError from "../../../common/response/server-error.js";
 import { listUsers } from "../../../services/v2/user/admin.js";
 import { log } from "../../../common/tools/logger.js";
 
 export async function userList(req: Request, res: Response): Promise<void> {
-  const page = req.query.page as unknown as number;
-  const pageSize = req.query.pageSize as unknown as number;
+  const query = parseQuery(listUsersQuerySchema, req, res);
+  if (!query) return;
+  const { page, pageSize } = query;
   const offset = (page - 1) * pageSize;
 
   try {

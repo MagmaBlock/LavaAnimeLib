@@ -1,4 +1,6 @@
 import type { Request, Response } from "express";
+import { parseBody } from "../../../common/tools/parse-request.js";
+import { userRegisterBodySchema } from "../../../schemas/v2/user/register.js";
 import success from "../../../common/response/success.js";
 import badRequest from "../../../common/response/bad-request.js";
 import serverError from "../../../common/response/server-error.js";
@@ -8,7 +10,9 @@ import { checkEmailExists, checkNameExists, createUser, getNextUserID } from "..
 import { log } from "../../../common/tools/logger.js";
 
 export async function userRegister(req: Request, res: Response): Promise<void> {
-  const { email, password, name, inviteCode } = req.body;
+  const body = parseBody(userRegisterBodySchema, req, res);
+  if (!body) return;
+  const { email, password, name, inviteCode } = body;
 
   try {
     if (await checkEmailExists(email)) {

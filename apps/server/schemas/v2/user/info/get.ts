@@ -1,5 +1,5 @@
 import { z } from "zod";
 
 export const getUserInfoQuerySchema = z.object({
-  userID: z.string().optional(),
+  userID: z.coerce.number().int().positive().optional(),
 });

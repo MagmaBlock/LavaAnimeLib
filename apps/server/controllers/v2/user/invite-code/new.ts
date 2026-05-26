@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import type { User } from "../../../../types/models.js";
+import { parseBody } from "../../../../common/tools/parse-request.js";
+import { createInviteCodeBodySchema } from "../../../../schemas/v2/user/invite-code/new.js";
 import success from "../../../../common/response/success.js";
 import forbidden from "../../../../common/response/forbidden.js";
 import {
@@ -13,7 +15,9 @@ export async function createUserInviteCode(req: Request, res: Response): Promise
   if (!user.data?.permission?.admin) {
     return forbidden(res);
   }
-  const { amount, expirationTime } = req.body;
+  const body = parseBody(createInviteCodeBodySchema, req, res);
+  if (!body) return;
+  const { amount, expirationTime } = body;
   let inviteCodes: { code: string; expirationTime?: Date }[] = [];
 
   for (let i = 0; i < amount; i++) {

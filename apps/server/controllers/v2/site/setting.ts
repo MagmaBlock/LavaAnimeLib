@@ -1,4 +1,6 @@
 import type { Request, Response } from "express";
+import { parseQuery, parseBody } from "../../../common/tools/parse-request.js";
+import { getSiteSettingQuerySchema, setSiteSettingBodySchema } from "../../../schemas/v2/site/setting.js";
 import { getSiteSetting as getSiteSettingService, setSiteSetting as setSiteSettingService } from "../../../services/v2/site/setting.js";
 import success from "../../../common/response/success.js";
 import notFound from "../../../common/response/not-found.js";
@@ -6,7 +8,9 @@ import serverError from "../../../common/response/server-error.js";
 import { log } from "../../../common/tools/logger.js";
 
 export async function getSiteSetting(req: Request, res: Response): Promise<void> {
-  const key = req.query.key as string;
+  const query = parseQuery(getSiteSettingQuerySchema, req, res);
+  if (!query) return;
+  const { key } = query;
 
   try {
     const result = await getSiteSettingService(key);
@@ -22,7 +26,9 @@ export async function getSiteSetting(req: Request, res: Response): Promise<void>
 }
 
 export async function setSiteSetting(req: Request, res: Response): Promise<void> {
-  const { key, value } = req.body;
+  const body = parseBody(setSiteSettingBodySchema, req, res);
+  if (!body) return;
+  const { key, value } = body;
 
   try {
     await setSiteSettingService(key, value);
