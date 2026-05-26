@@ -7,7 +7,7 @@ export const useUserStore = defineStore("user", {
   actions: {
     async getUserInfo() {
       try {
-        let result = await LavaAnimeAPI.get("/v2/user/info");
+        let result = await api.get("/v2/user/info");
         if (result.data.code == 200) {
           this.userInfo = result.data.data;
           return this.userInfo;

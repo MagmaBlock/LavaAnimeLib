@@ -104,7 +104,7 @@ const scrollAction = (direction) => {
 
 async function getHistory(page, pageSize) {
   try {
-    let request = await LavaAnimeAPI.post("/v2/anime/history/my", {
+    let request = await api.post("/v2/anime/history/my", {
       page,
       pageSize,
       withAnimeData: true,

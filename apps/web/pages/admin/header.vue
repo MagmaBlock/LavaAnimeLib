@@ -143,11 +143,11 @@ interface HeaderItem {
 async function submitData() {
   submitting.value = true;
   try {
-    const result = await LavaAnimeAPI.post("/v2/home/header/update", {
+    const result = await api.post("/v2/home/header/update", {
       data: headers.value,
     });
     message.success(result.data.message);
-    headers.value = await homeHeaderGet();
+    headers.value = (await api.get("/v2/home/header/get")).data.data ?? [];
   } catch (_error) {
     message.error("提交更新失败");
   } finally {
@@ -181,7 +181,7 @@ function add() {
 
 onMounted(async () => {
   loading.value = true;
-  headers.value = await homeHeaderGet();
+  try { headers.value = (await api.get("/v2/home/header/get")).data.data ?? []; } catch { headers.value = []; }
   loading.value = false;
 });
 </script>

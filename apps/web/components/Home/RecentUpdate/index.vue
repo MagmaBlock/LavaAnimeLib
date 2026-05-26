@@ -140,7 +140,7 @@ watch(ignoreDuplicate, () => {
 async function getRecentUpdates() {
   loading.value = true;
   try {
-    let result = await LavaAnimeAPI.get("/v2/anime/recent-update/get", {
+    let result = await api.get("/v2/anime/recent-update/get", {
       params: {
         take: 36,
         ignoreDuplicate: ignoreDuplicate.value,

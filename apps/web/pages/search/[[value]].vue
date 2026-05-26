@@ -22,7 +22,7 @@ const search = async (value) => {
     addSearchHistory(value); // 把搜索词加入记录
     changeUrlParams(value); // 修改 url 参数
     let results = (
-      await LavaAnimeAPI.get("/v2/search", { params: { value: value } })
+      await api.get("/v2/search", { params: { value: value } })
     ).data;
     if (results.code !== 200) return;
     setTimeout(() => {
@@ -63,7 +63,7 @@ const changeUrlParams = (value) => {
 };
 const getHotAnimes = async () => {
   try {
-    let result = await LavaAnimeAPI.get("/v2/search/hot");
+    let result = await api.get("/v2/search/hot");
     if (result.data.code == 200) {
       searchRecommendation.value = result.data.data;
     }

@@ -32,7 +32,8 @@ export default {
   },
   methods: {
     async getData() {
-      let result = await getAnimesData(this.ids);
+      if (!Array.isArray(this.ids) || this.ids.length === 0) return;
+      let result = (await api.post("/v2/anime/get", { ids: this.ids })).data;
       // 根据播放量进行排序
       this.data = result.data.sort((a, b) => {
         return b.views - a.views;

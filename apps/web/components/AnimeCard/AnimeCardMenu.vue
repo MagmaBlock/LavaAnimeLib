@@ -105,7 +105,7 @@ getFollowInfo();
 async function getFollowInfo() {
   if (anime?.id) {
     try {
-      let info = await lavaAnimeAPIs.getAnimeFollowInfoAPI(anime?.id);
+      let info = await api.get("/v2/anime/follow/info", { params: { id: anime?.id } });
       if (info.data.data) {
         followInfo.value = info.data.data;
       }
@@ -118,11 +118,11 @@ async function getFollowInfo() {
 async function editFollow(status, remove) {
   let followedBefore = followInfo.value?.status != -1;
   try {
-    let result = await lavaAnimeAPIs.editAnimeFollowAPI(
-      anime?.id,
+    let result = await api.post("/v2/anime/follow/edit", {
+      id: anime?.id,
       status,
-      remove
-    );
+      remove,
+    });
     if (result.data?.code == 200) {
       if (!followedBefore && !remove)
         window.$message.success("自己追的番就要好好看完哦^O^");

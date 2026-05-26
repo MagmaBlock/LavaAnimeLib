@@ -186,7 +186,7 @@ async function submitPasswordChange() {
   }
 
   try {
-    const result = await LavaAnimeAPI.post("/v2/user/admin-change-password", {
+    const result = await api.post("/v2/user/admin-change-password", {
       userID: selectedUser.value.id,
       password: newPassword.value,
     });
@@ -204,7 +204,7 @@ async function submitPasswordChange() {
 async function fetchUsers() {
   loading.value = true;
   try {
-    const result = await LavaAnimeAPI.get("/v2/user/list", {
+    const result = await api.get("/v2/user/list", {
       params: { page: page.value, pageSize: pageSize.value },
     });
     if (result.data?.code === 200) {

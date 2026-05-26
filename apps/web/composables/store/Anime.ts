@@ -533,7 +533,7 @@ export const useAnimeStore = defineStore("anime", {
       };
 
       try {
-        let result = await LavaAnimeAPI.get("/v2/anime/get", {
+        let result = await api.get("/v2/anime/get", {
           params: { id: laID, full: true },
         });
         this.animeData = result.data.data;
@@ -556,7 +556,7 @@ export const useAnimeStore = defineStore("anime", {
         list: [],
       };
       try {
-        let result = await LavaAnimeAPI.get("/v2/drive/all");
+        let result = await api.get("/v2/drive/all");
         this.driveData = result.data.data;
         if (!this.myDrive.rememberMyChoice) {
           this.myDrive.selectedDrive = null;
@@ -583,7 +583,7 @@ export const useAnimeStore = defineStore("anime", {
         errorMessage: null,
       };
       try {
-        let result = await LavaAnimeAPI.get("/v2/anime/file", {
+        let result = await api.get("/v2/anime/file", {
           params: { id: laID, drive: drive },
         });
         this.fileData.fileList = result.data.data;
@@ -741,7 +741,7 @@ export const useAnimeStore = defineStore("anime", {
      * 获取当前番剧的播放历史记录
      */
     async getAnimeViewHistory() {
-      return await LavaAnimeAPI.post("/v2/anime/history/my", {
+      return await api.post("/v2/anime/history/my", {
         animeID: this.laID,
       });
     },
@@ -758,7 +758,7 @@ export const useAnimeStore = defineStore("anime", {
         useDrive: this.activeDrive?.id,
       };
       try {
-        await LavaAnimeAPI.post("/v2/anime/history/report", content, {
+        await api.post("/v2/anime/history/report", content, {
           timeout: 3000,
         });
       } catch (error) {

@@ -191,7 +191,7 @@ async function loadUserInfo() {
 async function loadStats() {
   statsLoading.value = true;
   try {
-    const result = await LavaAnimeAPI.get("/v2/admin/stats");
+    const result = await api.get("/v2/admin/stats");
     if (result.data?.code === 200) {
       stats.value = result.data.data;
     }

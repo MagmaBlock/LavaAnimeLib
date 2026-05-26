@@ -295,7 +295,7 @@ function openEditDrawer(row: DriveRecord) {
 async function loadDrives() {
   loading.value = true;
   try {
-    const result = await LavaAnimeAPI.get("/v2/admin/drive/all");
+    const result = await api.get("/v2/admin/drive/all");
     if (result.data?.code === 200) {
       drives.value = result.data.data || [];
     }
@@ -310,7 +310,7 @@ async function saveDrive() {
   saving.value = true;
   try {
     const url = editing.value ? "/v2/admin/drive/update" : "/v2/admin/drive/new";
-    const result = await LavaAnimeAPI.post(url, { ...form });
+    const result = await api.post(url, { ...form });
     if (result.data?.code === 200) {
       message.success(result.data.message || "保存成功");
       drawerOpen.value = false;
@@ -325,7 +325,7 @@ async function saveDrive() {
 
 async function quickUpdate(row: DriveRecord, patch: Partial<DriveForm>) {
   try {
-    await LavaAnimeAPI.post("/v2/admin/drive/update", {
+    await api.post("/v2/admin/drive/update", {
       id: row.id,
       name: row.name,
       description: row.description,
@@ -349,7 +349,7 @@ async function quickUpdate(row: DriveRecord, patch: Partial<DriveForm>) {
 
 async function setDefault(id: string) {
   try {
-    const result = await LavaAnimeAPI.post("/v2/admin/drive/set-default", { id });
+    const result = await api.post("/v2/admin/drive/set-default", { id });
     if (result.data?.code === 200) {
       message.success("已设为默认节点");
       await loadDrives();
@@ -361,7 +361,7 @@ async function setDefault(id: string) {
 
 async function deleteDrive(id: string) {
   try {
-    const result = await LavaAnimeAPI.post("/v2/admin/drive/delete", { id });
+    const result = await api.post("/v2/admin/drive/delete", { id });
     if (result.data?.code === 200) {
       message.success("删除成功");
       await loadDrives();

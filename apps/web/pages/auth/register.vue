@@ -52,7 +52,7 @@ const register = async () => {
       return;
     }
 
-    let regResult = await LavaAnimeAPI.post("/v2/user/register", {
+    let regResult = await api.post("/v2/user/register", {
       email: email.value,
       password: password.value,
       name: name.value,
@@ -62,7 +62,7 @@ const register = async () => {
       // 成功注册
       message.success(regResult.data.message);
       // 开始尝试登录
-      let loginResult = await LavaAnimeAPI.post("/v2/user/login", {
+      let loginResult = await api.post("/v2/user/login", {
         account: email.value,
         password: password.value,
       });

@@ -210,7 +210,7 @@ async function send() {
   if (amount.value < 1) return;
   generating.value = true;
   try {
-    const add = await LavaAnimeAPI.post("/v2/user/invite/new", {
+    const add = await api.post("/v2/user/invite/new", {
       amount: amount.value,
       expirationTime: timeLimit.value ? expirationTime.value : undefined,
     });
@@ -228,7 +228,7 @@ async function send() {
 async function allValidCodes() {
   loading.value = true;
   try {
-    const result = await LavaAnimeAPI.get("/v2/admin/invite/all-valid-codes");
+    const result = await api.get("/v2/admin/invite/all-valid-codes");
     if (result.data?.code === 200) {
       allCodes.value = result.data.data || [];
     }
@@ -241,7 +241,7 @@ async function allValidCodes() {
 
 async function deleteCode(code: string) {
   try {
-    const result = await LavaAnimeAPI.post("/v2/admin/invite/delete-codes", {
+    const result = await api.post("/v2/admin/invite/delete-codes", {
       codes: [code],
     });
     if (result.data?.code === 200) {
@@ -256,7 +256,7 @@ async function deleteCode(code: string) {
 
 async function batchDelete() {
   try {
-    const result = await LavaAnimeAPI.post("/v2/admin/invite/delete-codes", {
+    const result = await api.post("/v2/admin/invite/delete-codes", {
       codes: checkedRowKeys.value,
     });
     if (result.data?.code === 200) {

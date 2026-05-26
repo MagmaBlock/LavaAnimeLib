@@ -137,7 +137,7 @@ const preSearch = async (value: string) => {
   if (preSearchLock.value) return; // 如果搜索值为空或正在节流则不继续请求
   preSearchLock.value = true; // Lock
   try {
-    let results: AxiosResponse = await LavaAnimeAPI.get("/v2/search/quick", {
+    let results: AxiosResponse = await api.get("/v2/search/quick", {
       params: { value: value },
     });
     results = results.data;

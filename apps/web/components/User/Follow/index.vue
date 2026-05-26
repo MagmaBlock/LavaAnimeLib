@@ -116,11 +116,11 @@ const fetchFailed = ref(false);
 async function getFollow(status, page = 1) {
   loading.value = true;
   try {
-    let result = await lavaAnimeAPIs.getAnimeFollowListAPI(
-      [status],
+    let result = await api.post("/v2/anime/follow/list", {
+      status: [status],
       page,
-      pageSize
-    );
+      pageSize,
+    });
     if ((result.data.code = 200)) {
       thisFollowList.value = result.data.data;
     }
@@ -141,7 +141,7 @@ async function getFollow(status, page = 1) {
 
 async function getFollowTotal() {
   try {
-    let result = await lavaAnimeAPIs.getAnimeFollowTotalAPI();
+    let result = await api.get("/v2/anime/follow/total");
     if ((result.data.code = 200)) {
       followTotals.value = result.data.data;
     }

@@ -74,7 +74,7 @@ const logoutMenu = [
 
 // 登出
 async function logout(all = false) {
-  let logout = await LavaAnimeAPI.post("/v2/user/logout", { all });
+  let logout = await api.post("/v2/user/logout", { all });
   if (logout.data.code == 200) {
     $message.success(logout.data.message);
     userStore.userInfo = {};

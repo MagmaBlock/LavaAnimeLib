@@ -94,7 +94,7 @@ let autoSwitch = setInterval(switchNext, autoSwitchInterval);
  */
 async function getData() {
   try {
-    let fromAPI = await LavaAnimeAPI.get("/v2/home/header/get");
+    let fromAPI = await api.get("/v2/home/header/get");
     if (fromAPI.data.code == 200) return fromAPI.data.data;
     else return [];
   } catch (error) {

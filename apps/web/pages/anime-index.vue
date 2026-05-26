@@ -20,7 +20,7 @@ export default {
   },
   methods: {
     async getIndex() {
-      let index = (await LavaAnimeAPI("/v2/index/info")).data;
+      let index = (await api("/v2/index/info")).data;
       if (index.code == 200) index = index.data;
       else throw new Error("索引获取失败");
       this.tabs = index;
@@ -41,7 +41,7 @@ export default {
     async queryIndex() {
       this.animes = null; // 移除数据，进入空状态
       let animeList = (
-        await LavaAnimeAPI.post("/v2/index/query", this.selectedTab)
+        await api.post("/v2/index/query", this.selectedTab)
       ).data.data;
       await new Promise((resolve) => {
         setTimeout(() => {

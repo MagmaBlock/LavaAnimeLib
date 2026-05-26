@@ -113,7 +113,7 @@ watch(gravatarHost, () => {
 
 async function saveAvatar() {
   try {
-    let result = await LavaAnimeAPI.post("/v2/user/info/avatar", {
+    let result = await api.post("/v2/user/info/avatar", {
       url: newAvatarURL.value,
     });
     if (result.data.code == 200) {

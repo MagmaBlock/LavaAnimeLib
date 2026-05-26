@@ -101,7 +101,7 @@ const submitting = ref(false);
 async function handleSubmit() {
   submitting.value = true;
   try {
-    const request = await LavaAnimeAPI.post("/v2/site/setting/set", {
+    const request = await api.post("/v2/site/setting/set", {
       key: "indexActivityCard",
       value: store.activityCard,
     });

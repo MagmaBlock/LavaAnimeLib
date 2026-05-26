@@ -77,7 +77,7 @@ async function doSearch() {
   router.push({ params: { value: bgmID.value } });
 
   try {
-    let result = await LavaAnimeAPI.get("/v2/anime/bangumi/get", {
+    let result = await api.get("/v2/anime/bangumi/get", {
       params: { bgmid: bgmID.value },
     });
     if (result.status == 200 && Array.isArray(result.data.data)) {

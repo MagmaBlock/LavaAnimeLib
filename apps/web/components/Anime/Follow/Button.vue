@@ -60,7 +60,7 @@ async function getFollowInfo() {
   if (animeId === undefined) return;
 
   try {
-    let info = await lavaAnimeAPIs.getAnimeFollowInfoAPI(animeId);
+    let info = await api.get("/v2/anime/follow/info", { params: { id: animeId } });
     if (info.data.data) {
       followInfo.value = info.data.data;
     }
@@ -74,11 +74,11 @@ async function editFollow(status?: number, remove?: boolean) {
 
   loading.value = true;
   try {
-    let result = await lavaAnimeAPIs.editAnimeFollowAPI(
-      animeId,
+    let result = await api.post("/v2/anime/follow/edit", {
+      id: animeId,
       status,
-      remove
-    );
+      remove,
+    });
     if (result.data?.code == 200) {
       loading.value = false;
     }

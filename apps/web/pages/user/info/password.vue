@@ -27,7 +27,7 @@ const message = useMessage();
 
 async function changePassword() {
   try {
-    let query = await LavaAnimeAPI.post("/v2/user/changepassword", {
+    let query = await api.post("/v2/user/changepassword", {
       password: newPassword.value,
     });
     if (query.data.code == 200) {

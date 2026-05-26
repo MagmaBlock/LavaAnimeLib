@@ -49,7 +49,7 @@ const login = async () => {
     return;
   }
   try {
-    let loginResult = await LavaAnimeAPI.post("/v2/user/login", {
+    let loginResult = await api.post("/v2/user/login", {
       account: account.value,
       password: password.value,
     });

@@ -77,7 +77,7 @@ const groupedData = computed(() => {
 
 async function getHistory(page, pageSize) {
   try {
-    let request = await LavaAnimeAPI.post("/v2/anime/history/my", {
+    let request = await api.post("/v2/anime/history/my", {
       page,
       pageSize: 40,
       withAnimeData: true,

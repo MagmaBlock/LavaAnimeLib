@@ -39,7 +39,7 @@ const message = useMessage();
 async function updateUserName(newName) {
   if (!newName) return message.warning("请输入新用户名");
   try {
-    let updateRequest = await LavaAnimeAPI.post("/v2/user/info/name", {
+    let updateRequest = await api.post("/v2/user/info/name", {
       name: newName,
     });
     if (updateRequest.data.code == 200) {
