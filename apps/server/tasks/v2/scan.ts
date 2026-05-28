@@ -66,7 +66,7 @@ async function scanDirectory(
 ): Promise<ScanStats> {
   let entries: FileSystemEntry[];
   try {
-    entries = await driver.list(currentPath);
+    entries = await limit(() => driver.list(currentPath));
   } catch (err) {
     log.error(err, `列出目录失败: ${currentPath}`);
     return { total: 0, files: 0, dirs: 0, directories: 0 };
@@ -99,7 +99,7 @@ async function scanDirectory(
   if (dirEntries.length > 0) {
     const subResults = await Promise.all(
       dirEntries.map((entry) =>
-        limit(() => scanDirectory(limit, driver, driveId, entry.path))
+        scanDirectory(limit, driver, driveId, entry.path)
       )
     );
     for (const sub of subResults) {

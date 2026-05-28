@@ -32,7 +32,7 @@ export async function refreshDir(
   const limit = pLimit(DIR_CONCURRENCY);
 
   async function recursiveList(currentPath: string, depth: number): Promise<void> {
-    const entries = await driver.list(currentPath);
+    const entries = await limit(() => driver.list(currentPath));
     const fileCount = entries.filter((e) => e.type === "file").length;
     const dirCount = entries.filter((e) => e.type === "dir").length;
     log.info(`[${driveId}] ${"  ".repeat(depth)}${currentPath} → ${fileCount} 文件, ${dirCount} 目录`);
@@ -59,12 +59,8 @@ export async function refreshDir(
     if (subDirs.length > 0) {
       await Promise.all(
         subDirs.map((entry) =>
-          limit(async () => {
-            try {
-              await recursiveList(entry.path, depth + 1);
-            } catch (err) {
-              log.error(err, "递归列出目录失败: %s", entry.path);
-            }
+          recursiveList(entry.path, depth + 1).catch((err) => {
+            log.error(err, "递归列出目录失败: %s", entry.path);
           })
         )
       );
