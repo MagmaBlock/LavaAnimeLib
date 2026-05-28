@@ -35,7 +35,7 @@
           :row-key="rowKey"
           :single-line="false"
           size="small"
-          :scroll-x="1200"
+          :scroll-x="1100"
         />
       </NSpin>
     </NCard>
@@ -52,21 +52,13 @@
           <NFormItem label="描述">
             <NInput v-model:value="form.description" type="textarea" placeholder="节点说明" />
           </NFormItem>
-          <NFormItem label="类型" required>
-            <NSelect v-model:value="form.type" :options="typeOptions" />
-          </NFormItem>
-          <NFormItem label="Host" required>
-            <NInput v-model:value="form.host" placeholder="https://alist.example.com" />
-          </NFormItem>
-          <NFormItem label="路径" required>
-            <NInput v-model:value="form.path" placeholder="/LavaAnimeLib" />
-          </NFormItem>
-          <NFormItem label="密码">
-            <NInput
-              v-model:value="form.password"
-              type="password"
-              show-password-on="click"
-              placeholder="AList 目录密码，可留空"
+          <NFormItem label="连接配置">
+            <NSelect
+              v-model:value="form.connectionConfigId"
+              :options="connectionConfigOptions"
+              placeholder="选择连接配置（可选）"
+              clearable
+              filterable
             />
           </NFormItem>
           <NFormItem label="排序">
@@ -112,7 +104,7 @@ import {
   NTag,
   type DataTableColumns,
 } from "naive-ui";
-import type { DriveRecord } from "@lavaanime/shared";
+import type { DriveRecord, ConnectionConfig } from "@lavaanime/shared";
 
 definePageMeta({
   layout: "admin",
@@ -124,22 +116,25 @@ type DriveForm = Omit<DriveRecord, "createdAt" | "updatedAt">;
 
 const message = useMessage();
 const drives = ref<DriveRecord[]>([]);
+const connectionConfigs = ref<ConnectionConfig[]>([]);
 const loading = ref(true);
 const saving = ref(false);
 const drawerOpen = ref(false);
 const editing = ref(false);
 const drawerWidth = computed(() => (typeof window !== "undefined" && window.innerWidth < 768 ? "100%" : 520));
 
-const typeOptions = [{ label: "AList", value: "alist" }];
+const connectionConfigOptions = computed(() =>
+  connectionConfigs.value.map((c) => ({
+    label: `#${c.id} ${c.type}` + (c.config && typeof c.config === "object" && "host" in c.config ? ` (${(c.config as Record<string, string>).host})` : ""),
+    value: c.id,
+  }))
+);
 
 const emptyForm = (): DriveForm => ({
   id: "",
   name: "",
   description: "",
-  type: "alist",
-  host: "",
-  path: "",
-  password: "",
+  connectionConfigId: null,
   banNSFW: false,
   disableDownload: false,
   enabled: true,
@@ -148,6 +143,11 @@ const emptyForm = (): DriveForm => ({
 });
 
 const form = reactive<DriveForm>(emptyForm());
+
+function findConfig(id: number | null): ConnectionConfig | undefined {
+  if (id == null) return undefined;
+  return connectionConfigs.value.find((c) => c.id === id);
+}
 
 const columns: DataTableColumns<DriveRecord> = [
   {
@@ -162,24 +162,21 @@ const columns: DataTableColumns<DriveRecord> = [
     },
   },
   {
-    title: "类型",
-    key: "type",
-    width: 90,
+    title: "连接配置",
+    key: "connectionConfigId",
+    width: 200,
+    ellipsis: { tooltip: true },
     render(row: DriveRecord) {
-      return h(NTag, { size: "small" }, () => row.type);
+      const cfg = findConfig(row.connectionConfigId);
+      if (!cfg) return h("span", { class: "text-gray-400 text-xs" }, "未配置");
+      const host = cfg.config && typeof cfg.config === "object" && "host" in cfg.config
+        ? (cfg.config as Record<string, string>).host
+        : "-";
+      return h("div", [
+        h(NTag, { size: "small" }, () => cfg.type),
+        h("span", { class: "ml-1 text-xs text-gray-500" }, host),
+      ]);
     },
-  },
-  {
-    title: "Host",
-    key: "host",
-    minWidth: 220,
-    ellipsis: { tooltip: true },
-  },
-  {
-    title: "路径",
-    key: "path",
-    minWidth: 180,
-    ellipsis: { tooltip: true },
   },
   {
     title: "策略",
@@ -279,10 +276,7 @@ function openEditDrawer(row: DriveRecord) {
     id: row.id,
     name: row.name,
     description: row.description,
-    type: row.type,
-    host: row.host,
-    path: row.path,
-    password: row.password,
+    connectionConfigId: row.connectionConfigId,
     banNSFW: row.banNSFW,
     disableDownload: row.disableDownload,
     enabled: row.enabled,
@@ -292,9 +286,21 @@ function openEditDrawer(row: DriveRecord) {
   drawerOpen.value = true;
 }
 
+async function loadConnectionConfigs() {
+  try {
+    const result = await api.get("/v2/admin/connection-config/all");
+    if (result.data?.code === 200) {
+      connectionConfigs.value = result.data.data || [];
+    }
+  } catch (_error) {
+    // non-critical
+  }
+}
+
 async function loadDrives() {
   loading.value = true;
   try {
+    await loadConnectionConfigs();
     const result = await api.get("/v2/admin/drive/all");
     if (result.data?.code === 200) {
       drives.value = result.data.data || [];
@@ -329,10 +335,7 @@ async function quickUpdate(row: DriveRecord, patch: Partial<DriveForm>) {
       id: row.id,
       name: row.name,
       description: row.description,
-      type: row.type,
-      host: row.host,
-      path: row.path,
-      password: row.password,
+      connectionConfigId: row.connectionConfigId,
       banNSFW: row.banNSFW,
       disableDownload: row.disableDownload,
       enabled: row.enabled,

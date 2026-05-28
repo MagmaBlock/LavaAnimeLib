@@ -11,4 +11,9 @@ export type {
   DriveInfo,
   DriveListResult,
   DriveRecord,
+  ConnectionConfig,
+  EndpointRecord,
+  FileIndexItem,
+  FileIndexStats,
+  FileIndexListData,
 } from "./models.js";

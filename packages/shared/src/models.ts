@@ -87,13 +87,52 @@ export interface DriveListResult {
 }
 
 export interface DriveRecord extends DriveInfo {
-  type: "alist";
-  host: string;
-  path: string;
-  password: string;
+  connectionConfigId: number | null;
   enabled: boolean;
   isDefault: boolean;
   sortOrder: number;
   createdAt: string | Date | null;
   updatedAt: string | Date | null;
+}
+
+export interface ConnectionConfig {
+  id: number;
+  type: string;
+  config: Record<string, unknown>;
+}
+
+export interface EndpointRecord {
+  id: number;
+  driveId: string;
+  name: string;
+  url: string;
+  connectionConfigId: number;
+  priority: number;
+  enabled: boolean;
+}
+
+export interface FileIndexItem {
+  id: number;
+  driveId: string;
+  animeId: number | null;
+  path: string;
+  name: string;
+  size: number;
+  type: string;
+  deleted: number;
+  modified: string | null;
+  sign: string | null;
+  indexedAt: string;
+}
+
+export interface FileIndexStats {
+  totalFiles: number;
+  totalDirs: number;
+  deletedFiles: number;
+  lastIndexedAt: string | null;
+}
+
+export interface FileIndexListData {
+  items: FileIndexItem[];
+  total: number;
 }

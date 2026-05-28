@@ -58,7 +58,9 @@ const menuOptions = [
     children: [
       { label: "主页头图", key: "admin-header" },
       { label: "索引页活动", key: "admin-index-activity" },
+      { label: "连接配置", key: "admin-connection-config" },
       { label: "存储节点", key: "admin-drive" },
+      { label: "文件索引", key: "admin-file-index" },
       { label: "Bangumi 缓存", key: "admin-bangumi-cache" },
     ],
   },

@@ -118,6 +118,18 @@
             </template>
             管理存储节点
           </NButton>
+          <NButton @click="router.push({ name: 'admin-connection-config' })" class="!justify-start" size="large">
+            <template #icon>
+              <Icon icon="fluent:plug-connected-24-regular" width="18" height="18" />
+            </template>
+            管理连接配置
+          </NButton>
+          <NButton @click="router.push({ name: 'admin-file-index' })" class="!justify-start" size="large">
+            <template #icon>
+              <Icon icon="fluent:search-folder-24-regular" width="18" height="18" />
+            </template>
+            管理文件索引
+          </NButton>
           <NButton @click="router.push({ name: 'index' })" tag="a" target="_blank" class="!justify-start" size="large">
             <template #icon>
               <Icon icon="fluent:open-24-regular" width="18" height="18" />
