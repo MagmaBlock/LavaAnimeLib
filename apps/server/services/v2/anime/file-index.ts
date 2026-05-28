@@ -33,6 +33,11 @@ function mapRow(row: typeof fileIndex.$inferSelect): FileIndexRecord {
   return { ...row };
 }
 
+function dirPrefix(dirPath: string): string {
+  const normalized = dirPath.replace(/\/+$/, "");
+  return normalized ? `${normalized}/` : "/";
+}
+
 export async function getByPath(
   driveId: string,
   dirPath: string
@@ -47,7 +52,7 @@ export async function isCacheValid(driveId: string, dirPath: string): Promise<bo
     .where(
       and(
         eq(fileIndex.driveId, driveId),
-        like(fileIndex.path, `${dirPath}/%`),
+        like(fileIndex.path, `${dirPrefix(dirPath)}%`),
         eq(fileIndex.deleted, 0),
       ),
     )
@@ -70,7 +75,7 @@ export async function findActiveByDrive(
     .where(
       and(
         eq(fileIndex.driveId, driveId),
-        like(fileIndex.path, `${dirPath}/%`),
+        like(fileIndex.path, `${dirPrefix(dirPath)}%`),
         eq(fileIndex.deleted, 0),
       ),
     )
@@ -136,7 +141,7 @@ export async function softDeleteStale(
       .where(
         and(
           eq(fileIndex.driveId, driveId),
-          like(fileIndex.path, `${dirPath}/%`),
+          like(fileIndex.path, `${dirPrefix(dirPath)}%`),
           eq(fileIndex.deleted, 0),
         ),
       );
@@ -149,7 +154,7 @@ export async function softDeleteStale(
     .where(
       and(
         eq(fileIndex.driveId, driveId),
-        like(fileIndex.path, `${dirPath}/%`),
+        like(fileIndex.path, `${dirPrefix(dirPath)}%`),
         eq(fileIndex.deleted, 0),
       ),
     );
@@ -180,7 +185,7 @@ export async function setAnimeId(
     .where(
       and(
         eq(fileIndex.driveId, driveId),
-        like(fileIndex.path, `${dirPath}/%`),
+        like(fileIndex.path, `${dirPrefix(dirPath)}%`),
       ),
     );
 }
@@ -288,7 +293,7 @@ export async function touchIndexedAt(
     .where(
       and(
         eq(fileIndex.driveId, driveId),
-        like(fileIndex.path, `${dirPath}/%`),
+        like(fileIndex.path, `${dirPrefix(dirPath)}%`),
       ),
     );
 }

@@ -12,10 +12,7 @@ export interface DriveInfo {
 }
 
 export interface DriveRecord extends DriveInfo {
-  type: "alist";
-  host: string;
-  path: string;
-  password: string;
+  connectionConfigId: number | null;
   enabled: boolean;
   isDefault: boolean;
   sortOrder: number;

@@ -162,6 +162,12 @@ describe("POST /v2/site/setting/set", () => {
 });
 
 describe("GET /v2/anime/file", () => {
+  beforeAll(async () => {
+    const { sql } = await import("drizzle-orm");
+    const { db } = await import("../../common/database/connection.js");
+    await db.execute(sql.raw("DELETE FROM file_index"));
+  });
+
   it("未登录应返回 401", async () => {
     const res = await request
       .get("/v2/anime/file")
@@ -169,12 +175,12 @@ describe("GET /v2/anime/file", () => {
     expect(res.status).toBe(401);
   });
 
-  it("缺少 drive 应返回 400", async () => {
+  it("缺少 drive 应使用默认存储节点", async () => {
     const res = await request
       .get("/v2/anime/file")
       .set("Authorization", token)
       .query({ id: 1 });
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(500);
   });
 
   it("登录后尝试获取文件（外部 AList 不可用，预期 500）", async () => {

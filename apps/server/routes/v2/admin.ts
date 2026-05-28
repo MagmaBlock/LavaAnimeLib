@@ -7,6 +7,19 @@ import { newDrive } from "../../controllers/v2/admin/drive/new.js";
 import { updateDriveInfo } from "../../controllers/v2/admin/drive/update.js";
 import { removeDrive } from "../../controllers/v2/admin/drive/delete.js";
 import { setDefaultDriveController } from "../../controllers/v2/admin/drive/set-default.js";
+import { listConnectionConfigs } from "../../controllers/v2/admin/connection-config/all.js";
+import { newConnectionConfig } from "../../controllers/v2/admin/connection-config/new.js";
+import { updateConnectionConfigInfo } from "../../controllers/v2/admin/connection-config/update.js";
+import { removeConnectionConfig } from "../../controllers/v2/admin/connection-config/delete.js";
+import { listEndpoints } from "../../controllers/v2/admin/drive-endpoint/list.js";
+import { newEndpoint } from "../../controllers/v2/admin/drive-endpoint/new.js";
+import { updateEndpointInfo } from "../../controllers/v2/admin/drive-endpoint/update.js";
+import { removeEndpoint } from "../../controllers/v2/admin/drive-endpoint/delete.js";
+import { adminListIndex } from "../../controllers/v2/admin/file-index/list.js";
+import { adminSearchIndex } from "../../controllers/v2/admin/file-index/search.js";
+import { adminRefreshDir } from "../../controllers/v2/admin/file-index/refresh-dir.js";
+import { adminRefreshDrive } from "../../controllers/v2/admin/file-index/refresh-drive.js";
+import { adminIndexStats } from "../../controllers/v2/admin/file-index/stats.js";
 import { listBangumiCache } from "../../controllers/v2/admin/bangumi-cache/list.js";
 import {
   refreshBangumiCacheController,
@@ -32,6 +45,19 @@ router.post(
   requireAdmin,
   setDefaultDriveController
 );
+router.get("/connection-config/all", requireAdmin, listConnectionConfigs);
+router.post("/connection-config/new", requireAdmin, newConnectionConfig);
+router.post("/connection-config/update", requireAdmin, updateConnectionConfigInfo);
+router.post("/connection-config/delete", requireAdmin, removeConnectionConfig);
+router.get("/drive/endpoint/list", requireAdmin, listEndpoints);
+router.post("/drive/endpoint/new", requireAdmin, newEndpoint);
+router.post("/drive/endpoint/update", requireAdmin, updateEndpointInfo);
+router.post("/drive/endpoint/delete", requireAdmin, removeEndpoint);
+router.get("/file-index/list", requireAdmin, adminListIndex);
+router.get("/file-index/search", requireAdmin, adminSearchIndex);
+router.post("/file-index/refresh-dir", requireAdmin, adminRefreshDir);
+router.post("/file-index/refresh-drive", requireAdmin, adminRefreshDrive);
+router.get("/file-index/stats", requireAdmin, adminIndexStats);
 router.get(
   "/bangumi-cache/list",
   requireAdmin,

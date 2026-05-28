@@ -43,7 +43,7 @@ describe("getDrive", () => {
     const drive = await getDrive("1A");
     expect(drive).toBeDefined();
     expect(drive!.id).toBe("1A");
-    expect(drive!.host).toBe("https://alist.example.com");
+    expect(drive!.connectionConfigId).toBe(1);
   });
 
   it("不存在的 ID 应返回 undefined", async () => {
@@ -73,10 +73,7 @@ describe("admin drive mutations", () => {
       id: "nonexistent",
       name: "不存在节点",
       description: "",
-      type: "alist",
-      host: "https://alist.example.com",
-      path: "/missing",
-      password: "",
+      connectionConfigId: null,
       banNSFW: false,
       disableDownload: false,
       enabled: true,

@@ -11,12 +11,20 @@ REPLACE INTO `invite_code` (`code`, `code_creator`, `expiration_time`)
 VALUES ('TESTCODE001', 1, NULL),
        ('TESTCODE002', 1, '2027-12-31 23:59:59');
 
+-- 测试连接配置
+REPLACE INTO `connection_configs` (`id`, `type`, `config`)
+VALUES (1, 'alist', '{"host": "https://alist.example.com", "path": "/test/LavaAnimeLib", "password": ""}');
+
 -- 测试存储节点
 REPLACE INTO `drives`
-  (`id`, `name`, `description`, `type`, `host`, `path`, `password`, `banNSFW`, `disableDownload`, `enabled`, `isDefault`, `sortOrder`)
+  (`id`, `name`, `description`, `connection_config_id`, `banNSFW`, `disableDownload`, `enabled`, `isDefault`, `sortOrder`)
 VALUES
-  ('1A', '测试存储节点', '测试用存储节点', 'alist', 'https://alist.example.com', '/test/LavaAnimeLib', '', 0, 0, 1, 1, 0),
-  ('2B', '禁用测试节点', '不应出现在公开列表', 'alist', 'https://disabled.example.com', '/disabled', '', 0, 1, 0, 0, 1);
+  ('1A', '测试存储节点', '测试用存储节点', 1, 0, 0, 1, 1, 0),
+  ('2B', '禁用测试节点', '不应出现在公开列表', 1, 0, 1, 0, 0, 1);
+
+-- 测试端点
+REPLACE INTO `drive_endpoints` (`id`, `drive_id`, `name`, `url`, `connection_config_id`, `priority`, `enabled`)
+VALUES (1, '1A', '默认端点', 'https://alist.example.com', 1, 0, 1);
 
 -- 测试已使用的邀请码
 REPLACE INTO `invite_code` (`code`, `code_creator`, `code_user`, `use_time`, `expiration_time`)

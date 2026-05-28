@@ -15,6 +15,13 @@
       "when": 1779517633333,
       "tag": "0001_black_mimic",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1748425000000,
+      "tag": "0002_expensive_hammerhead",
+      "breakpoints": true
     }
   ]
 }

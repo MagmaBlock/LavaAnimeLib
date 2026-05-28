@@ -23,8 +23,8 @@ export async function refreshDir(
   driveId: string,
   dirPath: string
 ): Promise<void> {
-  const { driver, rootPath } = await getDriverForDriveId(driveId);
-  const startPath = dirPath || rootPath;
+  const { driver } = await getDriverForDriveId(driveId);
+  const startPath = dirPath || "/";
 
   async function recursiveList(currentPath: string): Promise<void> {
     const entries = await driver.list(currentPath);
