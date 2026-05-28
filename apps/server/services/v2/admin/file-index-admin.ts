@@ -6,7 +6,7 @@ import type { ListIndexOptions } from "../anime/file-index.js";
 import * as fileIndexService from "../anime/file-index.js";
 import { log } from "../../../common/tools/logger.js";
 
-async function getDriverForDriveId(driveId: string): Promise<{ driver: FileSystemDriver; rootPath: string }> {
+async function getDriverForDriveId(driveId: string): Promise<{ driver: FileSystemDriver }> {
   const driveRecord = await getDrive(driveId);
   if (!driveRecord) throw new Error("存储节点不存在");
   if (driveRecord.connectionConfigId == null) {
@@ -15,8 +15,7 @@ async function getDriverForDriveId(driveId: string): Promise<{ driver: FileSyste
   const configRecord = await getConnectionConfigById(driveRecord.connectionConfigId);
   if (!configRecord) throw new Error("连接配置不存在");
   const driver = createDriver(configRecord);
-  const rootPath = (driver as { getRootPath?: () => string }).getRootPath?.() ?? "";
-  return { driver, rootPath };
+  return { driver };
 }
 
 export async function refreshDir(
@@ -25,9 +24,14 @@ export async function refreshDir(
 ): Promise<void> {
   const { driver } = await getDriverForDriveId(driveId);
   const startPath = dirPath || "/";
+  log.info(`[${driveId}] 开始刷新目录索引: ${startPath}`);
 
-  async function recursiveList(currentPath: string): Promise<void> {
+  async function recursiveList(currentPath: string, depth: number): Promise<void> {
     const entries = await driver.list(currentPath);
+    const fileCount = entries.filter((e) => e.type === "file").length;
+    const dirCount = entries.filter((e) => e.type === "dir").length;
+    log.info(`[${driveId}] ${"  ".repeat(depth)}${currentPath} → ${fileCount} 文件, ${dirCount} 目录`);
+
     const currentPaths: string[] = [];
 
     const upsertEntries = entries.map((entry) => {
@@ -49,7 +53,7 @@ export async function refreshDir(
     for (const entry of entries) {
       if (entry.type === "dir") {
         try {
-          await recursiveList(entry.path);
+          await recursiveList(entry.path, depth + 1);
         } catch (err) {
           log.error(err, "递归列出目录失败: %s", entry.path);
         }
@@ -57,7 +61,8 @@ export async function refreshDir(
     }
   }
 
-  await recursiveList(startPath);
+  await recursiveList(startPath, 0);
+  log.info(`[${driveId}] 目录刷新完成: ${startPath}`);
 }
 
 export async function getDriveStats(driveId: string) {
@@ -70,4 +75,3 @@ export async function listDriveIndex(
 ) {
   return fileIndexService.listIndex(driveId, options);
 }
-
