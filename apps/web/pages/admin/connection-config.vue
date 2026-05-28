@@ -32,7 +32,7 @@
           v-else
           :columns="columns"
           :data="configs"
-          :row-key="(row: ConnectionConfig) => row.id"
+          :row-key="(row: ParsedConfig) => row.id"
           :single-line="false"
           size="small"
         />
@@ -50,44 +50,45 @@
               @update:value="onTypeChange"
             />
           </NFormItem>
-          <NFormItem label="配置 JSON" required>
-            <NInput
-              v-model:value="configText"
-              type="textarea"
-              :rows="14"
-              :status="jsonError ? 'error' : undefined"
-              placeholder="{ &quot;host&quot;: &quot;https://alist.example.com&quot;, &quot;path&quot;: &quot;/Anime&quot; }"
-              class="font-mono text-sm"
-            />
-            <template #feedback>
-              <span v-if="jsonError" class="text-red-500 text-xs">{{ jsonError }}</span>
-            </template>
-          </NFormItem>
-          <NFormItem v-if="form.type === 'alist'" label="快捷配置">
-            <div class="grid grid-cols-1 gap-3">
-              <div>
-                <div class="text-xs text-gray-500 mb-1">Host</div>
-                <NInput v-model:value="alistHost" placeholder="https://alist.example.com" size="small" />
-              </div>
-              <div>
-                <div class="text-xs text-gray-500 mb-1">路径</div>
-                <NInput v-model:value="alistPath" placeholder="/Anime" size="small" />
-              </div>
-              <div>
-                <div class="text-xs text-gray-500 mb-1">密码</div>
-                <NInput
-                  v-model:value="alistPassword"
-                  type="password"
-                  show-password-on="click"
-                  placeholder="目录密码，可留空"
-                  size="small"
-                />
-              </div>
-              <NButton size="small" @click="applyAlistQuickConfig">
-                应用快捷配置
-              </NButton>
-            </div>
-          </NFormItem>
+
+          <!-- Alist quick config form -->
+          <template v-if="form.type === 'alist'">
+            <NFormItem label="Host" required>
+              <NInput v-model:value="alistHost" placeholder="https://alist.example.com" />
+            </NFormItem>
+            <NFormItem label="路径" required>
+              <NInput v-model:value="alistPath" placeholder="/Anime" />
+            </NFormItem>
+            <NFormItem label="密码">
+              <NInput
+                v-model:value="alistPassword"
+                type="password"
+                show-password-on="click"
+                placeholder="目录密码，可留空"
+              />
+            </NFormItem>
+          </template>
+
+          <!-- Generic config form for other types -->
+          <div v-else class="mb-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm text-gray-500 dark:text-gray-400">
+            该驱动类型暂无快捷配置表单，请在下方 JSON 编辑器中编辑。
+          </div>
+
+          <!-- Raw JSON editor (collapsible) -->
+          <NCollapse>
+            <NCollapseItem title="高级：原始 JSON 编辑">
+              <div class="text-xs text-gray-400 mb-2">直接编辑连接配置的 JSON 对象</div>
+              <NInput
+                v-model:value="configText"
+                type="textarea"
+                :rows="12"
+                :status="jsonError ? 'error' : undefined"
+                placeholder="{ &quot;host&quot;: &quot;...&quot;, &quot;path&quot;: &quot;...&quot; }"
+                class="font-mono text-sm"
+              />
+              <div v-if="jsonError" class="text-red-500 text-xs mt-1">{{ jsonError }}</div>
+            </NCollapseItem>
+          </NCollapse>
         </NForm>
 
         <template #footer>
@@ -108,18 +109,25 @@ import { Icon } from "@iconify/vue";
 import { h } from "vue";
 import {
   NButton,
+  NCollapse,
+  NCollapseItem,
   NPopconfirm,
   NSpace,
   NTag,
   type DataTableColumns,
 } from "naive-ui";
-import type { ConnectionConfig } from "@lavaanime/shared";
 
 definePageMeta({
   layout: "admin",
 });
 
 useHead({ title: "连接配置管理" });
+
+interface ParsedConfig {
+  id: number;
+  type: string;
+  config: Record<string, unknown>;
+}
 
 interface ConfigForm {
   id: number | null;
@@ -128,7 +136,7 @@ interface ConfigForm {
 }
 
 const message = useMessage();
-const configs = ref<ConnectionConfig[]>([]);
+const configs = ref<ParsedConfig[]>([]);
 const loading = ref(true);
 const saving = ref(false);
 const drawerOpen = ref(false);
@@ -144,21 +152,43 @@ const typeOptions = [
   { label: "AList", value: "alist" },
 ];
 
-const alistDefaultConfig = {
-  host: "https://alist.example.com",
-  path: "/Anime",
+const alistDefaults: Record<string, string> = {
+  host: "",
+  path: "",
   password: "",
 };
+
+function parseConfig(raw: unknown): Record<string, unknown> {
+  if (typeof raw === "string") {
+    try {
+      return JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      return {} as Record<string, unknown>;
+    }
+  }
+  if (typeof raw === "object" && raw !== null && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  return {} as Record<string, unknown>;
+}
+
+function loadParsedConfigs(rawList: { id: number; type: string; config: unknown }[]): ParsedConfig[] {
+  return rawList.map((item) => ({
+    id: item.id,
+    type: item.type,
+    config: parseConfig(item.config),
+  }));
+}
 
 const emptyForm = (): ConfigForm => ({
   id: null,
   type: "alist",
-  config: { ...alistDefaultConfig },
+  config: { ...alistDefaults },
 });
 
 const form = reactive<ConfigForm>(emptyForm());
 
-const columns: DataTableColumns<ConnectionConfig> = [
+const columns: DataTableColumns<ParsedConfig> = [
   {
     title: "ID",
     key: "id",
@@ -168,36 +198,21 @@ const columns: DataTableColumns<ConnectionConfig> = [
     title: "类型",
     key: "type",
     width: 100,
-    render(row: ConnectionConfig) {
+    render(row: ParsedConfig) {
       return h(NTag, { size: "small" }, () => row.type);
     },
   },
   {
     title: "配置",
     key: "config",
-    minWidth: 320,
+    minWidth: 360,
     ellipsis: { tooltip: true },
-    render(row: ConnectionConfig) {
-      const config = row.config;
-      if (!config || typeof config !== "object") return h("span", { class: "text-gray-400" }, "-");
-      const cfg = config as Record<string, unknown>;
+    render(row: ParsedConfig) {
+      const cfg = row.config;
       const parts: string[] = [];
-      if ("host" in cfg) parts.push(`host: ${cfg.host}`);
-      if ("path" in cfg) parts.push(`path: ${cfg.path}`);
+      if (cfg.host) parts.push(`host: ${cfg.host}`);
+      if (cfg.path) parts.push(`path: ${cfg.path}`);
       return h("span", { class: "text-xs font-mono text-gray-600 dark:text-gray-400" }, parts.join("  "));
-    },
-  },
-  {
-    title: "完整 JSON",
-    key: "configJson",
-    minWidth: 200,
-    ellipsis: { tooltip: true },
-    render(row: ConnectionConfig) {
-      return h(
-        "code",
-        { class: "text-xs text-gray-500 dark:text-gray-500" },
-        JSON.stringify(row.config),
-      );
     },
   },
   {
@@ -205,7 +220,7 @@ const columns: DataTableColumns<ConnectionConfig> = [
     key: "actions",
     width: 160,
     fixed: "right",
-    render(row: ConnectionConfig) {
+    render(row: ParsedConfig) {
       return h(NSpace, { size: "small" }, () => [
         h(
           NButton,
@@ -240,15 +255,38 @@ const columns: DataTableColumns<ConnectionConfig> = [
   },
 ];
 
-function validateJson(): boolean {
+function readAlistFields(cfg: Record<string, unknown>) {
+  alistHost.value = String(cfg.host ?? "");
+  alistPath.value = String(cfg.path ?? "");
+  alistPassword.value = String(cfg.password ?? "");
+}
+
+function buildAlistConfig(): Record<string, unknown> {
+  return {
+    host: alistHost.value,
+    path: alistPath.value,
+    password: alistPassword.value,
+  };
+}
+
+function buildConfigFromForm(): Record<string, unknown> {
+  if (form.type === "alist") {
+    return buildAlistConfig();
+  }
+  if (validateJsonRaw()) {
+    return JSON.parse(configText.value);
+  }
+  return form.config;
+}
+
+function validateJsonRaw(): boolean {
+  jsonError.value = "";
   try {
     const parsed = JSON.parse(configText.value);
     if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
       jsonError.value = "配置必须是 JSON 对象";
       return false;
     }
-    form.config = parsed as Record<string, unknown>;
-    jsonError.value = "";
     return true;
   } catch {
     jsonError.value = "JSON 格式无效";
@@ -261,42 +299,34 @@ function syncFormToText() {
   jsonError.value = "";
 }
 
-function onTypeChange() {
+function syncQuickFormToConfig() {
   if (form.type === "alist") {
-    alistHost.value = (form.config as Record<string, string>).host || "";
-    alistPath.value = (form.config as Record<string, string>).path || "";
-    alistPassword.value = (form.config as Record<string, string>).password || "";
+    form.config = buildAlistConfig();
   }
-  syncFormToText();
 }
 
-function applyAlistQuickConfig() {
-  form.config = {
-    host: alistHost.value,
-    path: alistPath.value,
-    password: alistPassword.value,
-  };
+function onTypeChange() {
+  if (form.type === "alist") {
+    readAlistFields(form.config);
+  }
   syncFormToText();
 }
 
 function resetForm(next: ConfigForm) {
   Object.assign(form, next);
   if (form.type === "alist") {
-    alistHost.value = (form.config as Record<string, string>).host || "";
-    alistPath.value = (form.config as Record<string, string>).path || "";
-    alistPassword.value = (form.config as Record<string, string>).password || "";
+    readAlistFields(form.config);
   }
   syncFormToText();
 }
 
 function openCreateDrawer() {
   editing.value = false;
-  const def = emptyForm();
-  resetForm(def);
+  resetForm(emptyForm());
   drawerOpen.value = true;
 }
 
-function openEditDrawer(row: ConnectionConfig) {
+function openEditDrawer(row: ParsedConfig) {
   editing.value = true;
   resetForm({
     id: row.id,
@@ -311,7 +341,7 @@ async function loadConfigs() {
   try {
     const result = await api.get("/v2/admin/connection-config/all");
     if (result.data?.code === 200) {
-      configs.value = result.data.data || [];
+      configs.value = loadParsedConfigs(result.data.data || []);
     }
   } catch (_error) {
     message.error("获取连接配置失败");
@@ -321,7 +351,7 @@ async function loadConfigs() {
 }
 
 async function saveConfig() {
-  if (!validateJson()) return;
+  syncQuickFormToConfig();
   saving.value = true;
   try {
     const url = editing.value

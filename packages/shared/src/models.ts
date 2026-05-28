@@ -98,7 +98,7 @@ export interface DriveRecord extends DriveInfo {
 export interface ConnectionConfig {
   id: number;
   type: string;
-  config: Record<string, unknown>;
+  config: unknown;
 }
 
 export interface EndpointRecord {

@@ -231,13 +231,22 @@ const connectionConfigOptions = computed(() =>
   }))
 );
 
-function configSummary(c: ConnectionConfig): string {
-  if (c.config && typeof c.config === "object") {
-    const cfg = c.config as Record<string, unknown>;
-    if (cfg.host) return String(cfg.host);
-    if (cfg.path) return String(cfg.path);
+function parseConfigObj(c: ConnectionConfig): Record<string, unknown> {
+  const raw = c.config;
+  if (typeof raw === "string") {
+    try { return JSON.parse(raw) as Record<string, unknown>; } catch { return {}; }
   }
-  return JSON.stringify(c.config).slice(0, 40);
+  if (typeof raw === "object" && raw !== null && !Array.isArray(raw)) {
+    return raw as Record<string, unknown>;
+  }
+  return {};
+}
+
+function configSummary(c: ConnectionConfig): string {
+  const cfg = parseConfigObj(c);
+  if (cfg.host) return String(cfg.host);
+  if (cfg.path) return String(cfg.path);
+  return JSON.stringify(cfg).slice(0, 40);
 }
 
 function findConfig(id: number | null): ConnectionConfig | undefined {
