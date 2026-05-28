@@ -154,6 +154,19 @@ describe("list", () => {
       path: "/media/anime",
     }));
   });
+
+  it("空目录返回 content: null 时应返回空数组", async () => {
+    mockPost.mockResolvedValueOnce({
+      data: {
+        code: 200, message: "ok",
+        data: { content: null },
+      },
+    });
+
+    const driver = createTestDriver();
+    const result = await driver.list("/empty-dir");
+    expect(result).toEqual([]);
+  });
 });
 
 describe("getDownloadUrl", () => {

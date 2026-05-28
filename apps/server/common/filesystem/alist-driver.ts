@@ -19,7 +19,7 @@ interface AlistApiResponse {
   code: number;
   message: string;
   data: {
-    content: AlistApiFile[];
+    content: AlistApiFile[] | null;
   };
 }
 
@@ -53,7 +53,7 @@ export class AlistDriver implements FileSystemDriver {
       throw new Error(`AList API 错误: ${result.data.message}`);
     }
 
-    return result.data.data.content.map((file) => {
+    return (result.data.data.content ?? []).map((file) => {
       const physicalEntryPath = joinPaths(physicalPath, file.name).replace(/\/+/g, "/");
       const normalizedEntryPath = stripPrefix(physicalEntryPath, this.rootPath) || "/";
       return {
