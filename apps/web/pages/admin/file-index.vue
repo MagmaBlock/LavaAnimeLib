@@ -122,8 +122,8 @@
           </div>
         </div>
 
-        <!-- Browse mode: breadcrumb -->
-        <div v-if="mode === 'browse'" class="mb-3 flex items-center gap-1 text-sm flex-wrap">
+        <!-- Browse mode: breadcrumb + path jump -->
+        <div v-if="mode === 'browse'" class="mb-3 flex items-center gap-2 text-sm flex-wrap">
           <NButton
             size="tiny"
             quaternary
@@ -132,6 +132,7 @@
           >
             <template #icon><Icon icon="fluent:arrow-up-24-regular" width="14" height="14" /></template>
           </NButton>
+          <span class="text-gray-300" v-if="breadcrumbs.length === 0">/</span>
           <template v-for="(seg, idx) in breadcrumbs" :key="idx">
             <span class="text-gray-300">/</span>
             <NButton
@@ -143,12 +144,25 @@
               {{ seg }}
             </NButton>
           </template>
+          <div class="ml-2 flex items-center gap-1">
+            <NInput
+              v-model:value="pathJumpInput"
+              size="tiny"
+              :placeholder="currentParent || '/  (输入路径后回车跳转)'"
+              class="!w-64 font-mono"
+              @keyup.enter="jumpToPath"
+            />
+            <NButton size="tiny" quaternary @click="jumpToPath">
+              <template #icon><Icon icon="fluent:arrow-right-24-regular" width="14" height="14" /></template>
+            </NButton>
+          </div>
         </div>
 
-        <!-- Browse mode: parent row -->
-        <div v-if="mode === 'browse' && !listLoading && fileItems.length === 0 && !searchKeyword" class="text-center py-12 text-gray-400">
+        <!-- Browse mode: empty state with navigation hint -->
+        <div v-if="mode === 'browse' && !listLoading && fileItems.length === 0 && !searchKeyword && !filterType && filterDeleted !== '1'" class="text-center py-12 text-gray-400">
           <Icon icon="fluent:folder-open-24-regular" width="40" height="40" class="mx-auto mb-3 opacity-50" />
           <div>此目录为空</div>
+          <div v-if="!currentParent" class="text-xs mt-1 text-gray-400">可在上方路径框输入起始路径（如 /LavaAnimeLib）后回车浏览</div>
         </div>
 
         <NDataTable
@@ -223,6 +237,7 @@ const fileItems = ref<FileIndexItem[]>([]);
 const listLoading = ref(false);
 
 const currentParent = ref<string>("");
+const pathJumpInput = ref<string>("");
 const searchKeyword = ref("");
 const filterType = ref<string | null>(null);
 const filterDeleted = ref<string | null>(null);
@@ -266,24 +281,37 @@ function buildBreadcrumbPath(idx: number): string {
 function switchMode(m: "browse" | "list") {
   mode.value = m;
   currentParent.value = "";
+  pathJumpInput.value = "";
   pagination.page = 1;
   loadFileList();
 }
 
 function navigateToParent(path: string | null) {
   currentParent.value = path ?? "";
+  pathJumpInput.value = path ?? "";
   pagination.page = 1;
   loadFileList();
 }
 
 function navigateToBreadcrumb(idx: number) {
-  currentParent.value = buildBreadcrumbPath(idx);
+  const p = buildBreadcrumbPath(idx);
+  currentParent.value = p;
+  pathJumpInput.value = p;
   pagination.page = 1;
   loadFileList();
 }
 
 function enterDirectory(dirPath: string) {
   currentParent.value = dirPath;
+  pathJumpInput.value = dirPath;
+  pagination.page = 1;
+  loadFileList();
+}
+
+function jumpToPath() {
+  const path = pathJumpInput.value.trim();
+  if (!path) return;
+  currentParent.value = path.startsWith("/") ? path : `/${path}`;
   pagination.page = 1;
   loadFileList();
 }
@@ -447,6 +475,7 @@ async function loadDrives() {
 
 async function onDriveChange() {
   currentParent.value = "";
+  pathJumpInput.value = "";
   pagination.page = 1;
   searchKeyword.value = "";
   filterType.value = null;

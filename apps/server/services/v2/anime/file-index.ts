@@ -232,13 +232,9 @@ export async function listIndex(
   const conditions: ReturnType<typeof eq>[] = [eq(fileIndex.driveId, driveId)];
 
   if (options.parent !== undefined) {
-    const parentPrefix = options.parent ? `${options.parent}/` : "";
-    if (parentPrefix) {
-      conditions.push(like(fileIndex.path, `${parentPrefix}%`));
-      conditions.push(sql`${fileIndex.path} NOT LIKE ${`${parentPrefix}%/%`}`);
-    } else {
-      conditions.push(sql`${fileIndex.path} NOT LIKE ${`%/%`}`);
-    }
+    const parentPrefix = options.parent ? `${options.parent}/` : "/";
+    conditions.push(like(fileIndex.path, `${parentPrefix}%`));
+    conditions.push(sql`${fileIndex.path} NOT LIKE ${`${parentPrefix}%/%`}`);
   }
 
   if (options.search) {
