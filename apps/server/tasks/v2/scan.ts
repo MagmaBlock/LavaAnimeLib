@@ -1,3 +1,4 @@
+import pLimit from "p-limit";
 import { db } from "../../common/database/connection.js";
 import { drives } from "../../common/database/schema/drive.js";
 import { connectionConfigs } from "../../common/database/schema/connection-config.js";
@@ -6,6 +7,8 @@ import { createDriver } from "../../common/filesystem/factory.js";
 import type { FileSystemEntry } from "../../common/filesystem/types.js";
 import * as fileIndexService from "../../services/v2/anime/file-index.js";
 import { log } from "../../common/tools/logger.js";
+
+const DIR_CONCURRENCY = 4;
 
 export default async function scanAllDrives() {
   const driveRows = await db
@@ -18,27 +21,33 @@ export default async function scanAllDrives() {
 
   log.info(`共 ${driveRows.length} 个存储节点待扫描`);
 
-  for (const row of driveRows) {
-    try {
-      const configRow = await db
-        .select()
-        .from(connectionConfigs)
-        .where(eq(connectionConfigs.id, row.connectionConfigId!))
-        .limit(1);
+  await Promise.all(driveRows.map((row) => scanSingleDrive(row)));
+}
 
-      if (!configRow.length) {
-        log.warn(`Drive ${row.driveId} 的连接配置 ${row.connectionConfigId} 不存在，跳过`);
-        continue;
-      }
+async function scanSingleDrive(row: {
+  driveId: string;
+  connectionConfigId: number | null;
+}) {
+  try {
+    const configRow = await db
+      .select()
+      .from(connectionConfigs)
+      .where(eq(connectionConfigs.id, row.connectionConfigId!))
+      .limit(1);
 
-      const driver = createDriver(configRow[0]);
-      log.info(`[${row.driveId}] 开始全量扫描...`);
-
-      const stats = await scanDirectory(driver, row.driveId, "/");
-      log.info(`[${row.driveId}] 扫描完成: ${stats.total} 条 (${stats.files} 文件, ${stats.dirs} 目录, ${stats.directories} 个文件夹)`);
-    } catch (err) {
-      log.error(err, `扫描 Drive ${row.driveId} 失败`);
+    if (!configRow.length) {
+      log.warn(`[${row.driveId}] 连接配置 ${row.connectionConfigId} 不存在，跳过`);
+      return;
     }
+
+    const driver = createDriver(configRow[0]);
+    log.info(`[${row.driveId}] 开始全量扫描...`);
+
+    const limit = pLimit(DIR_CONCURRENCY);
+    const stats = await scanDirectory(limit, driver, row.driveId, "/");
+    log.info(`[${row.driveId}] 扫描完成: ${stats.total} 条 (${stats.files} 文件, ${stats.dirs} 目录, ${stats.directories} 个文件夹)`);
+  } catch (err) {
+    log.error(err, `扫描 Drive ${row.driveId} 失败`);
   }
 }
 
@@ -50,6 +59,7 @@ interface ScanStats {
 }
 
 async function scanDirectory(
+  limit: ReturnType<typeof pLimit>,
   driver: ReturnType<typeof createDriver>,
   driveId: string,
   currentPath: string
@@ -86,12 +96,18 @@ async function scanDirectory(
 
   const stats: ScanStats = { total: entries.length, files: fileEntries.length, dirs: dirEntries.length, directories: 1 };
 
-  for (const entry of dirEntries) {
-    const sub = await scanDirectory(driver, driveId, entry.path);
-    stats.total += sub.total;
-    stats.files += sub.files;
-    stats.dirs += sub.dirs;
-    stats.directories += sub.directories;
+  if (dirEntries.length > 0) {
+    const subResults = await Promise.all(
+      dirEntries.map((entry) =>
+        limit(() => scanDirectory(limit, driver, driveId, entry.path))
+      )
+    );
+    for (const sub of subResults) {
+      stats.total += sub.total;
+      stats.files += sub.files;
+      stats.dirs += sub.dirs;
+      stats.directories += sub.directories;
+    }
   }
 
   return stats;
