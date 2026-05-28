@@ -158,7 +158,9 @@ export async function ensureAllAnimeBangumiCaches(): Promise<number> {
 export function queueBangumiCacheRefresh(bgmID: number): void {
   if (!Number.isFinite(bgmID) || bgmID <= 0 || refreshingBgmIDs.has(bgmID)) return;
   refreshingBgmIDs.add(bgmID);
-  void refreshBangumiCache(bgmID).finally(() => refreshingBgmIDs.delete(bgmID));
+  refreshBangumiCache(bgmID)
+    .catch((error) => log.error(error, "Bangumi cache refresh failed: bgm%d", bgmID))
+    .finally(() => refreshingBgmIDs.delete(bgmID));
 }
 
 export async function refreshBangumiCache(bgmID: number): Promise<boolean> {
