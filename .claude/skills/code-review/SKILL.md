@@ -27,7 +27,7 @@ metadata:
 - 报告发现的任何类型错误。
 
 ### 4. 运行完整测试套件
-- 仅当变更涉及 `controllers/`、`services/`、`routes/`、`middleware/`、`common/`、`tests/` 下的文件时执行 `pnpm test`（vitest run），否则跳过。
+- 仅当变更涉及 `controllers/`、`services/`、`routes/`、`middleware/`、`common/`、`tests/` 下的文件时执行 `pnpm test:full`，否则跳过。
 - 报告任何测试失败。对于每个失败，阅读相关的测试和源文件进行诊断。
 
 ### 5. 检查变更文件中的常见问题
