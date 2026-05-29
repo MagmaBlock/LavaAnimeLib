@@ -1,5 +1,5 @@
 import _ from "lodash";
-import config from "../../../common/config.js";
+import config from "../../../common/env.js";
 import { db } from "../../../common/database/connection.js";
 import { bangumiData } from "../../../common/database/schema/bangumi-data.js";
 import { inArray } from "drizzle-orm";

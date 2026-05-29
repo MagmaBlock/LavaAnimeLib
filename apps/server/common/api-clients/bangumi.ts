@@ -1,5 +1,5 @@
 import axios from "axios";
-import config from "../config.js";
+import config from "../env.js";
 
 export const bangumiAPI = axios.create({
   baseURL: config.bangumi.host,

@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { parseBody } from "../../../common/tools/parse-request.js";
 import { userLoginBodySchema } from "../../../schemas/v2/user/login.js";
-import config from "../../../common/config.js";
+import config from "../../../common/env.js";
 import success from "../../../common/response/success.js";
 import forbidden from "../../../common/response/forbidden.js";
 import notFound from "../../../common/response/not-found.js";

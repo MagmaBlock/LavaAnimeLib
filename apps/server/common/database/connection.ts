@@ -2,7 +2,7 @@ import mysql from "mysql2";
 import { drizzle } from "drizzle-orm/mysql2";
 import { migrate } from "drizzle-orm/mysql2/migrator";
 import path from "path";
-import config from "../config.js";
+import config from "../env.js";
 import { log } from "../tools/logger.js";
 
 const { database: _database, ...initConfig } = config.mysql;

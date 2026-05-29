@@ -1,10 +1,18 @@
-import { vi, beforeAll, beforeEach } from "vitest";
 import fs from "fs";
 import path from "path";
+import { beforeAll, beforeEach } from "vitest";
 
-vi.mock("../common/config.js", async () => {
-  const testConfig = await import("../common/config.test.js");
-  return { default: testConfig.default };
+Object.assign(process.env, {
+  MYSQL_URL: "mysql://LavaAnimeTest:test_password@localhost:3307/lavaanime_test",
+  BANGUMI_API_HOST: "https://api.bgm.tv",
+  BANGUMI_IMAGE_HOST: "https://lain.bgm.tv/",
+  LOG_LEVEL: "error",
+  LOG_DIR: "logs",
+  LOG_FILE: "app.log",
+  SECURITY_TRUST_PROXY: "true",
+  SECURITY_LOGIN_MAX_TRY: "10",
+  SECURITY_BAN_WAIT_MINUTES: "1",
+  SECURITY_TOKEN_EXPIRATION_DAYS: "30",
 });
 
 import cache from "../common/cache.js";

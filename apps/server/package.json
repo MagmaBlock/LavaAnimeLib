@@ -9,7 +9,7 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "start": "node dist/main.js",
-    "dev": "tsx watch main.ts",
+    "dev": "tsx watch --env-file=.env main.ts",
     "sync": "tsx ./tasks/v2/main.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",

@@ -3,7 +3,7 @@ import pino from "pino";
 import pretty from "pino-pretty";
 import { createStream } from "rotating-file-stream";
 import path from "node:path";
-import config from "../config.js";
+import config from "../env.js";
 
 let _instance: Logger | null = null;
 

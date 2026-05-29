@@ -1,5 +1,5 @@
 import { and, asc, count, eq, inArray, isNotNull, lt, sql } from "drizzle-orm";
-import config from "../../../common/config.js";
+import config from "../../../common/env.js";
 import { db } from "../../../common/database/connection.js";
 import { bangumiData } from "../../../common/database/schema/bangumi-data.js";
 import { anime } from "../../../common/database/schema/anime.js";
