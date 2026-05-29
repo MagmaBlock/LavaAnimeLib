@@ -145,7 +145,7 @@ const videoButtonClick = async (video) => {
           <NPopover trigger="hover" v-for="file in store.otherList">
             <template #trigger>
               <a
-                v-if="!store.activeDrive?.disableDownload"
+                v-if="!store.activeEndpoint?.disableDownload"
                 :href="file?.url"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -156,7 +156,7 @@ const videoButtonClick = async (video) => {
             </template>
             <span>
               这是一个 {{ file?.parseResult?.extensionName?.result }} 附件, 大小
-              {{ useBytesToSize(file?.size) }}{{ store.activeDrive?.disableDownload ? "" : ", 点击可以下载" }}
+              {{ useBytesToSize(file?.size) }}{{ store.activeEndpoint?.disableDownload ? "" : ", 点击可以下载" }}
             </span>
           </NPopover>
         </NTabPane>

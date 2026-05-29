@@ -1,5 +1,5 @@
 import parseFileName from "anime-file-parser";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "../../../common/database/connection.js";
 import { connectionConfigs } from "../../../common/database/schema/connection-config.js";
 import { driveEndpoints } from "../../../common/database/schema/drive-endpoint.js";
@@ -31,17 +31,17 @@ export async function getFilesByID(
   const thisDrive = await getDrive(drive ?? await getDefaultDrive());
   if (!thisDrive) return "存储节点不存在";
 
-  const animeType = anime.type as { nsfw?: boolean } | undefined;
-  if (animeType?.nsfw && thisDrive.banNSFW) {
-    return "存储节点不支持当前类型动画";
-  }
-
   if (thisDrive.connectionConfigId == null) {
     return "存储节点尚未配置连接";
   }
 
   const endpoint = await resolveEndpoint(thisDrive.id, endpointId);
   if (!endpoint) return "没有可用的对外节点";
+
+  const animeType = anime.type as { nsfw?: boolean } | undefined;
+  if (animeType?.nsfw && endpoint.banNSFW) {
+    return "存储节点不支持当前类型动画";
+  }
 
   const configRow = await db
     .select()
@@ -51,75 +51,104 @@ export async function getFilesByID(
 
   if (!configRow.length) return "连接配置不存在";
 
-  const driver = createDriver(configRow[0]);
+  let driver: ReturnType<typeof createDriver>;
+  try {
+    driver = createDriver(configRow[0]);
+  } catch (err) {
+    log.error(err, `创建文件系统驱动失败: endpoint=${endpointId} config=${endpoint.connectionConfigId}`);
+    return "创建文件系统驱动失败";
+  }
+
   const animeIndex = anime.index as { year: string; type: string; name: string };
   const dirPath = joinPaths(animeIndex.year, animeIndex.type, animeIndex.name);
 
-  const isCached = await fileIndexService.isCacheValid(thisDrive.id, dirPath);
+  try {
+    const isCached = await fileIndexService.isCacheValid(thisDrive.id, dirPath);
 
-  let files: fileIndexService.FileIndexRecord[];
+    let files: fileIndexService.FileIndexRecord[];
 
-  if (isCached) {
-    files = await fileIndexService.findActiveByDrive(thisDrive.id, dirPath);
-  } else {
-    try {
+    if (isCached) {
+      files = await fileIndexService.findActiveByDrive(thisDrive.id, dirPath);
+    } else {
       await refreshDirectory(driver, thisDrive.id, dirPath);
       files = await fileIndexService.findActiveByDrive(thisDrive.id, dirPath);
-    } catch (err) {
-      log.error(err, `刷新文件索引失败: ${dirPath}`);
-      return "请求存储节点时服务端发生意外错误";
     }
+
+    return files.map((entry) => {
+      const base: FileItem = {
+        name: entry.name,
+        size: entry.size,
+        updated: entry.modified?.toISOString() ?? "",
+        driver: thisDrive.id,
+        thumbnail: "",
+        type: entry.type as "dir" | "file",
+      };
+
+      if (entry.type === "file") {
+        const downloadUrl = driver.getDownloadUrl(
+          {
+            name: entry.name,
+            path: entry.path,
+            type: "file",
+            size: entry.size,
+            modified: entry.modified?.toISOString() ?? "",
+            sign: entry.sign ?? undefined,
+          },
+          endpoint.url,
+        );
+        base.url = downloadUrl;
+        base.parseResult = parseFileName(entry.name);
+      }
+
+      return base;
+    });
+  } catch (err) {
+    log.error(err, `获取文件列表失败: drive=${thisDrive.id} dir=${dirPath} endpoint=${endpointId}`);
+    return "请求存储节点时服务端发生意外错误";
   }
-
-  return files.map((entry) => {
-    const base: FileItem = {
-      name: entry.name,
-      size: entry.size,
-      updated: entry.modified?.toISOString() ?? "",
-      driver: thisDrive.id,
-      thumbnail: "",
-      type: entry.type as "dir" | "file",
-    };
-
-    if (entry.type === "file") {
-      const downloadUrl = driver.getDownloadUrl(
-        {
-          name: entry.name,
-          path: entry.path,
-          type: "file",
-          size: entry.size,
-          modified: entry.modified?.toISOString() ?? "",
-          sign: entry.sign ?? undefined,
-        },
-        endpoint.url,
-      );
-      base.url = downloadUrl;
-      base.parseResult = parseFileName(entry.name);
-    }
-
-    return base;
-  });
 }
 
 async function resolveEndpoint(
   driveId: string,
   endpointId?: number
-): Promise<{ id: number; connectionConfigId: number; url: string } | null> {
+): Promise<{ id: number; connectionConfigId: number; url: string; banNSFW: boolean; disableDownload: boolean } | null> {
   if (endpointId != null) {
     const rows = await db
-      .select({ id: driveEndpoints.id, connectionConfigId: driveEndpoints.connectionConfigId, url: driveEndpoints.url })
+      .select({
+        id: driveEndpoints.id,
+        connectionConfigId: driveEndpoints.connectionConfigId,
+        url: driveEndpoints.url,
+        banNSFW: driveEndpoints.banNSFW,
+        disableDownload: driveEndpoints.disableDownload,
+      })
       .from(driveEndpoints)
-      .where(and(eq(driveEndpoints.id, endpointId), eq(driveEndpoints.enabled, 1)))
+      .where(and(
+        eq(driveEndpoints.id, endpointId),
+        eq(driveEndpoints.driveId, driveId),
+        eq(driveEndpoints.enabled, 1)
+      ))
       .limit(1);
-    return rows[0] ?? null;
+    if (!rows[0] || !rows[0].url) return null;
+    return { ...rows[0], banNSFW: toBoolean(rows[0].banNSFW), disableDownload: toBoolean(rows[0].disableDownload) };
   }
 
   const rows = await db
-    .select({ id: driveEndpoints.id, connectionConfigId: driveEndpoints.connectionConfigId, url: driveEndpoints.url })
+    .select({
+      id: driveEndpoints.id,
+      connectionConfigId: driveEndpoints.connectionConfigId,
+      url: driveEndpoints.url,
+      banNSFW: driveEndpoints.banNSFW,
+      disableDownload: driveEndpoints.disableDownload,
+    })
     .from(driveEndpoints)
     .where(and(eq(driveEndpoints.driveId, driveId), eq(driveEndpoints.enabled, 1)))
-    .limit(1);
-  return rows[0] ?? null;
+    .orderBy(asc(driveEndpoints.priority), asc(driveEndpoints.id));
+  for (const row of rows) {
+    if (row.url) {
+      return { ...row, banNSFW: toBoolean(row.banNSFW), disableDownload: toBoolean(row.disableDownload) };
+    }
+  }
+  return null;
 }
 
 async function refreshDirectory(
@@ -180,4 +209,8 @@ function joinPaths(...segments: string[]): string {
     .map((s) => s.replace(/^\/+|\/+$/g, ""))
     .filter((s) => s.length > 0);
   return "/" + cleaned.join("/");
+}
+
+function toBoolean(value: number): boolean {
+  return value === 1;
 }

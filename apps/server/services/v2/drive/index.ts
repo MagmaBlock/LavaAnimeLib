@@ -2,16 +2,28 @@ import { and, asc, eq } from "drizzle-orm";
 import { db } from "../../../common/database/connection.js";
 import { drives } from "../../../common/database/schema/drive.js";
 import { mapDriveRecord } from "../admin/drive.js";
+import type { EndpointRecord } from "../admin/drive-endpoint.js";
+import { listEndpointsByDrive } from "../admin/drive-endpoint.js";
+
+export interface EndpointInfo {
+  id: number;
+  name: string;
+  priority: number;
+  banNSFW: boolean;
+  disableDownload: boolean;
+}
 
 export interface DriveInfo {
   id: string;
   name: string;
   description: string;
-  banNSFW: boolean;
-  disableDownload: boolean;
+  endpoints: EndpointInfo[];
 }
 
-export interface DriveRecord extends DriveInfo {
+interface DriveRecordBase {
+  id: string;
+  name: string;
+  description: string;
   connectionConfigId: number | null;
   enabled: boolean;
   isDefault: boolean;
@@ -20,6 +32,8 @@ export interface DriveRecord extends DriveInfo {
   updatedAt: Date | null;
 }
 
+export type DriveRecord = DriveRecordBase;
+
 export type DriveUpsertInput = Omit<DriveRecord, "createdAt" | "updatedAt">;
 
 export interface DriveListResult {
@@ -27,17 +41,31 @@ export interface DriveListResult {
   list: DriveInfo[];
 }
 
+function toEndpointInfo(ep: EndpointRecord): EndpointInfo {
+  return {
+    id: ep.id,
+    name: ep.name,
+    priority: ep.priority,
+    banNSFW: ep.banNSFW,
+    disableDownload: ep.disableDownload,
+  };
+}
+
 export async function getDriveList(): Promise<DriveListResult> {
   const enabledDrives = await getEnabledDrives();
-  return {
-    default: getDefaultDriveFromList(enabledDrives).id,
-    list: enabledDrives.map((drive) => ({
+  const driveList: DriveInfo[] = [];
+  for (const drive of enabledDrives) {
+    const endpoints = await listEndpointsByDrive(drive.id);
+    driveList.push({
       id: drive.id,
       name: drive.name,
       description: drive.description,
-      banNSFW: drive.banNSFW,
-      disableDownload: drive.disableDownload,
-    })),
+      endpoints: endpoints.filter((ep) => ep.enabled && ep.url).map(toEndpointInfo),
+    });
+  }
+  return {
+    default: getDefaultDriveFromList(enabledDrives).id,
+    list: driveList,
   };
 }
 

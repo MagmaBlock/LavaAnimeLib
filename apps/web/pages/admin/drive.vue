@@ -67,12 +67,6 @@
             <NInputNumber v-model:value="form.sortOrder" class="!w-full" />
           </NFormItem>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <NFormItem label="限制 NSFW">
-              <NSwitch v-model:value="form.banNSFW" />
-            </NFormItem>
-            <NFormItem label="禁止下载">
-              <NSwitch v-model:value="form.disableDownload" />
-            </NFormItem>
             <NFormItem label="启用">
               <NSwitch v-model:value="form.enabled" />
             </NFormItem>
@@ -129,7 +123,8 @@
         <NFormItem label="线路名称" required>
           <NInput v-model:value="endpointForm.name" placeholder="例如 电信、海外" />
         </NFormItem>
-        <NFormItem label="对外地址 (URL)">
+        <NFormItem label="对外地址 (URL)" required>
+          <div class="text-xs text-gray-400 mb-1">用户访问该线路时的地址，例如 https://alist.example.com，用于构造文件下载链接</div>
           <NInput v-model:value="endpointForm.url" placeholder="https://public.example.com" />
         </NFormItem>
         <NFormItem label="对外连接" required>
@@ -141,16 +136,22 @@
             filterable
           />
         </NFormItem>
-        <div class="grid grid-cols-2 gap-3">
-          <NFormItem label="优先级">
-            <NInputNumber v-model:value="endpointForm.priority" class="!w-full" :min="0" />
-          </NFormItem>
-          <NFormItem label="启用">
-            <div class="h-9 flex items-center">
-              <NSwitch v-model:value="endpointForm.enabled" />
-            </div>
-          </NFormItem>
-        </div>
+          <div class="grid grid-cols-2 gap-3">
+            <NFormItem label="优先级">
+              <NInputNumber v-model:value="endpointForm.priority" class="!w-full" :min="0" />
+            </NFormItem>
+            <NFormItem label="启用">
+              <div class="h-9 flex items-center">
+                <NSwitch v-model:value="endpointForm.enabled" />
+              </div>
+            </NFormItem>
+            <NFormItem label="限制 NSFW">
+              <NSwitch v-model:value="endpointForm.banNSFW" />
+            </NFormItem>
+            <NFormItem label="禁止下载">
+              <NSwitch v-model:value="endpointForm.disableDownload" />
+            </NFormItem>
+          </div>
       </NForm>
       <template #footer>
         <NSpace justify="end">
@@ -193,6 +194,8 @@ interface EndpointForm {
   connectionConfigId: number | null;
   priority: number;
   enabled: boolean;
+  banNSFW: boolean;
+  disableDownload: boolean;
 }
 
 const message = useMessage();
@@ -221,6 +224,8 @@ const emptyEndpointForm = (): EndpointForm => ({
   connectionConfigId: null,
   priority: 0,
   enabled: true,
+  banNSFW: false,
+  disableDownload: false,
 });
 const endpointForm = reactive<EndpointForm>(emptyEndpointForm());
 
@@ -259,8 +264,6 @@ const emptyForm = (): DriveForm => ({
   name: "",
   description: "",
   connectionConfigId: null,
-  banNSFW: false,
-  disableDownload: false,
   enabled: true,
   isDefault: false,
   sortOrder: 0,
@@ -313,11 +316,9 @@ const columns: DataTableColumns<DriveRecord> = [
   {
     title: "策略",
     key: "flags",
-    width: 210,
+    width: 100,
     render(row: DriveRecord) {
       return h(NSpace, { size: "small" }, () => [
-        row.banNSFW ? h(NTag, { size: "small", type: "warning" }, () => "NSFW") : null,
-        row.disableDownload ? h(NTag, { size: "small", type: "error" }, () => "禁止下载") : null,
         row.isDefault ? h(NTag, { size: "small", type: "success" }, () => "默认") : null,
       ]);
     },
@@ -423,6 +424,17 @@ const endpointColumns: DataTableColumns<EndpointRecord> = [
     width: 70,
   },
   {
+    title: "策略",
+    key: "endpointFlags",
+    width: 120,
+    render(row: EndpointRecord) {
+      return h(NSpace, { size: "small" }, () => [
+        row.banNSFW ? h(NTag, { size: "small", type: "warning" }, () => "NSFW") : null,
+        row.disableDownload ? h(NTag, { size: "small", type: "error" }, () => "禁止下载") : null,
+      ]);
+    },
+  },
+  {
     title: "启用",
     key: "enabled",
     width: 80,
@@ -479,8 +491,6 @@ function openEditDrawer(row: DriveRecord) {
     name: row.name,
     description: row.description,
     connectionConfigId: row.connectionConfigId,
-    banNSFW: row.banNSFW,
-    disableDownload: row.disableDownload,
     enabled: row.enabled,
     isDefault: row.isDefault,
     sortOrder: row.sortOrder,
@@ -533,11 +543,21 @@ function openEditEndpoint(row: EndpointRecord) {
     connectionConfigId: row.connectionConfigId,
     priority: row.priority,
     enabled: row.enabled,
+    banNSFW: row.banNSFW,
+    disableDownload: row.disableDownload,
   });
   endpointEditModal.value = true;
 }
 
 async function saveEndpoint() {
+  if (!endpointForm.name.trim()) {
+    message.warning("线路名称不能为空");
+    return;
+  }
+  if (!endpointForm.url.trim()) {
+    message.warning("对外地址不能为空");
+    return;
+  }
   endpointSaving.value = true;
   try {
     const url = editingEndpointId.value
@@ -567,6 +587,8 @@ async function quickUpdateEndpoint(row: EndpointRecord, patch: Partial<EndpointF
       connectionConfigId: row.connectionConfigId,
       priority: row.priority,
       enabled: row.enabled,
+      banNSFW: row.banNSFW,
+      disableDownload: row.disableDownload,
       ...patch,
     });
     await loadEndpoints();
@@ -640,8 +662,6 @@ async function quickUpdate(row: DriveRecord, patch: Partial<DriveForm>) {
       name: row.name,
       description: row.description,
       connectionConfigId: row.connectionConfigId,
-      banNSFW: row.banNSFW,
-      disableDownload: row.disableDownload,
       enabled: row.enabled,
       isDefault: row.isDefault,
       sortOrder: row.sortOrder,

@@ -17,14 +17,14 @@ VALUES (1, 'alist', '{"host": "https://alist.example.com", "path": "/test/LavaAn
 
 -- 测试存储节点
 REPLACE INTO `drives`
-  (`id`, `name`, `description`, `connection_config_id`, `banNSFW`, `disableDownload`, `enabled`, `isDefault`, `sortOrder`)
+  (`id`, `name`, `description`, `connection_config_id`, `enabled`, `isDefault`, `sortOrder`)
 VALUES
-  ('1A', '测试存储节点', '测试用存储节点', 1, 0, 0, 1, 1, 0),
-  ('2B', '禁用测试节点', '不应出现在公开列表', 1, 0, 1, 0, 0, 1);
+  ('1A', '测试存储节点', '测试用存储节点', 1, 1, 1, 0),
+  ('2B', '禁用测试节点', '不应出现在公开列表', 1, 0, 0, 1);
 
 -- 测试端点
-REPLACE INTO `drive_endpoints` (`id`, `drive_id`, `name`, `url`, `connection_config_id`, `priority`, `enabled`)
-VALUES (1, '1A', '默认端点', 'https://alist.example.com', 1, 0, 1);
+REPLACE INTO `drive_endpoints` (`id`, `drive_id`, `name`, `url`, `connection_config_id`, `priority`, `enabled`, `banNSFW`, `disableDownload`)
+VALUES (1, '1A', '默认端点', 'https://alist.example.com', 1, 0, 1, 0, 0);
 
 -- 测试已使用的邀请码
 REPLACE INTO `invite_code` (`code`, `code_creator`, `code_user`, `use_time`, `expiration_time`)

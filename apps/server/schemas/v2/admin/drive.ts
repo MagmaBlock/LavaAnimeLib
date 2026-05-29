@@ -9,8 +9,6 @@ export const driveBodySchema = z.object({
   name: z.string().trim().min(1).max(100),
   description: z.string().trim().default(""),
   connectionConfigId: z.number().int().nullable().default(null),
-  banNSFW: z.boolean().default(false),
-  disableDownload: z.boolean().default(false),
   enabled: z.boolean().default(true),
   isDefault: z.boolean().default(false),
   sortOrder: z.number().int().default(0),

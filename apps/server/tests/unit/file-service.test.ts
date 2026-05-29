@@ -48,8 +48,6 @@ function mockDrive(overrides?: Record<string, unknown>) {
     id: "1A",
     name: "测试存储",
     description: "",
-    banNSFW: false,
-    disableDownload: false,
     connectionConfigId: 1,
     enabled: true,
     isDefault: true,

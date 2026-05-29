@@ -20,7 +20,7 @@
   </AnimePlayerActionBarIcon>
   <!-- 缓存 -->
   <AnimePlayerActionBarIcon
-    v-if="!store.activeDrive?.disableDownload"
+    v-if="!store.activeEndpoint?.disableDownload"
     icon="/PlayersIcon/download.svg"
     :href="store.activeFile?.url"
     @click="handleButtonClick('Download')"
@@ -29,7 +29,7 @@
   </AnimePlayerActionBarIcon>
   <!-- 缓存 -->
   <AnimePlayerActionBarIcon
-    v-if="!store.activeDrive?.disableDownload"
+    v-if="!store.activeEndpoint?.disableDownload"
     @click="
       () => {
         handleButtonClick('Download');

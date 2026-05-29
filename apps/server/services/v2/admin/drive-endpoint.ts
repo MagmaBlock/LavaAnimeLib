@@ -10,6 +10,8 @@ export interface EndpointRecord {
   connectionConfigId: number;
   priority: number;
   enabled: boolean;
+  banNSFW: boolean;
+  disableDownload: boolean;
 }
 
 export interface EndpointUpsert {
@@ -19,6 +21,8 @@ export interface EndpointUpsert {
   connectionConfigId: number;
   priority: number;
   enabled: boolean;
+  banNSFW: boolean;
+  disableDownload: boolean;
 }
 
 function mapRow(row: typeof driveEndpoints.$inferSelect): EndpointRecord {
@@ -30,6 +34,8 @@ function mapRow(row: typeof driveEndpoints.$inferSelect): EndpointRecord {
     connectionConfigId: row.connectionConfigId,
     priority: row.priority,
     enabled: toBoolean(row.enabled),
+    banNSFW: toBoolean(row.banNSFW),
+    disableDownload: toBoolean(row.disableDownload),
   };
 }
 
@@ -54,6 +60,8 @@ export async function createEndpoint(input: EndpointUpsert): Promise<number> {
     connectionConfigId: input.connectionConfigId,
     priority: input.priority,
     enabled: input.enabled ? 1 : 0,
+    banNSFW: input.banNSFW ? 1 : 0,
+    disableDownload: input.disableDownload ? 1 : 0,
   });
   return result[0].insertId;
 }
@@ -69,6 +77,8 @@ export async function updateEndpoint(id: number, input: EndpointUpsert): Promise
       connectionConfigId: input.connectionConfigId,
       priority: input.priority,
       enabled: input.enabled ? 1 : 0,
+      banNSFW: input.banNSFW ? 1 : 0,
+      disableDownload: input.disableDownload ? 1 : 0,
     })
     .where(eq(driveEndpoints.id, id));
   return true;

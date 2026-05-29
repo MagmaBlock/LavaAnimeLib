@@ -28,8 +28,7 @@ describe("getDriveList", () => {
     expect(drive).toHaveProperty("id");
     expect(drive).toHaveProperty("name");
     expect(drive).toHaveProperty("description");
-    expect(drive).toHaveProperty("banNSFW");
-    expect(drive).toHaveProperty("disableDownload");
+    expect(drive).toHaveProperty("endpoints");
   });
 
   it("list 中不应包含禁用节点", async () => {
@@ -74,8 +73,6 @@ describe("admin drive mutations", () => {
       name: "不存在节点",
       description: "",
       connectionConfigId: null,
-      banNSFW: false,
-      disableDownload: false,
       enabled: true,
       isDefault: false,
       sortOrder: 0,

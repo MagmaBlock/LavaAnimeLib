@@ -20,7 +20,8 @@
 const store = useAnimeStore();
 
 const retry = async () => {
-  await store.getFileData(store.laID, store.activeDrive.id);
+  if (!store.activeDrive) return;
+  await store.getFileData(store.laID, store.activeDrive.id, store.activeEndpoint?.id);
   store.autoPlay();
 };
 </script>

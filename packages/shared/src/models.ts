@@ -73,26 +73,36 @@ export interface ViewHistoryItem {
   useDrive: string | null;
 }
 
-export interface DriveInfo {
-  id: string;
+export interface EndpointInfo {
+  id: number;
   name: string;
-  description: string;
+  priority: number;
   banNSFW: boolean;
   disableDownload: boolean;
 }
 
-export interface DriveListResult {
-  default: string;
-  list: DriveInfo[];
+export interface DriveInfo {
+  id: string;
+  name: string;
+  description: string;
+  endpoints: EndpointInfo[];
 }
 
-export interface DriveRecord extends DriveInfo {
+export interface DriveRecord {
+  id: string;
+  name: string;
+  description: string;
   connectionConfigId: number | null;
   enabled: boolean;
   isDefault: boolean;
   sortOrder: number;
   createdAt: string | Date | null;
   updatedAt: string | Date | null;
+}
+
+export interface DriveListResult {
+  default: string;
+  list: DriveInfo[];
 }
 
 export interface ConnectionConfig {
@@ -109,6 +119,8 @@ export interface EndpointRecord {
   connectionConfigId: number;
   priority: number;
   enabled: boolean;
+  banNSFW: boolean;
+  disableDownload: boolean;
 }
 
 export interface FileIndexItem {

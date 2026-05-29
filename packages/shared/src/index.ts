@@ -12,6 +12,7 @@ export type {
   DriveListResult,
   DriveRecord,
   ConnectionConfig,
+  EndpointInfo,
   EndpointRecord,
   FileIndexItem,
   FileIndexStats,

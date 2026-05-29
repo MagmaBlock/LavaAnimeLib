@@ -68,6 +68,9 @@ export class AlistDriver implements FileSystemDriver {
   }
 
   getDownloadUrl(entry: FileSystemEntry, endpointBaseUrl: string): string {
+    if (!endpointBaseUrl) {
+      return "";
+    }
     const url = new URL(endpointBaseUrl);
     url.pathname = joinPaths("/d", this.rootPath, entry.path);
     if (entry.sign) {

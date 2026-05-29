@@ -22,6 +22,20 @@
       "when": 1748425000000,
       "tag": "0002_expensive_hammerhead",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1779994039845,
+      "tag": "0003_neat_vanisher",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1780025577388,
+      "tag": "0004_eager_madame_masque",
+      "breakpoints": true
     }
   ]
 }
