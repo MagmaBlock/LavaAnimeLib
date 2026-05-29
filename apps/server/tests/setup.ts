@@ -9,18 +9,19 @@ vi.mock("../common/config.js", async () => {
 
 import cache from "../common/cache.js";
 
-let db: Awaited<typeof import("../common/database/connection.js")>["db"] | undefined;
-let dbReady = false;
+let seeded = false;
 
 beforeAll(async () => {
+  let db: Awaited<typeof import("../common/database/connection.js")>["db"];
   try {
     const connectionModule = await import("../common/database/connection.js");
     db = connectionModule.db;
-    dbReady = true;
   } catch {
     console.warn("[tests/setup] 数据库不可用，跳过 seed 数据加载。部分测试可能无法运行。");
     return;
   }
+
+  if (seeded) return;
 
   const { sql } = await import("drizzle-orm");
 
@@ -38,6 +39,8 @@ beforeAll(async () => {
   for (const statement of statements) {
     await db.execute(sql.raw(statement));
   }
+
+  seeded = true;
 });
 
 beforeEach(() => {
