@@ -100,8 +100,8 @@ pnpm build            # 全量构建（shared → web → server），构建后 
 # 类型 / 测试
 pnpm typecheck        # 所有包类型检查
 pnpm start            # 生产启动（:8090，自动托管前端静态文件）
-pnpm test             # 运行全部测试
-pnpm test:full        # 全流程测试（启动 test db → 运行测试 → 停止清理）
+pnpm test:full        # 全流程测试（启动 test db → 运行测试 → 停止清理） ⭐ 推荐
+pnpm test             # 运行全部测试（需要自行启动 test db）
 
 # 数据库
 pnpm db:generate      # 生成 Drizzle 迁移文件
