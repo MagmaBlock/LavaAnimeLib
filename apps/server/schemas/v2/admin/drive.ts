@@ -8,6 +8,8 @@ export const alistConfigSchema = z.object({
   host: z.string().trim().min(1, "Host 不能为空").max(512),
   path: z.string().trim().min(1, "Path 不能为空").max(512),
   password: z.string().trim().max(256).default(""),
+  token: z.string().trim().max(512).optional(),
+  signExpireHours: z.number().int().min(0).optional(),
 });
 
 export const driveBodySchema = z.object({

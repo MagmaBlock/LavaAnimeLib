@@ -67,7 +67,13 @@
             <NInput v-model:value="configForm.path" placeholder="/Anime" />
           </NFormItem>
           <NFormItem label="Password">
-            <NInput v-model:value="configForm.password" type="password" placeholder="AList 密码（可选）" />
+            <NInput v-model:value="configForm.password" placeholder="AList 密码（可选）" />
+          </NFormItem>
+          <NFormItem label="Token">
+            <NInput v-model:value="configForm.token" placeholder="AList Token，用于服务端自签名（可选）" />
+          </NFormItem>
+          <NFormItem label="签名过期时间（小时）">
+            <NInputNumber v-model:value="configForm.signExpireHours" :min="0" class="!w-full" placeholder="0 = 永不过期" />
           </NFormItem>
           <NDivider>策略</NDivider>
           <NFormItem label="排序">
@@ -139,6 +145,12 @@
         <NFormItem label="Path 覆写">
           <NInput v-model:value="endpointOverrideForm.path" placeholder="留空沿用节点 Path，例如 /od1-proxy" />
         </NFormItem>
+        <NFormItem label="Token 覆写">
+          <NInput v-model:value="endpointOverrideForm.token" placeholder="留空沿用节点 Token" />
+        </NFormItem>
+        <NFormItem label="签名过期时间覆写">
+          <NInputNumber v-model:value="endpointOverrideForm.signExpireHours" :min="0" class="!w-full" placeholder="留空沿用节点设置" />
+        </NFormItem>
         <NDivider>策略</NDivider>
         <div class="grid grid-cols-2 gap-3">
           <NFormItem label="优先级">
@@ -205,6 +217,8 @@ interface DriveConfigForm {
   host: string;
   path: string;
   password: string;
+  token: string;
+  signExpireHours: number;
 }
 
 interface EndpointForm {
@@ -221,6 +235,9 @@ interface EndpointForm {
 interface EndpointOverrideForm {
   host: string;
   path: string;
+  password: string;
+  token: string;
+  signExpireHours: number | null;
 }
 
 const driverTypeOptions = [
@@ -259,16 +276,25 @@ const endpointForm = reactive<EndpointForm>(emptyEndpointForm());
 const emptyEndpointOverride = (): EndpointOverrideForm => ({
   host: "",
   path: "",
+  password: "",
+  token: "",
+  signExpireHours: null,
 });
 const endpointOverrideForm = reactive<EndpointOverrideForm>(emptyEndpointOverride());
 
 function configToOverride(): DriveConfigOverride | null {
   const host = endpointOverrideForm.host.trim();
   const path = endpointOverrideForm.path.trim();
-  if (!host && !path) return null;
+  const password = endpointOverrideForm.password.trim();
+  const token = endpointOverrideForm.token.trim();
+  const signExpireHours = endpointOverrideForm.signExpireHours;
+  if (!host && !path && !password && !token && signExpireHours === null) return null;
   const result: DriveConfigOverride = {};
   if (host) result.host = host;
   if (path) result.path = path;
+  if (password) result.password = password;
+  if (token) result.token = token;
+  if (signExpireHours != null) result.signExpireHours = signExpireHours;
   return result;
 }
 
@@ -279,6 +305,9 @@ function overrideToForm(override: DriveConfigOverride | null) {
   }
   endpointOverrideForm.host = override.host ?? "";
   endpointOverrideForm.path = override.path ?? "";
+  endpointOverrideForm.password = override.password ?? "";
+  endpointOverrideForm.token = override.token ?? "";
+  endpointOverrideForm.signExpireHours = override.signExpireHours ?? null;
 }
 
 const emptyForm = (): DriveForm => ({
@@ -286,7 +315,7 @@ const emptyForm = (): DriveForm => ({
   name: "",
   description: "",
   type: "alist",
-  config: { host: "", path: "", password: "" },
+  config: { host: "", path: "", password: "", token: "", signExpireHours: 0 },
   banNSFW: false,
   enabled: true,
   isDefault: false,
@@ -300,6 +329,8 @@ function parseDriveConfig(config: AlistDriveConfig): DriveConfigForm {
     host: config.host,
     path: config.path,
     password: config.password,
+    token: config.token ?? "",
+    signExpireHours: config.signExpireHours ?? 0,
   };
 }
 
@@ -308,6 +339,8 @@ function buildDriveConfig(): AlistDriveConfig {
     host: configForm.host.trim(),
     path: configForm.path.trim(),
     password: configForm.password.trim(),
+    token: configForm.token.trim() || undefined,
+    signExpireHours: configForm.signExpireHours || undefined,
   };
 }
 
@@ -517,6 +550,8 @@ function resetForm(next: DriveForm) {
   configForm.host = cfg.host;
   configForm.path = cfg.path;
   configForm.password = cfg.password;
+  configForm.token = cfg.token;
+  configForm.signExpireHours = cfg.signExpireHours;
 }
 
 function openCreateDrawer() {

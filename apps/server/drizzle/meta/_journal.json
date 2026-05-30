@@ -43,6 +43,13 @@
       "when": 1780134810481,
       "tag": "0005_slim_connection_config",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1780162653330,
+      "tag": "0006_mean_maelstrom",
+      "breakpoints": true
     }
   ]
 }

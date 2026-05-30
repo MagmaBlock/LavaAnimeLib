@@ -14,7 +14,6 @@ export interface FileIndexRecord {
   type: string;
   deleted: number;
   modified: Date | null;
-  sign: string | null;
   indexedAt: Date;
 }
 
@@ -26,7 +25,6 @@ export interface FileIndexUpsert {
   size?: number;
   type: string;
   modified?: Date | null;
-  sign?: string | null;
 }
 
 function mapRow(row: typeof fileIndex.$inferSelect): FileIndexRecord {
@@ -106,7 +104,6 @@ export async function upsertEntries(
           size: entry.size ?? 0,
           type: entry.type,
           modified: entry.modified ?? null,
-          sign: entry.sign ?? null,
           deleted: 0,
           indexedAt: sql`NOW()`,
           animeId: entry.animeId ?? null,
@@ -121,7 +118,6 @@ export async function upsertEntries(
         size: entry.size ?? 0,
         type: entry.type,
         modified: entry.modified ?? null,
-        sign: entry.sign ?? null,
         deleted: 0,
         indexedAt: sql`NOW()`,
       });

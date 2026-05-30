@@ -12,7 +12,7 @@ afterEach(async () => {
 describe("upsertEntries", () => {
   it("应插入新文件条目", async () => {
     await s.upsertEntries([
-      { driveId: DRIVE, path: "/root/file1.mkv", name: "file1.mkv", size: 1024, type: "file", sign: "abc" },
+      { driveId: DRIVE, path: "/root/file1.mkv", name: "file1.mkv", size: 1024, type: "file" },
     ]);
 
     const rows = await s.findActiveByDrive(DRIVE, "/root");
@@ -20,7 +20,6 @@ describe("upsertEntries", () => {
     expect(rows[0].name).toBe("file1.mkv");
     expect(rows[0].size).toBe(1024);
     expect(rows[0].type).toBe("file");
-    expect(rows[0].sign).toBe("abc");
     expect(rows[0].deleted).toBe(0);
     expect(rows[0].indexedAt).toBeInstanceOf(Date);
   });
@@ -38,16 +37,15 @@ describe("upsertEntries", () => {
 
   it("已存在条目应 UPDATE 而非 INSERT", async () => {
     await s.upsertEntries([
-      { driveId: DRIVE, path: "/root/file1.mkv", name: "file1.mkv", size: 100, type: "file", sign: "old" },
+      { driveId: DRIVE, path: "/root/file1.mkv", name: "file1.mkv", size: 100, type: "file" },
     ]);
     await s.upsertEntries([
-      { driveId: DRIVE, path: "/root/file1.mkv", name: "file1.mkv", size: 200, type: "file", sign: "new" },
+      { driveId: DRIVE, path: "/root/file1.mkv", name: "file1.mkv", size: 200, type: "file" },
     ]);
 
     const rows = await s.findActiveByDrive(DRIVE, "/root");
     expect(rows).toHaveLength(1);
     expect(rows[0].size).toBe(200);
-    expect(rows[0].sign).toBe("new");
   });
 
   it("软删除的文件重新出现时应恢复 deleted=0", async () => {

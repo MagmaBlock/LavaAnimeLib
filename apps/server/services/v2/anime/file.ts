@@ -85,7 +85,6 @@ export async function getFilesByID(
             type: "file",
             size: entry.size,
             modified: entry.modified?.toISOString() ?? "",
-            sign: entry.sign ?? undefined,
           },
           effectiveConfig.host,
         );
@@ -170,7 +169,6 @@ async function refreshDirectory(
         size: entry.size,
         type: entry.type,
         modified: entry.modified ? new Date(entry.modified) : null,
-        sign: entry.sign ?? null,
       };
     });
 

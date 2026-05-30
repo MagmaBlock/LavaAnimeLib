@@ -84,7 +84,6 @@ async function scanDirectory(
       size: entry.size,
       type: entry.type,
       modified: entry.modified ? new Date(entry.modified) : null,
-      sign: entry.sign ?? null,
     };
   });
 

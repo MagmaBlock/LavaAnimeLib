@@ -5,7 +5,6 @@ export interface FileSystemEntry {
   type: "file" | "dir";
   size: number;
   modified: string;
-  sign?: string;
 }
 
 export interface ListOptions {

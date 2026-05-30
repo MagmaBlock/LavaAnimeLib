@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import axios, { type AxiosInstance } from "axios";
 import type { FileSystemDriver, FileSystemEntry, ListOptions } from "./types.js";
 import type { AlistDriveConfig } from "@lavaanime/shared";
@@ -7,7 +8,6 @@ interface AlistApiFile {
   size: number;
   modified: string;
   is_dir: boolean;
-  sign?: string;
 }
 
 interface AlistApiResponse {
@@ -24,11 +24,15 @@ export class AlistDriver implements FileSystemDriver {
   private client: AxiosInstance;
   private rootPath: string;
   private password: string;
+  private token: string;
+  private signExpireHours: number;
 
   constructor(config: AlistDriveConfig) {
     this.client = axios.create({ baseURL: config.host });
     this.rootPath = ensureLeadingSlash(config.path);
     this.password = config.password ?? "";
+    this.token = config.token ?? "";
+    this.signExpireHours = config.signExpireHours ?? 0;
   }
 
   async list(normalizedPath: string, options?: ListOptions): Promise<FileSystemEntry[]> {
@@ -57,7 +61,6 @@ export class AlistDriver implements FileSystemDriver {
         type: file.is_dir ? "dir" : "file",
         size: file.size,
         modified: file.modified,
-        sign: file.sign,
       };
     });
   }
@@ -68,10 +71,28 @@ export class AlistDriver implements FileSystemDriver {
     }
     const url = new URL(endpointBaseUrl);
     url.pathname = joinPaths("/d", this.rootPath, entry.path);
-    if (entry.sign) {
-      url.searchParams.set("sign", entry.sign);
+    const sign = this.generateSign(entry.path);
+    if (sign) {
+      url.searchParams.set("sign", sign);
     }
     return url.toString();
+  }
+
+  generateSign(normalizedPath: string): string {
+    if (!this.token) {
+      return "";
+    }
+    const physicalPath = joinPaths(this.rootPath, normalizedPath).replace(/\/+/g, "/");
+    const expire = this.signExpireHours > 0
+      ? Math.floor(Date.now() / 1000) + this.signExpireHours * 3600
+      : 0;
+    const data = `${physicalPath}:${expire}`;
+    const hmac = crypto.createHmac("sha256", this.token).update(data).digest();
+    const signature = Buffer.from(hmac)
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_");
+    return `${signature}:${expire}`;
   }
 }
 

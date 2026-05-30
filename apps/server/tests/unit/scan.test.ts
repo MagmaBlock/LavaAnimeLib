@@ -31,11 +31,11 @@ describe("scanAllDrives", () => {
   it("应递归扫描所有条目（归一化路径）", async () => {
     mockList
       .mockResolvedValueOnce([
-        { name: "file1.mkv", path: "/file1.mkv", type: "file", size: 100, modified: "", sign: "s1" },
+        { name: "file1.mkv", path: "/file1.mkv", type: "file", size: 100, modified: "" },
         { name: "subdir", path: "/subdir", type: "dir", size: 0, modified: "" },
       ])
       .mockResolvedValueOnce([
-        { name: "file2.mkv", path: "/subdir/file2.mkv", type: "file", size: 200, modified: "", sign: "s2" },
+        { name: "file2.mkv", path: "/subdir/file2.mkv", type: "file", size: 200, modified: "" },
       ]);
 
     await scanAllDrives();

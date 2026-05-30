@@ -71,7 +71,6 @@ function makeIndexRecord(overrides: Partial<FileIndexRecord>): FileIndexRecord {
     type: "file",
     deleted: 0,
     modified: null,
-    sign: null,
     indexedAt: new Date(),
     ...overrides,
   };

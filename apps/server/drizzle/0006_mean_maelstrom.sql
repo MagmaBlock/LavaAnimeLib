@@ -1,0 +1,1 @@
+ALTER TABLE `file_index` DROP COLUMN `sign`;

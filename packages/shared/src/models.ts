@@ -93,6 +93,8 @@ export interface AlistDriveConfig {
   host: string;
   path: string;
   password: string;
+  token?: string;
+  signExpireHours?: number;
 }
 
 export type DriveConfig = AlistDriveConfig;
