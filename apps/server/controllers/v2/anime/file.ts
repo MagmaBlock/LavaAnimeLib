@@ -19,7 +19,7 @@ export async function getFilesByID(req: Request, res: Response): Promise<void> {
     if (Array.isArray(files)) {
       return success(res, files);
     } else if (typeof files === "string") {
-      if (["此 laID 不存在", "存储节点不存在", "存储节点尚未配置连接", "连接配置不存在", "没有可用的对外节点", "创建文件系统驱动失败"].includes(files)) {
+      if (["此 laID 不存在", "存储节点不存在", "没有可用的对外节点", "创建文件系统驱动失败"].includes(files)) {
         return notFound(res, files);
       }
       if (["存储节点不支持当前类型动画"].includes(files)) {

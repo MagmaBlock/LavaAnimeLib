@@ -1,13 +1,14 @@
 import parseFileName from "anime-file-parser";
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "../../../common/database/connection.js";
-import { connectionConfigs } from "../../../common/database/schema/connection-config.js";
 import { driveEndpoints } from "../../../common/database/schema/drive-endpoint.js";
 import { createDriver } from "../../../common/filesystem/factory.js";
 import { getDefaultDrive, getDrive } from "../drive/index.js";
 import { getAnimeByID } from "./index.js";
 import * as fileIndexService from "./file-index.js";
 import { log } from "../../../common/tools/logger.js";
+import type { DriveConfigOverride } from "@lavaanime/shared";
+import { parseJsonField } from "../../../common/tools/parse-json-field.js";
 
 interface FileItem {
   name: string;
@@ -31,31 +32,22 @@ export async function getFilesByID(
   const thisDrive = await getDrive(drive ?? await getDefaultDrive());
   if (!thisDrive) return "存储节点不存在";
 
-  if (thisDrive.connectionConfigId == null) {
-    return "存储节点尚未配置连接";
-  }
-
   const endpoint = await resolveEndpoint(thisDrive.id, endpointId);
   if (!endpoint) return "没有可用的对外节点";
 
-  const animeType = anime.type as { nsfw?: boolean } | undefined;
-  if (animeType?.nsfw && endpoint.banNSFW) {
+  if (thisDrive.banNSFW && (anime.type as { nsfw?: boolean })?.nsfw) {
     return "存储节点不支持当前类型动画";
   }
 
-  const configRow = await db
-    .select()
-    .from(connectionConfigs)
-    .where(eq(connectionConfigs.id, endpoint.connectionConfigId))
-    .limit(1);
-
-  if (!configRow.length) return "连接配置不存在";
+  const effectiveConfig = endpoint.configOverride
+    ? { ...thisDrive.config, ...endpoint.configOverride }
+    : thisDrive.config;
 
   let driver: ReturnType<typeof createDriver>;
   try {
-    driver = createDriver(configRow[0]);
+    driver = createDriver({ type: thisDrive.type, config: effectiveConfig });
   } catch (err) {
-    log.error(err, `创建文件系统驱动失败: endpoint=${endpointId} config=${endpoint.connectionConfigId}`);
+    log.error(err, `创建文件系统驱动失败: endpoint=${endpointId} drive=${thisDrive.id}`);
     return "创建文件系统驱动失败";
   }
 
@@ -63,6 +55,7 @@ export async function getFilesByID(
   const dirPath = joinPaths(animeIndex.year, animeIndex.type, animeIndex.name);
 
   try {
+    const scanDriver = createDriver({ type: thisDrive.type, config: thisDrive.config });
     const isCached = await fileIndexService.isCacheValid(thisDrive.id, dirPath);
 
     let files: fileIndexService.FileIndexRecord[];
@@ -70,7 +63,7 @@ export async function getFilesByID(
     if (isCached) {
       files = await fileIndexService.findActiveByDrive(thisDrive.id, dirPath);
     } else {
-      await refreshDirectory(driver, thisDrive.id, dirPath);
+      await refreshDirectory(scanDriver, thisDrive.id, dirPath);
       files = await fileIndexService.findActiveByDrive(thisDrive.id, dirPath);
     }
 
@@ -94,7 +87,7 @@ export async function getFilesByID(
             modified: entry.modified?.toISOString() ?? "",
             sign: entry.sign ?? undefined,
           },
-          endpoint.url,
+          effectiveConfig.host,
         );
         base.url = downloadUrl;
         base.parseResult = parseFileName(entry.name);
@@ -111,13 +104,12 @@ export async function getFilesByID(
 async function resolveEndpoint(
   driveId: string,
   endpointId?: number
-): Promise<{ id: number; connectionConfigId: number; url: string; banNSFW: boolean; disableDownload: boolean } | null> {
+): Promise<{ id: number; configOverride: DriveConfigOverride | null; banNSFW: boolean; disableDownload: boolean } | null> {
   if (endpointId != null) {
     const rows = await db
       .select({
         id: driveEndpoints.id,
-        connectionConfigId: driveEndpoints.connectionConfigId,
-        url: driveEndpoints.url,
+        configOverride: driveEndpoints.configOverride,
         banNSFW: driveEndpoints.banNSFW,
         disableDownload: driveEndpoints.disableDownload,
       })
@@ -125,30 +117,39 @@ async function resolveEndpoint(
       .where(and(
         eq(driveEndpoints.id, endpointId),
         eq(driveEndpoints.driveId, driveId),
-        eq(driveEndpoints.enabled, 1)
+        eq(driveEndpoints.enabled, 1),
       ))
       .limit(1);
-    if (!rows[0] || !rows[0].url) return null;
-    return { ...rows[0], banNSFW: toBoolean(rows[0].banNSFW), disableDownload: toBoolean(rows[0].disableDownload) };
+    if (!rows[0]) return null;
+    const override = parseJsonField(rows[0].configOverride);
+    return {
+      ...rows[0],
+      configOverride: (override && Object.keys(override).length > 0 ? override : null) as DriveConfigOverride | null,
+      banNSFW: toBoolean(rows[0].banNSFW),
+      disableDownload: toBoolean(rows[0].disableDownload),
+    };
   }
 
   const rows = await db
     .select({
       id: driveEndpoints.id,
-      connectionConfigId: driveEndpoints.connectionConfigId,
-      url: driveEndpoints.url,
+      configOverride: driveEndpoints.configOverride,
       banNSFW: driveEndpoints.banNSFW,
       disableDownload: driveEndpoints.disableDownload,
     })
     .from(driveEndpoints)
     .where(and(eq(driveEndpoints.driveId, driveId), eq(driveEndpoints.enabled, 1)))
     .orderBy(asc(driveEndpoints.priority), asc(driveEndpoints.id));
-  for (const row of rows) {
-    if (row.url) {
-      return { ...row, banNSFW: toBoolean(row.banNSFW), disableDownload: toBoolean(row.disableDownload) };
-    }
-  }
-  return null;
+
+  const override2 = rows[0] ? parseJsonField(rows[0].configOverride) : null;
+  return rows[0]
+    ? {
+        ...rows[0],
+        configOverride: (override2 && Object.keys(override2).length > 0 ? override2 : null) as DriveConfigOverride | null,
+        banNSFW: toBoolean(rows[0].banNSFW),
+        disableDownload: toBoolean(rows[0].disableDownload),
+      }
+    : null;
 }
 
 async function refreshDirectory(
@@ -187,17 +188,8 @@ export async function refreshAnimeFileIndex(laID: number, driveId?: string): Pro
 
   const thisDrive = await getDrive(driveId ?? await getDefaultDrive());
   if (!thisDrive) throw new Error("存储节点不存在");
-  if (thisDrive.connectionConfigId == null) throw new Error("存储节点尚未配置连接");
 
-  const configRow = await db
-    .select()
-    .from(connectionConfigs)
-    .where(eq(connectionConfigs.id, thisDrive.connectionConfigId))
-    .limit(1);
-
-  if (!configRow.length) throw new Error("连接配置不存在");
-
-  const driver = createDriver(configRow[0]);
+  const driver = createDriver({ type: thisDrive.type, config: thisDrive.config });
   const animeIndex = anime.index as { year: string; type: string; name: string };
   const dirPath = joinPaths(animeIndex.year, animeIndex.type, animeIndex.name);
 

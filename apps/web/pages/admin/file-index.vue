@@ -460,7 +460,7 @@ async function loadDrives() {
     if (result.data?.code === 200) {
       const drives = result.data.data as DriveRecord[];
       driveOptions.value = drives
-        .filter((d) => d.connectionConfigId != null)
+        .filter((d) => d.type && d.config)
         .map((d) => ({
           label: `${d.name} (${d.id})`,
           value: d.id,

@@ -48,7 +48,9 @@ function mockDrive(overrides?: Record<string, unknown>) {
     id: "1A",
     name: "测试存储",
     description: "",
-    connectionConfigId: 1,
+    type: "alist",
+    config: { host: "https://alist.example.com", path: "/test", password: "" },
+    banNSFW: false,
     enabled: true,
     isDefault: true,
     sortOrder: 0,
@@ -185,11 +187,12 @@ describe("getFilesByID", () => {
       expect(result).toBe("存储节点不存在");
     });
 
-    it("未配置连接时返回错误", async () => {
-      mockAnimeIndexService.getDrive.mockResolvedValue(mockDrive({ connectionConfigId: null }));
+    it("NSFW 番剧在禁止 NSFW 的节点上应返回错误", async () => {
+      mockAnimeIndexService.getAnimeByID.mockResolvedValue(mockAnime({ type: { nsfw: true } }));
+      mockAnimeIndexService.getDrive.mockResolvedValue(mockDrive({ banNSFW: true }));
 
       const result = await getFilesByID(1, "1A");
-      expect(result).toBe("存储节点尚未配置连接");
+      expect(result).toBe("存储节点不支持当前类型动画");
     });
   });
 });

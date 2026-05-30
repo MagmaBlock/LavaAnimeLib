@@ -40,12 +40,11 @@
       </NSpin>
     </NCard>
 
-    <!-- 存储节点编辑 Drawer -->
     <NDrawer v-model:show="drawerOpen" :width="drawerWidth" placement="right">
       <NDrawerContent :title="editing ? '编辑存储节点' : '新建存储节点'" closable>
         <NForm label-placement="top">
           <NFormItem label="节点 ID" required>
-            <NInput v-model:value="form.id" :disabled="editing" placeholder="例如 tky1-openlist" />
+            <NInput v-model:value="form.id" :disabled="editing" placeholder="例如 tky1" />
           </NFormItem>
           <NFormItem label="名称" required>
             <NInput v-model:value="form.name" placeholder="展示给用户的节点名称" />
@@ -53,16 +52,24 @@
           <NFormItem label="描述">
             <NInput v-model:value="form.description" type="textarea" placeholder="节点说明" />
           </NFormItem>
-          <NFormItem label="扫盘连接" required>
-            <div class="text-xs text-gray-400 mb-1">该存储节点用于扫描文件索引的内部连接配置</div>
+          <NFormItem label="驱动类型" required>
             <NSelect
-              v-model:value="form.connectionConfigId"
-              :options="connectionConfigOptions"
-              placeholder="选择扫盘使用的连接配置"
-              clearable
-              filterable
+              v-model:value="form.type"
+              :options="driverTypeOptions"
+              placeholder="选择文件系统驱动类型"
             />
           </NFormItem>
+          <NDivider>连接配置</NDivider>
+          <NFormItem label="Host" required>
+            <NInput v-model:value="configForm.host" placeholder="https://alist.example.com" />
+          </NFormItem>
+          <NFormItem label="Path" required>
+            <NInput v-model:value="configForm.path" placeholder="/Anime" />
+          </NFormItem>
+          <NFormItem label="Password">
+            <NInput v-model:value="configForm.password" type="password" placeholder="AList 密码（可选）" />
+          </NFormItem>
+          <NDivider>策略</NDivider>
           <NFormItem label="排序">
             <NInputNumber v-model:value="form.sortOrder" class="!w-full" />
           </NFormItem>
@@ -72,6 +79,9 @@
             </NFormItem>
             <NFormItem label="默认节点">
               <NSwitch v-model:value="form.isDefault" />
+            </NFormItem>
+            <NFormItem label="禁止 NSFW">
+              <NSwitch v-model:value="form.banNSFW" />
             </NFormItem>
           </div>
         </NForm>
@@ -87,7 +97,6 @@
       </NDrawerContent>
     </NDrawer>
 
-    <!-- 对外节点管理 Drawer -->
     <NDrawer v-model:show="endpointDrawerOpen" :width="drawerWidth" placement="right">
       <NDrawerContent :title="`对外节点 — ${currentDriveName}`" closable>
         <div class="mb-4">
@@ -117,41 +126,36 @@
       </NDrawerContent>
     </NDrawer>
 
-    <!-- 对外节点编辑 Modal -->
     <NModal v-model:show="endpointEditModal" preset="card" :title="editingEndpointId ? '编辑对外节点' : '新建对外节点'" class="!max-w-md">
       <NForm label-placement="top">
         <NFormItem label="线路名称" required>
-          <NInput v-model:value="endpointForm.name" placeholder="例如 电信、海外" />
+          <NInput v-model:value="endpointForm.name" placeholder="例如 电信直连、本机转发" />
         </NFormItem>
-        <NFormItem label="对外地址 (URL)" required>
-          <div class="text-xs text-gray-400 mb-1">用户访问该线路时的地址，例如 https://alist.example.com，用于构造文件下载链接</div>
-          <NInput v-model:value="endpointForm.url" placeholder="https://public.example.com" />
+        <NDivider>覆写连接配置（可选）</NDivider>
+        <div class="text-xs text-gray-400 mb-3">覆写存储节点的连接配置。留空则沿用节点默认配置。</div>
+        <NFormItem label="Host 覆写">
+          <NInput v-model:value="endpointOverrideForm.host" placeholder="留空沿用节点 Host" />
         </NFormItem>
-        <NFormItem label="对外连接" required>
-          <div class="text-xs text-gray-400 mb-1">该对外节点用于构造下载链接的连接配置</div>
-          <NSelect
-            v-model:value="endpointForm.connectionConfigId"
-            :options="connectionConfigOptions"
-            placeholder="选择对外使用的连接配置"
-            filterable
-          />
+        <NFormItem label="Path 覆写">
+          <NInput v-model:value="endpointOverrideForm.path" placeholder="留空沿用节点 Path，例如 /od1-proxy" />
         </NFormItem>
-          <div class="grid grid-cols-2 gap-3">
-            <NFormItem label="优先级">
-              <NInputNumber v-model:value="endpointForm.priority" class="!w-full" :min="0" />
-            </NFormItem>
-            <NFormItem label="启用">
-              <div class="h-9 flex items-center">
-                <NSwitch v-model:value="endpointForm.enabled" />
-              </div>
-            </NFormItem>
-            <NFormItem label="限制 NSFW">
-              <NSwitch v-model:value="endpointForm.banNSFW" />
-            </NFormItem>
-            <NFormItem label="禁止下载">
-              <NSwitch v-model:value="endpointForm.disableDownload" />
-            </NFormItem>
-          </div>
+        <NDivider>策略</NDivider>
+        <div class="grid grid-cols-2 gap-3">
+          <NFormItem label="优先级">
+            <NInputNumber v-model:value="endpointForm.priority" class="!w-full" :min="0" />
+          </NFormItem>
+          <NFormItem label="启用">
+            <div class="h-9 flex items-center">
+              <NSwitch v-model:value="endpointForm.enabled" />
+            </div>
+          </NFormItem>
+          <NFormItem label="限制 NSFW">
+            <NSwitch v-model:value="endpointForm.banNSFW" />
+          </NFormItem>
+          <NFormItem label="禁止下载">
+            <NSwitch v-model:value="endpointForm.disableDownload" />
+          </NFormItem>
+        </div>
       </NForm>
       <template #footer>
         <NSpace justify="end">
@@ -170,13 +174,14 @@ import { Icon } from "@iconify/vue";
 import { h } from "vue";
 import {
   NButton,
+  NDivider,
   NPopconfirm,
   NSpace,
   NSwitch,
   NTag,
   type DataTableColumns,
 } from "naive-ui";
-import type { DriveRecord, ConnectionConfig, EndpointRecord } from "@lavaanime/shared";
+import type { DriveRecord, EndpointRecord, AlistDriveConfig, DriveConfigOverride } from "@lavaanime/shared";
 
 definePageMeta({
   layout: "admin",
@@ -184,23 +189,46 @@ definePageMeta({
 
 useHead({ title: "存储节点管理" });
 
-type DriveForm = Omit<DriveRecord, "createdAt" | "updatedAt">;
+interface DriveForm {
+  id: string;
+  name: string;
+  description: string;
+  type: string;
+  config: AlistDriveConfig;
+  banNSFW: boolean;
+  enabled: boolean;
+  isDefault: boolean;
+  sortOrder: number;
+}
+
+interface DriveConfigForm {
+  host: string;
+  path: string;
+  password: string;
+}
 
 interface EndpointForm {
   id: number | null;
   driveId: string;
   name: string;
-  url: string;
-  connectionConfigId: number | null;
+  configOverride: DriveConfigOverride | null;
   priority: number;
   enabled: boolean;
   banNSFW: boolean;
   disableDownload: boolean;
 }
 
+interface EndpointOverrideForm {
+  host: string;
+  path: string;
+}
+
+const driverTypeOptions = [
+  { label: "AList", value: "alist" },
+];
+
 const message = useMessage();
 const drives = ref<DriveRecord[]>([]);
-const connectionConfigs = ref<ConnectionConfig[]>([]);
 const loading = ref(true);
 const saving = ref(false);
 const drawerOpen = ref(false);
@@ -220,8 +248,7 @@ const emptyEndpointForm = (): EndpointForm => ({
   id: null,
   driveId: "",
   name: "",
-  url: "",
-  connectionConfigId: null,
+  configOverride: null,
   priority: 0,
   enabled: true,
   banNSFW: false,
@@ -229,47 +256,62 @@ const emptyEndpointForm = (): EndpointForm => ({
 });
 const endpointForm = reactive<EndpointForm>(emptyEndpointForm());
 
-const connectionConfigOptions = computed(() =>
-  connectionConfigs.value.map((c) => ({
-    label: `#${c.id} ${c.type} — ${configSummary(c)}`,
-    value: c.id,
-  }))
-);
+const emptyEndpointOverride = (): EndpointOverrideForm => ({
+  host: "",
+  path: "",
+});
+const endpointOverrideForm = reactive<EndpointOverrideForm>(emptyEndpointOverride());
 
-function parseConfigObj(c: ConnectionConfig): Record<string, unknown> {
-  const raw = c.config;
-  if (typeof raw === "string") {
-    try { return JSON.parse(raw) as Record<string, unknown>; } catch { return {}; }
-  }
-  if (typeof raw === "object" && raw !== null && !Array.isArray(raw)) {
-    return raw as Record<string, unknown>;
-  }
-  return {};
+function configToOverride(): DriveConfigOverride | null {
+  const host = endpointOverrideForm.host.trim();
+  const path = endpointOverrideForm.path.trim();
+  if (!host && !path) return null;
+  const result: DriveConfigOverride = {};
+  if (host) result.host = host;
+  if (path) result.path = path;
+  return result;
 }
 
-function configSummary(c: ConnectionConfig): string {
-  const cfg = parseConfigObj(c);
-  if (cfg.host) return String(cfg.host);
-  if (cfg.path) return String(cfg.path);
-  return JSON.stringify(cfg).slice(0, 40);
-}
-
-function findConfig(id: number | null): ConnectionConfig | undefined {
-  if (id == null) return undefined;
-  return connectionConfigs.value.find((c) => c.id === id);
+function overrideToForm(override: DriveConfigOverride | null) {
+  if (!override) {
+    Object.assign(endpointOverrideForm, emptyEndpointOverride());
+    return;
+  }
+  endpointOverrideForm.host = override.host ?? "";
+  endpointOverrideForm.path = override.path ?? "";
 }
 
 const emptyForm = (): DriveForm => ({
   id: "",
   name: "",
   description: "",
-  connectionConfigId: null,
+  type: "alist",
+  config: { host: "", path: "", password: "" },
+  banNSFW: false,
   enabled: true,
   isDefault: false,
   sortOrder: 0,
 });
 
 const form = reactive<DriveForm>(emptyForm());
+
+function parseDriveConfig(config: AlistDriveConfig): DriveConfigForm {
+  return {
+    host: config.host,
+    path: config.path,
+    password: config.password,
+  };
+}
+
+function buildDriveConfig(): AlistDriveConfig {
+  return {
+    host: configForm.host.trim(),
+    path: configForm.path.trim(),
+    password: configForm.password.trim(),
+  };
+}
+
+const configForm = reactive<DriveConfigForm>(parseDriveConfig(emptyForm().config));
 
 const columns: DataTableColumns<DriveRecord> = [
   {
@@ -284,17 +326,20 @@ const columns: DataTableColumns<DriveRecord> = [
     },
   },
   {
-    title: "扫盘连接",
-    key: "scanConfig",
+    title: "驱动",
+    key: "type",
+    width: 80,
+    render(row: DriveRecord) {
+      return h(NTag, { size: "small" }, () => row.type);
+    },
+  },
+  {
+    title: "Host",
+    key: "host",
     width: 200,
     ellipsis: { tooltip: true },
     render(row: DriveRecord) {
-      const cfg = findConfig(row.connectionConfigId);
-      if (!cfg) return h("span", { class: "text-gray-400 text-xs" }, "未配置");
-      return h("div", { class: "text-xs" }, [
-        h(NTag, { size: "small" }, () => cfg.type),
-        h("span", { class: "ml-1 text-gray-500" }, configSummary(cfg)),
-      ]);
+      return h("span", { class: "text-xs" }, row.config.host);
     },
   },
   {
@@ -316,10 +361,11 @@ const columns: DataTableColumns<DriveRecord> = [
   {
     title: "策略",
     key: "flags",
-    width: 100,
+    width: 120,
     render(row: DriveRecord) {
       return h(NSpace, { size: "small" }, () => [
         row.isDefault ? h(NTag, { size: "small", type: "success" }, () => "默认") : null,
+        row.banNSFW ? h(NTag, { size: "small", type: "warning" }, () => "NSFW") : null,
       ]);
     },
   },
@@ -396,26 +442,17 @@ const endpointColumns: DataTableColumns<EndpointRecord> = [
     width: 120,
   },
   {
-    title: "对外连接",
-    key: "connection",
-    width: 220,
-    ellipsis: { tooltip: true },
-    render(row: EndpointRecord) {
-      const cfg = findConfig(row.connectionConfigId);
-      if (!cfg) return h("span", { class: "text-gray-400 text-xs" }, "未配置");
-      return h("div", { class: "text-xs" }, [
-        h(NTag, { size: "small" }, () => cfg.type),
-        h("span", { class: "ml-1 text-gray-500" }, configSummary(cfg)),
-      ]);
-    },
-  },
-  {
-    title: "对外 URL",
-    key: "url",
+    title: "覆写配置",
+    key: "override",
     width: 200,
     ellipsis: { tooltip: true },
     render(row: EndpointRecord) {
-      return row.url || h("span", { class: "text-gray-400" }, "—");
+      const ov = row.configOverride;
+      if (!ov) return h("span", { class: "text-gray-400 text-xs" }, "无覆写");
+      const parts: string[] = [];
+      if (ov.host) parts.push(`Host: ${ov.host}`);
+      if (ov.path) parts.push(`Path: ${ov.path}`);
+      return h("div", { class: "text-xs" }, parts.length > 0 ? parts.join(" / ") : "无覆写");
     },
   },
   {
@@ -476,6 +513,10 @@ function rowKey(row: DriveRecord) {
 
 function resetForm(next: DriveForm) {
   Object.assign(form, next);
+  const cfg = parseDriveConfig(next.config);
+  configForm.host = cfg.host;
+  configForm.path = cfg.path;
+  configForm.password = cfg.password;
 }
 
 function openCreateDrawer() {
@@ -490,15 +531,15 @@ function openEditDrawer(row: DriveRecord) {
     id: row.id,
     name: row.name,
     description: row.description,
-    connectionConfigId: row.connectionConfigId,
+    type: row.type,
+    config: row.config,
+    banNSFW: row.banNSFW,
     enabled: row.enabled,
     isDefault: row.isDefault,
     sortOrder: row.sortOrder,
   });
   drawerOpen.value = true;
 }
-
-// ── Endpoints ──
 
 async function openEndpointDrawer(row: DriveRecord) {
   currentDriveId.value = row.id;
@@ -528,8 +569,8 @@ function openCreateEndpoint() {
   Object.assign(endpointForm, {
     ...emptyEndpointForm(),
     driveId: currentDriveId.value,
-    connectionConfigId: null,
   });
+  Object.assign(endpointOverrideForm, emptyEndpointOverride());
   endpointEditModal.value = true;
 }
 
@@ -539,13 +580,13 @@ function openEditEndpoint(row: EndpointRecord) {
     id: row.id,
     driveId: row.driveId,
     name: row.name,
-    url: row.url,
-    connectionConfigId: row.connectionConfigId,
+    configOverride: row.configOverride,
     priority: row.priority,
     enabled: row.enabled,
     banNSFW: row.banNSFW,
     disableDownload: row.disableDownload,
   });
+  overrideToForm(row.configOverride);
   endpointEditModal.value = true;
 }
 
@@ -554,16 +595,15 @@ async function saveEndpoint() {
     message.warning("线路名称不能为空");
     return;
   }
-  if (!endpointForm.url.trim()) {
-    message.warning("对外地址不能为空");
-    return;
-  }
   endpointSaving.value = true;
   try {
     const url = editingEndpointId.value
       ? "/v2/admin/drive/endpoint/update"
       : "/v2/admin/drive/endpoint/new";
-    const body = { ...endpointForm };
+    const body = {
+      ...endpointForm,
+      configOverride: configToOverride(),
+    };
     const result = await api.post(url, body);
     if (result.data?.code === 200) {
       message.success(result.data.message || "保存成功");
@@ -583,8 +623,7 @@ async function quickUpdateEndpoint(row: EndpointRecord, patch: Partial<EndpointF
       id: row.id,
       driveId: row.driveId,
       name: row.name,
-      url: row.url,
-      connectionConfigId: row.connectionConfigId,
+      configOverride: row.configOverride,
       priority: row.priority,
       enabled: row.enabled,
       banNSFW: row.banNSFW,
@@ -610,23 +649,9 @@ async function deleteEndpoint(id: number) {
   }
 }
 
-// ── Drives CRUD ──
-
-async function loadConnectionConfigs() {
-  try {
-    const result = await api.get("/v2/admin/connection-config/all");
-    if (result.data?.code === 200) {
-      connectionConfigs.value = result.data.data || [];
-    }
-  } catch (_error) {
-    // non-critical
-  }
-}
-
 async function loadDrives() {
   loading.value = true;
   try {
-    await loadConnectionConfigs();
     const result = await api.get("/v2/admin/drive/all");
     if (result.data?.code === 200) {
       drives.value = result.data.data || [];
@@ -642,7 +667,10 @@ async function saveDrive() {
   saving.value = true;
   try {
     const url = editing.value ? "/v2/admin/drive/update" : "/v2/admin/drive/new";
-    const result = await api.post(url, { ...form });
+    const result = await api.post(url, {
+      ...form,
+      config: buildDriveConfig(),
+    });
     if (result.data?.code === 200) {
       message.success(result.data.message || "保存成功");
       drawerOpen.value = false;
@@ -661,7 +689,9 @@ async function quickUpdate(row: DriveRecord, patch: Partial<DriveForm>) {
       id: row.id,
       name: row.name,
       description: row.description,
-      connectionConfigId: row.connectionConfigId,
+      type: row.type,
+      config: row.config,
+      banNSFW: row.banNSFW,
       enabled: row.enabled,
       isDefault: row.isDefault,
       sortOrder: row.sortOrder,

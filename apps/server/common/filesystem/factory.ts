@@ -1,19 +1,11 @@
 import type { FileSystemDriver } from "./types.js";
 import { AlistDriver } from "./alist-driver.js";
+import type { DriveConfig } from "@lavaanime/shared";
 
-interface ConnectionConfig {
-  type: string;
-  config: unknown;
-}
-
-export function createDriver(config: ConnectionConfig): FileSystemDriver {
-  const parsedConfig = typeof config.config === "string"
-    ? JSON.parse(config.config)
-    : config.config;
-
+export function createDriver(config: { type: string; config: DriveConfig }): FileSystemDriver {
   switch (config.type) {
     case "alist":
-      return new AlistDriver(parsedConfig as ConstructorParameters<typeof AlistDriver>[0]);
+      return new AlistDriver(config.config);
     default:
       throw new Error(`不支持的文件系统类型: ${config.type}`);
   }

@@ -1,11 +1,6 @@
 import axios, { type AxiosInstance } from "axios";
 import type { FileSystemDriver, FileSystemEntry, ListOptions } from "./types.js";
-
-interface AlistConfig {
-  host: string;
-  path: string;
-  password?: string;
-}
+import type { AlistDriveConfig } from "@lavaanime/shared";
 
 interface AlistApiFile {
   name: string;
@@ -30,7 +25,7 @@ export class AlistDriver implements FileSystemDriver {
   private rootPath: string;
   private password: string;
 
-  constructor(config: AlistConfig) {
+  constructor(config: AlistDriveConfig) {
     this.client = axios.create({ baseURL: config.host });
     this.rootPath = ensureLeadingSlash(config.path);
     this.password = config.password ?? "";

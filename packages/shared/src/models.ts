@@ -85,14 +85,27 @@ export interface DriveInfo {
   id: string;
   name: string;
   description: string;
+  banNSFW: boolean;
   endpoints: EndpointInfo[];
 }
+
+export interface AlistDriveConfig {
+  host: string;
+  path: string;
+  password: string;
+}
+
+export type DriveConfig = AlistDriveConfig;
+
+export type DriveConfigOverride = Partial<AlistDriveConfig>;
 
 export interface DriveRecord {
   id: string;
   name: string;
   description: string;
-  connectionConfigId: number | null;
+  type: string;
+  config: DriveConfig;
+  banNSFW: boolean;
   enabled: boolean;
   isDefault: boolean;
   sortOrder: number;
@@ -105,18 +118,11 @@ export interface DriveListResult {
   list: DriveInfo[];
 }
 
-export interface ConnectionConfig {
-  id: number;
-  type: string;
-  config: unknown;
-}
-
 export interface EndpointRecord {
   id: number;
   driveId: string;
   name: string;
-  url: string;
-  connectionConfigId: number;
+  configOverride: DriveConfigOverride | null;
   priority: number;
   enabled: boolean;
   banNSFW: boolean;

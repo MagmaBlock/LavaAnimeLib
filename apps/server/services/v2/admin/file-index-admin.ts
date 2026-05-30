@@ -1,7 +1,6 @@
 import pLimit from "p-limit";
 import type { FileSystemDriver } from "../../../common/filesystem/types.js";
 import { createDriver } from "../../../common/filesystem/factory.js";
-import { getConnectionConfigById } from "./connection-config.js";
 import { getDrive } from "../drive/index.js";
 import type { ListIndexOptions } from "../anime/file-index.js";
 import * as fileIndexService from "../anime/file-index.js";
@@ -12,12 +11,7 @@ const DIR_CONCURRENCY = 4;
 async function getDriverForDriveId(driveId: string): Promise<{ driver: FileSystemDriver }> {
   const driveRecord = await getDrive(driveId);
   if (!driveRecord) throw new Error("存储节点不存在");
-  if (driveRecord.connectionConfigId == null) {
-    throw new Error("该存储节点尚未关联连接配置");
-  }
-  const configRecord = await getConnectionConfigById(driveRecord.connectionConfigId);
-  if (!configRecord) throw new Error("连接配置不存在");
-  const driver = createDriver(configRecord);
+  const driver = createDriver({ type: driveRecord.type, config: driveRecord.config });
   return { driver };
 }
 

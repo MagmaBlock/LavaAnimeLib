@@ -36,6 +36,13 @@
       "when": 1780025577388,
       "tag": "0004_eager_madame_masque",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1780134810481,
+      "tag": "0005_slim_connection_config",
+      "breakpoints": true
     }
   ]
 }

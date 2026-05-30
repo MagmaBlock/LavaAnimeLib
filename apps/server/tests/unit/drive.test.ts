@@ -16,8 +16,8 @@ describe("getDriveList", () => {
   it("list 中的项不应包含敏感字段", async () => {
     const result = await getDriveList();
     for (const drive of result.list) {
-      expect(drive).not.toHaveProperty("host");
-      expect(drive).not.toHaveProperty("path");
+      expect(drive).not.toHaveProperty("type");
+      expect(drive).not.toHaveProperty("config");
       expect(drive).not.toHaveProperty("password");
     }
   });
@@ -29,6 +29,7 @@ describe("getDriveList", () => {
     expect(drive).toHaveProperty("name");
     expect(drive).toHaveProperty("description");
     expect(drive).toHaveProperty("endpoints");
+    expect(drive).toHaveProperty("banNSFW");
   });
 
   it("list 中不应包含禁用节点", async () => {
@@ -42,7 +43,7 @@ describe("getDrive", () => {
     const drive = await getDrive("1A");
     expect(drive).toBeDefined();
     expect(drive!.id).toBe("1A");
-    expect(drive!.connectionConfigId).toBe(1);
+    expect(drive!.type).toBe("alist");
   });
 
   it("不存在的 ID 应返回 undefined", async () => {
@@ -72,7 +73,9 @@ describe("admin drive mutations", () => {
       id: "nonexistent",
       name: "不存在节点",
       description: "",
-      connectionConfigId: null,
+      type: "alist",
+      config: { host: "", path: "", password: "" },
+      banNSFW: false,
       enabled: true,
       isDefault: false,
       sortOrder: 0,

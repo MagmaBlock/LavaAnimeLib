@@ -4,6 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
+echo "[test-db] Cleaning up previous test database..."
+docker compose -f "$ROOT_DIR/compose.test.yml" down -v 2>/dev/null || true
 echo "[test-db] Starting test database..."
 docker compose -f "$ROOT_DIR/compose.test.yml" up -d
 

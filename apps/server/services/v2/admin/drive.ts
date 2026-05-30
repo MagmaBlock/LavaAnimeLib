@@ -2,6 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "../../../common/database/connection.js";
 import { drives } from "../../../common/database/schema/drive.js";
 import type { DriveRecord, DriveUpsertInput } from "../drive/index.js";
+import { parseJsonField } from "../../../common/tools/parse-json-field.js";
 
 function toBoolean(value: number): boolean {
   return value === 1;
@@ -12,11 +13,14 @@ function toTinyInt(value: boolean): 0 | 1 {
 }
 
 export function mapDriveRecord(row: typeof drives.$inferSelect): DriveRecord {
+  const config = parseJsonField(row.config);
   return {
     id: row.id,
     name: row.name,
     description: row.description,
-    connectionConfigId: row.connectionConfigId,
+    type: row.type,
+    config: (config ?? { host: "", path: "", password: "" }) as unknown as DriveRecord["config"],
+    banNSFW: toBoolean(row.banNSFW),
     enabled: toBoolean(row.enabled),
     isDefault: toBoolean(row.isDefault),
     sortOrder: row.sortOrder,
@@ -30,7 +34,9 @@ function toInsertValue(input: DriveUpsertInput): typeof drives.$inferInsert {
     id: input.id,
     name: input.name,
     description: input.description,
-    connectionConfigId: input.connectionConfigId,
+    type: input.type,
+    config: input.config,
+    banNSFW: toTinyInt(input.banNSFW),
     enabled: toTinyInt(input.enabled),
     isDefault: toTinyInt(input.isDefault),
     sortOrder: input.sortOrder,

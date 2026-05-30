@@ -1,13 +1,14 @@
 import { db } from "../../../common/database/connection.js";
 import { driveEndpoints } from "../../../common/database/schema/drive-endpoint.js";
 import { asc, eq } from "drizzle-orm";
+import type { DriveConfigOverride } from "@lavaanime/shared";
+import { parseJsonField } from "../../../common/tools/parse-json-field.js";
 
 export interface EndpointRecord {
   id: number;
   driveId: string;
   name: string;
-  url: string;
-  connectionConfigId: number;
+  configOverride: DriveConfigOverride | null;
   priority: number;
   enabled: boolean;
   banNSFW: boolean;
@@ -17,8 +18,7 @@ export interface EndpointRecord {
 export interface EndpointUpsert {
   driveId: string;
   name: string;
-  url: string;
-  connectionConfigId: number;
+  configOverride: DriveConfigOverride | null;
   priority: number;
   enabled: boolean;
   banNSFW: boolean;
@@ -26,12 +26,12 @@ export interface EndpointUpsert {
 }
 
 function mapRow(row: typeof driveEndpoints.$inferSelect): EndpointRecord {
+  const override = parseJsonField(row.configOverride);
   return {
     id: row.id,
     driveId: row.driveId,
     name: row.name,
-    url: row.url,
-    connectionConfigId: row.connectionConfigId,
+    configOverride: (override && Object.keys(override).length > 0 ? override : null) as DriveConfigOverride | null,
     priority: row.priority,
     enabled: toBoolean(row.enabled),
     banNSFW: toBoolean(row.banNSFW),
@@ -56,8 +56,7 @@ export async function createEndpoint(input: EndpointUpsert): Promise<number> {
   const result = await db.insert(driveEndpoints).values({
     driveId: input.driveId,
     name: input.name,
-    url: input.url,
-    connectionConfigId: input.connectionConfigId,
+    configOverride: input.configOverride,
     priority: input.priority,
     enabled: input.enabled ? 1 : 0,
     banNSFW: input.banNSFW ? 1 : 0,
@@ -73,8 +72,7 @@ export async function updateEndpoint(id: number, input: EndpointUpsert): Promise
     .set({
       driveId: input.driveId,
       name: input.name,
-      url: input.url,
-      connectionConfigId: input.connectionConfigId,
+      configOverride: input.configOverride,
       priority: input.priority,
       enabled: input.enabled ? 1 : 0,
       banNSFW: input.banNSFW ? 1 : 0,

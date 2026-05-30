@@ -7,10 +7,6 @@ import { newDrive } from "../../controllers/v2/admin/drive/new.js";
 import { updateDriveInfo } from "../../controllers/v2/admin/drive/update.js";
 import { removeDrive } from "../../controllers/v2/admin/drive/delete.js";
 import { setDefaultDriveController } from "../../controllers/v2/admin/drive/set-default.js";
-import { listConnectionConfigs } from "../../controllers/v2/admin/connection-config/all.js";
-import { newConnectionConfig } from "../../controllers/v2/admin/connection-config/new.js";
-import { updateConnectionConfigInfo } from "../../controllers/v2/admin/connection-config/update.js";
-import { removeConnectionConfig } from "../../controllers/v2/admin/connection-config/delete.js";
 import { listEndpoints } from "../../controllers/v2/admin/drive-endpoint/list.js";
 import { newEndpoint } from "../../controllers/v2/admin/drive-endpoint/new.js";
 import { updateEndpointInfo } from "../../controllers/v2/admin/drive-endpoint/update.js";
@@ -45,10 +41,6 @@ router.post(
   requireAdmin,
   setDefaultDriveController
 );
-router.get("/connection-config/all", requireAdmin, listConnectionConfigs);
-router.post("/connection-config/new", requireAdmin, newConnectionConfig);
-router.post("/connection-config/update", requireAdmin, updateConnectionConfigInfo);
-router.post("/connection-config/delete", requireAdmin, removeConnectionConfig);
 router.get("/drive/endpoint/list", requireAdmin, listEndpoints);
 router.post("/drive/endpoint/new", requireAdmin, newEndpoint);
 router.post("/drive/endpoint/update", requireAdmin, updateEndpointInfo);

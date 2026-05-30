@@ -4,6 +4,7 @@ import { drives } from "../../../common/database/schema/drive.js";
 import { mapDriveRecord } from "../admin/drive.js";
 import type { EndpointRecord } from "../admin/drive-endpoint.js";
 import { listEndpointsByDrive } from "../admin/drive-endpoint.js";
+import type { DriveConfig } from "@lavaanime/shared";
 
 export interface EndpointInfo {
   id: number;
@@ -17,6 +18,7 @@ export interface DriveInfo {
   id: string;
   name: string;
   description: string;
+  banNSFW: boolean;
   endpoints: EndpointInfo[];
 }
 
@@ -24,7 +26,9 @@ interface DriveRecordBase {
   id: string;
   name: string;
   description: string;
-  connectionConfigId: number | null;
+  type: string;
+  config: DriveConfig;
+  banNSFW: boolean;
   enabled: boolean;
   isDefault: boolean;
   sortOrder: number;
@@ -60,7 +64,8 @@ export async function getDriveList(): Promise<DriveListResult> {
       id: drive.id,
       name: drive.name,
       description: drive.description,
-      endpoints: endpoints.filter((ep) => ep.enabled && ep.url).map(toEndpointInfo),
+      banNSFW: drive.banNSFW,
+      endpoints: endpoints.filter((ep) => ep.enabled).map(toEndpointInfo),
     });
   }
   return {
@@ -87,7 +92,9 @@ async function getEnabledDrives(): Promise<DriveRecord[]> {
   const rows = await db
     .select()
     .from(drives)
-    .where(eq(drives.enabled, 1))
+    .where(
+      eq(drives.enabled, 1),
+    )
     .orderBy(asc(drives.sortOrder), asc(drives.id));
   return rows.map(mapDriveRecord);
 }
