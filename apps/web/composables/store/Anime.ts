@@ -80,6 +80,12 @@ export type FileData = Array<{
     raw: string;
     type: string;
   }>;
+  drives?: Array<{
+    driveId: string;
+    driveName: string;
+    path: string;
+  }>;
+  modified?: string | null;
 }>;
 
 export type AnimeData = {
@@ -181,7 +187,7 @@ export const useAnimeStore = defineStore("anime", {
       },
       animeData: null as AnimeData | null,
       driveData: null as DriveData | null,
-      selectedEndpointId: null as number | null,
+      preferredEndpointId: null as number | null,
       myDrive: useStorage("myDrive", {
         rememberMyChoice: false,
         selectedDrive: null as string | null,
@@ -191,6 +197,8 @@ export const useAnimeStore = defineStore("anime", {
         activeEpisode: null as string | null,
         activeFileIndex: null as number | null,
         fileList: [] as FileData,
+        actualDriveId: null as string | null,
+        actualEndpointId: null as number | null,
       },
       // 字幕相关状态
       subtitleData: {
@@ -280,7 +288,7 @@ export const useAnimeStore = defineStore("anime", {
     /**
      * 获取选中的节点
      */
-    activeDrive: (state) => {
+    preferredDrive: (state) => {
       if (state.driveData === null) return null;
       // 开启了记住选择 返回曾经的选择
       if (state.myDrive.rememberMyChoice && state.myDrive.selectedDrive) {
@@ -301,7 +309,7 @@ export const useAnimeStore = defineStore("anime", {
     /**
      * 获取当前选中的线路
      */
-    activeEndpoint: (state) => {
+    preferredEndpoint: (state) => {
       const drive = (function () {
         if (state.driveData === null) return null;
         if (state.myDrive.rememberMyChoice && state.myDrive.selectedDrive) {
@@ -319,14 +327,41 @@ export const useAnimeStore = defineStore("anime", {
         }
       })();
       if (!drive || !drive.endpoints?.length) return null;
-      if (state.selectedEndpointId != null) {
-        return drive.endpoints.find((ep) => ep.id === state.selectedEndpointId) ?? drive.endpoints[0];
+      if (state.preferredEndpointId != null) {
+        return drive.endpoints.find((ep) => ep.id === state.preferredEndpointId) ?? drive.endpoints[0];
       }
       const rememberedId = drive.id ? state.myDrive.selectedEndpoints[drive.id] : undefined;
       if (rememberedId != null) {
         return drive.endpoints.find((ep) => ep.id === rememberedId) ?? drive.endpoints[0];
       }
       return drive.endpoints[0];
+    },
+    actualDrive(state) {
+      if (!state.fileData.actualDriveId || !state.driveData) return null;
+      return state.driveData.list.find((d) => d.id === state.fileData.actualDriveId) ?? null;
+    },
+    actualEndpoint(state) {
+      if (!state.fileData.actualEndpointId || !state.driveData) return null;
+      for (const d of state.driveData.list) {
+        const ep = d.endpoints?.find((e) => e.id === state.fileData.actualEndpointId);
+        if (ep) return ep;
+      }
+      return null;
+    },
+    actualDriveName(state): string | null {
+      return this.actualDrive?.name ?? null;
+    },
+    actualEndpointName(state): string | null {
+      return this.actualEndpoint?.name ?? null;
+    },
+    isFallback(state): boolean {
+      if (!state.fileData.actualDriveId || !state.driveData) return false;
+      const preferredDriveId = this.preferredDrive?.id ?? null;
+      const preferredEpId = this.preferredEndpoint?.id ?? null;
+      return (
+        state.fileData.actualDriveId !== preferredDriveId ||
+        (state.fileData.actualEndpointId != null && state.fileData.actualEndpointId !== preferredEpId)
+      );
     },
     /**
      * 获取集数和集数对应的视频
@@ -483,9 +518,7 @@ export const useAnimeStore = defineStore("anime", {
       this.getAnimeData(laID);
       (async () => {
         await this.getDriveData();
-        if (!this.activeDrive?.id) throw new Error("No active drive selected");
-        await this.getFileData(this.laID, this.activeDrive.id, this.activeEndpoint?.id);
-        // 如果 URL 指定了本次播放的集数
+        await this.getAggregatedFileData(this.laID);
         if (forceEpisode) {
           try {
             return await this.changeEpisodeAutoHistory(forceEpisode);
@@ -608,6 +641,8 @@ export const useAnimeStore = defineStore("anime", {
         activeEpisode: null,
         activeFileIndex: null,
         fileList: [],
+        actualDriveId: null,
+        actualEndpointId: null,
       };
       this.state.fileData = {
         isLoading: true,
@@ -635,6 +670,139 @@ export const useAnimeStore = defineStore("anime", {
         this.state.driveLoading = null; // End loading
       }
     },
+    async getAggregatedFileData(laID: number) {
+      this.showArtPlayer = false;
+      this.fileData = {
+        activeEpisode: null,
+        activeFileIndex: null,
+        fileList: [],
+        actualDriveId: null,
+        actualEndpointId: null,
+      };
+      this.state.fileData = {
+        isLoading: true,
+        errorCode: null,
+        errorMessage: null,
+      };
+      try {
+        const result = await api.get("/v2/anime/file", {
+          params: { id: laID },
+        });
+        const rawList = result.data.data as Array<Record<string, unknown>>;
+        this.fileData.fileList = rawList.map((item: Record<string, unknown>) => ({
+          name: (item.name as string) ?? "",
+          size: (item.size as number) ?? 0,
+          updated: (item.modified as string) ?? "",
+          driver: "",
+          thumbnail: "",
+          type: (item.type as string) ?? "file",
+          url: undefined,
+          parseResult: (item.parseResult as ParseResult) ?? {
+            animeTitle: "",
+            animeYear: null,
+            extensionName: { result: "", type: "", raw: "", trueName: "" },
+            fileName: "",
+            groups: [],
+          },
+          animeTitle: (item.parseResult as ParseResult)?.animeTitle ?? "",
+          animeYear: (item.parseResult as ParseResult)?.animeYear ?? null,
+          episode: (item.parseResult as ParseResult)?.episode,
+          extensionName: (item.parseResult as ParseResult)?.extensionName ?? { result: "", type: "", raw: "", trueName: "" },
+          fileName: (item.parseResult as ParseResult)?.fileName ?? "",
+          groups: (item.parseResult as ParseResult)?.groups ?? [],
+          noBrowser: (item.parseResult as ParseResult)?.noBrowser,
+          videoSource: (item.parseResult as ParseResult)?.videoSource,
+          videoQuality: (item.parseResult as ParseResult)?.videoQuality,
+          videoSubtitle: (item.parseResult as ParseResult)?.videoSubtitle,
+          drives: (item.drives as Array<{ driveId: string; driveName: string; path: string }>) ?? [],
+          modified: (item.modified as string | null) ?? null,
+        })) as FileData;
+        if (this.fileData.fileList.length) {
+          this.showArtPlayer = true;
+        }
+      } catch (error: any) {
+        console.log("获取聚合文件列表时发生", error, "错误");
+        this.state.fileData.errorCode = error?.response?.status ?? error.code;
+        this.state.fileData.errorMessage =
+          error?.response?.data?.message ?? error.message;
+      } finally {
+        this.state.fileData.isLoading = false;
+      }
+    },
+    async resolveFileUrl(fileIndex: number, force = false): Promise<string> {
+      const file = this.fileData.fileList[fileIndex];
+      if (!file) throw new Error("File not found");
+      if (file.url && !force) return file.url;
+
+      const drives = file.drives;
+      if (!drives?.length) throw new Error("No drives available for this file");
+
+      const preferredId = this.preferredDrive?.id ?? null;
+      let targetDrive = drives.find((d) => d.driveId === preferredId);
+      if (!targetDrive) targetDrive = drives[0];
+
+      const driveInfo = this.driveData?.list.find((d) => d.id === targetDrive!.driveId);
+      let endpointId: number | undefined;
+      if (driveInfo) {
+        endpointId =
+          this.preferredEndpointId ??
+          this.myDrive.selectedEndpoints[targetDrive!.driveId] ??
+          driveInfo.endpoints?.[0]?.id;
+      }
+
+      const params: Record<string, string | number> = {
+        drive: targetDrive!.driveId,
+        path: targetDrive!.path,
+      };
+      if (endpointId != null) params.endpoint = endpointId;
+
+      const result = await api.get("/v2/anime/file/url", { params });
+      const resolvedUrl = result.data?.data?.url;
+      if (!resolvedUrl) throw new Error("获取文件链接失败");
+      file.url = resolvedUrl;
+
+      this.fileData.actualDriveId = targetDrive!.driveId;
+      this.fileData.actualEndpointId = endpointId ?? null;
+
+      return resolvedUrl;
+    },
+    setPreferredDrive(driveId: string, endpointId?: number) {
+      const oldDriveId = this.myDrive.selectedDrive;
+      this.myDrive.selectedDrive = driveId;
+      if (endpointId != null) {
+        this.myDrive.selectedEndpoints = {
+          ...this.myDrive.selectedEndpoints,
+          [driveId]: endpointId,
+        };
+      }
+      if (oldDriveId !== driveId) {
+        this.preferredEndpointId = null;
+      }
+      this.reResolveIfActiveFileOnDrive(driveId);
+    },
+    setPreferredEndpoint(endpointId: number) {
+      const driveId = this.preferredDrive?.id;
+      if (!driveId) return;
+      this.preferredEndpointId = endpointId;
+      this.myDrive.selectedEndpoints = {
+        ...this.myDrive.selectedEndpoints,
+        [driveId]: endpointId,
+      };
+      this.reResolveIfActiveFileOnDrive(driveId);
+    },
+    reResolveIfActiveFileOnDrive(driveId: string) {
+      const activeIndex = this.fileData.activeFileIndex;
+      if (activeIndex === null || activeIndex < 0) return;
+      const file = this.fileData.fileList[activeIndex];
+      if (!file?.drives?.length) return;
+      if (!file.drives.some((d) => d.driveId === driveId)) return;
+      const newPreferredEpId = this.preferredEndpoint?.id ?? null;
+      if (
+        this.fileData.actualDriveId === driveId &&
+        this.fileData.actualEndpointId === newPreferredEpId
+      ) return;
+      this.resolveFileUrl(activeIndex, true);
+    },
     /**
      * 通过节点 ID 切换当前节点
      * @param {String} newDrive 节点 ID
@@ -655,11 +823,11 @@ export const useAnimeStore = defineStore("anime", {
      * @param {Number} endpointId 线路 ID
      */
     async changeEndpoint(endpointId: number) {
-      const driveId = this.activeDrive?.id;
+      const driveId = this.preferredDrive?.id;
       if (!driveId) return;
       try {
         await this.getFileData(this.laID, driveId, endpointId);
-        this.selectedEndpointId = endpointId;
+        this.preferredEndpointId = endpointId;
         const newEndpoints = { ...this.myDrive.selectedEndpoints, [driveId]: endpointId };
         this.myDrive.selectedEndpoints = newEndpoints;
         this.autoPlay();
@@ -674,83 +842,85 @@ export const useAnimeStore = defineStore("anime", {
     changeEpisode(newEpisode: string): Promise<string | undefined> {
       return new Promise((resolve, reject) => {
         if (!this.episodeListFind(newEpisode)) return reject("episodeNotFound");
-        // 2025年3月23日增加：优先寻找旧资源相同的字幕组
-        const oldGroups = this.activeFile?.parseResult?.groups || [];
-        console.log("当前发布组:", oldGroups);
+        (async () => {
+          const oldGroups = this.activeFile?.parseResult?.groups || [];
+          console.log("当前发布组:", oldGroups);
 
-        // 计算发布组相似度
-        const calculateGroupSimilarity = (
-          groups: Array<{ result: string }>
-        ) => {
-          if (!oldGroups.length) return 0;
-          const matched = groups.filter((g) =>
-            oldGroups.some(
-              (og) =>
-                og.result.toLowerCase().includes(g.result.toLowerCase()) ||
-                g.result.toLowerCase().includes(og.result.toLowerCase())
-            )
-          );
-          return matched.length / oldGroups.length;
-        };
+          const calculateGroupSimilarity = (
+            groups: Array<{ result: string }>
+          ) => {
+            if (!oldGroups.length) return 0;
+            const matched = groups.filter((g) =>
+              oldGroups.some(
+                (og) =>
+                  og.result.toLowerCase().includes(g.result.toLowerCase()) ||
+                  g.result.toLowerCase().includes(og.result.toLowerCase())
+              )
+            );
+            return matched.length / oldGroups.length;
+          };
 
-        this.fileData.activeEpisode = newEpisode;
-        // 查找当前集数下合适的视频资源
-        const findResult = (findBetter = true) => {
-          let bestMatchIndex = -1;
-          let bestSimilarity = 0;
+          this.fileData.activeEpisode = newEpisode;
+          const findResult = (findBetter = true) => {
+            let bestMatchIndex = -1;
+            let bestSimilarity = 0;
 
-          this.fileData.fileList.forEach((file, index) => {
-            if (
-              file?.parseResult?.episode == newEpisode &&
-              file?.parseResult?.extensionName?.type == "video" &&
-              (findBetter ? file?.parseResult?.noBrowser === false : true)
-            ) {
-              const similarity = calculateGroupSimilarity(
-                file.parseResult.groups || []
-              );
-              console.log(`文件 ${file.name} 发布组相似度: ${similarity}`);
-
-              if (similarity > bestSimilarity) {
-                bestSimilarity = similarity;
-                bestMatchIndex = index;
-              }
-            }
-          });
-
-          // 如果没有找到相似度大于0的，返回第一个匹配的文件
-          if (bestSimilarity === 0) {
-            return this.fileData.fileList.findIndex((file) => {
-              return (
+            this.fileData.fileList.forEach((file, index) => {
+              if (
                 file?.parseResult?.episode == newEpisode &&
                 file?.parseResult?.extensionName?.type == "video" &&
                 (findBetter ? file?.parseResult?.noBrowser === false : true)
-              );
+              ) {
+                const similarity = calculateGroupSimilarity(
+                  file.parseResult.groups || []
+                );
+                console.log(`文件 ${file.name} 发布组相似度: ${similarity}`);
+
+                if (similarity > bestSimilarity) {
+                  bestSimilarity = similarity;
+                  bestMatchIndex = index;
+                }
+              }
             });
+
+            if (bestSimilarity === 0) {
+              return this.fileData.fileList.findIndex((file) => {
+                return (
+                  file?.parseResult?.episode == newEpisode &&
+                  file?.parseResult?.extensionName?.type == "video" &&
+                  (findBetter ? file?.parseResult?.noBrowser === false : true)
+                );
+              });
+            }
+
+            return bestMatchIndex;
+          };
+          const bestIndex = findResult() != -1 ? findResult() : findResult(false);
+
+          try {
+            await this.resolveFileUrl(bestIndex);
+          } catch (err) {
+            return reject(err);
           }
 
-          return bestMatchIndex;
-        };
-        // 更改文件
-        this.fileData.activeFileIndex =
-          findResult() != -1 ? findResult() : findResult(false);
+          this.fileData.activeFileIndex = bestIndex;
 
-        // 当播放器可播放且当前活跃视频集数仍是本次切换的视频集数时
-        if (!this.artInstance)
-          throw new Error("Artplayer instance not initialized");
-        this.artInstance.once("video:canplaythrough", () => {
-          if (this.fileData.activeEpisode == newEpisode) {
-            resolve(undefined);
-          } else {
-            reject("视频集数切换被其他事件中断");
-          }
-        });
-        // 加载当前集数视频发生错误
-        this.artInstance.once("error", (error) => {
-          if (this.fileData.activeEpisode == newEpisode) {
-            reject(error);
-          }
-        });
-        this.autoSubtitle();
+          if (!this.artInstance)
+            return reject(new Error("Artplayer instance not initialized"));
+          this.artInstance.once("video:canplaythrough", () => {
+            if (this.fileData.activeEpisode == newEpisode) {
+              resolve(undefined);
+            } else {
+              reject("视频集数切换被其他事件中断");
+            }
+          });
+          this.artInstance.once("error", (error) => {
+            if (this.fileData.activeEpisode == newEpisode) {
+              reject(error);
+            }
+          });
+          this.autoSubtitle();
+        })();
       });
     },
     /**
@@ -810,7 +980,7 @@ export const useAnimeStore = defineStore("anime", {
         currentTime: isWebPlayer ? this.artInstance?.currentTime : null,
         totalTime: isWebPlayer ? this.artInstance?.duration : null,
         watchMethod,
-        useDrive: this.activeDrive?.id,
+        useDrive: this.fileData.actualDriveId ?? this.preferredDrive?.id,
       };
       try {
         await api.post("/v2/anime/history/report", content, {
@@ -848,8 +1018,10 @@ export const useAnimeStore = defineStore("anime", {
         if (findThisFile) {
           console.log("匹配到和上次播放完全相同的文件", findThisFile);
           try {
-            if (findThisFile?.url) {
-              await this.changeVideo(findThisFile.url);
+            const fileIndex = this.fileData.fileList.findIndex((f) => f.name === findThisFile.name);
+            if (fileIndex !== -1) {
+              const url = await this.resolveFileUrl(fileIndex);
+              await this.changeVideo(url);
             }
             this.seekByHistory(lastRecord);
           } catch (error) {
@@ -877,22 +1049,25 @@ export const useAnimeStore = defineStore("anime", {
     /**
      * (用于其他 actions 调用) 自动播放第一个集数/视频
      */
-    firstThisAnime() {
-      // 如果能识别到集数列表, 自动选择第一个集数播放
+    async firstThisAnime() {
       if (this.episodeList.length) {
         this.changeEpisode(this.episodeList[0].episode);
       }
-      // 没有集数列表, 播放第一个视频
       else if (this.fileData.fileList.length) {
-        this.changeVideo(
-          // 找文件列表中第一个是视频的文件
-          this.fileData.fileList.find((file) => {
-            return (
-              file?.type == "file" &&
-              file?.parseResult?.extensionName?.type == "video"
-            );
-          })?.url ?? ""
-        );
+        const index = this.fileData.fileList.findIndex((file) => {
+          return (
+            file?.type == "file" &&
+            file?.parseResult?.extensionName?.type == "video"
+          );
+        });
+        if (index !== -1) {
+          try {
+            const url = await this.resolveFileUrl(index);
+            this.changeVideo(url);
+          } catch (err) {
+            console.error("解析首个视频 URL 失败:", err);
+          }
+        }
       }
     },
     /**

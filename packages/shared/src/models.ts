@@ -156,3 +156,17 @@ export interface FileIndexListData {
   items: FileIndexItem[];
   total: number;
 }
+
+export interface FileDriveSource {
+  driveId: string;
+  driveName: string;
+  path: string;
+}
+
+export interface AggregatedFileItem {
+  name: string;
+  size: number;
+  type: string;
+  modified: string | null;
+  drives: FileDriveSource[];
+}

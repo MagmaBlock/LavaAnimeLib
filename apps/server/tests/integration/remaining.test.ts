@@ -175,12 +175,13 @@ describe("GET /v2/anime/file", () => {
     expect(res.status).toBe(401);
   });
 
-  it("缺少 drive 应使用默认存储节点", async () => {
+  it("缺少 drive 应使用聚合文件列表", async () => {
     const res = await request
       .get("/v2/anime/file")
       .set("Authorization", token)
       .query({ id: 1 });
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body.data)).toBe(true);
   });
 
   it("登录后尝试获取文件（外部 AList 不可用，预期 500）", async () => {
@@ -189,6 +190,58 @@ describe("GET /v2/anime/file", () => {
       .set("Authorization", token)
       .query({ id: 1, drive: "1A" });
     expect(res.status).toBe(500);
+  });
+});
+
+describe("GET /v2/anime/file/url", () => {
+  it("未登录应返回 401", async () => {
+    const res = await request
+      .get("/v2/anime/file/url")
+      .query({ drive: "1A", path: "/2026年/1月冬/测试番剧A 123456/ep01.mkv" });
+    expect(res.status).toBe(401);
+  });
+
+  it("缺少 drive 应返回 400", async () => {
+    const res = await request
+      .get("/v2/anime/file/url")
+      .set("Authorization", token)
+      .query({ path: "/2026年/1月冬/测试番剧A 123456/ep01.mkv" });
+    expect(res.status).toBe(400);
+  });
+
+  it("缺少 path 应返回 400", async () => {
+    const res = await request
+      .get("/v2/anime/file/url")
+      .set("Authorization", token)
+      .query({ drive: "1A" });
+    expect(res.status).toBe(400);
+  });
+
+  it("不存在的 drive 应返回 404", async () => {
+    const res = await request
+      .get("/v2/anime/file/url")
+      .set("Authorization", token)
+      .query({ drive: "nonexistent", path: "/test/file.mkv" });
+    expect(res.status).toBe(404);
+  });
+
+  it("有效的 drive 应返回文件下载 URL", async () => {
+    const res = await request
+      .get("/v2/anime/file/url")
+      .set("Authorization", token)
+      .query({ drive: "1A", path: "/2026年/1月冬/测试番剧A 123456/ep01.mkv" });
+    expect(res.status).toBe(200);
+    expect(res.body.data.url).toBeDefined();
+    expect(typeof res.body.data.url).toBe("string");
+  });
+
+  it("不带 endpoint 参数时应使用默认端点", async () => {
+    const res = await request
+      .get("/v2/anime/file/url")
+      .set("Authorization", token)
+      .query({ drive: "1A", path: "/test/file.mkv" });
+    expect(res.status).toBe(200);
+    expect(res.body.data.url).toBeDefined();
   });
 });
 

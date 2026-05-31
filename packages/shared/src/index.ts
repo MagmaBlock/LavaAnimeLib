@@ -19,4 +19,6 @@ export type {
   FileIndexItem,
   FileIndexStats,
   FileIndexListData,
+  FileDriveSource,
+  AggregatedFileItem,
 } from "./models.js";

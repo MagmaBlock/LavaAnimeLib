@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import { parseQuery } from "../../../common/tools/parse-request.js";
 import { getFilesByIDQuerySchema } from "../../../schemas/v2/anime/file.js";
 import { getFilesByID as getFilesByIDService } from "../../../services/v2/anime/file.js";
+import { getAggregatedFiles } from "../../../services/v2/anime/file-aggregate.js";
 import success from "../../../common/response/success.js";
 import notFound from "../../../common/response/not-found.js";
 import forbidden from "../../../common/response/forbidden.js";
@@ -12,6 +13,20 @@ export async function getFilesByID(req: Request, res: Response): Promise<void> {
   const query = parseQuery(getFilesByIDQuerySchema, req, res);
   if (!query) return;
   const { id: laID, drive, endpoint } = query;
+
+  if (!drive) {
+    try {
+      const files = await getAggregatedFiles(laID);
+      return success(res, files);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message === "此 laID 不存在") {
+        return notFound(res, message);
+      }
+      log.error(error, `聚合文件列表异常: laID=${laID}`);
+      return serverError(res, message);
+    }
+  }
 
   try {
     const files = await getFilesByIDService(laID, drive, endpoint);

@@ -5,6 +5,17 @@ const store = useAnimeStore();
 const ascOrder = useLocalStorage("AnimeFileAscOrder", true);
 
 const videoButtonClick = async (video) => {
+  if (!video.url) {
+    const index = store.fileData.fileList.indexOf(video);
+    if (index !== -1) {
+      try {
+        await store.resolveFileUrl(index);
+      } catch (err) {
+        window.$message?.error("获取文件链接失败");
+        return;
+      }
+    }
+  }
   if (video.url === store.activeFile?.url) return;
   let result = await Promise.allSettled([
     store.getAnimeViewHistory(),
@@ -13,7 +24,7 @@ const videoButtonClick = async (video) => {
   if (result[0].status !== "rejected") {
     let viewHistory = result[0].value;
     if (viewHistory.data.data.length) {
-      let recentRecord = // 用名字或者相同集数跳进度
+      let recentRecord =
         viewHistory.data.data.find((record) => {
           return record.fileName == video.name;
         }) ??
@@ -23,6 +34,21 @@ const videoButtonClick = async (video) => {
       store.seekByHistory(recentRecord);
     }
   }
+};
+
+const musicButtonClick = async (file) => {
+  if (!file.url) {
+    const index = store.fileData.fileList.indexOf(file);
+    if (index !== -1) {
+      try {
+        await store.resolveFileUrl(index);
+      } catch (err) {
+        window.$message?.error("获取文件链接失败");
+        return;
+      }
+    }
+  }
+  store.changeVideo(file.url, true);
 };
 </script>
 <template>
@@ -130,7 +156,7 @@ const videoButtonClick = async (video) => {
         >
           <AnimeFileInfo
             :video="file"
-            @click="store.changeVideo(file.url, true)"
+            @click="musicButtonClick(file)"
             :active="file.name == store.activeFile?.name"
             v-for="file in store.musicList"
           />
@@ -145,7 +171,7 @@ const videoButtonClick = async (video) => {
           <NPopover trigger="hover" v-for="file in store.otherList">
             <template #trigger>
               <a
-                v-if="!store.activeEndpoint?.disableDownload"
+                v-if="!(store.actualEndpoint ?? store.preferredEndpoint)?.disableDownload"
                 :href="file?.url"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -156,7 +182,7 @@ const videoButtonClick = async (video) => {
             </template>
             <span>
               这是一个 {{ file?.parseResult?.extensionName?.result }} 附件, 大小
-              {{ useBytesToSize(file?.size) }}{{ store.activeEndpoint?.disableDownload ? "" : ", 点击可以下载" }}
+              {{ useBytesToSize(file?.size) }}{{ (store.actualEndpoint ?? store.preferredEndpoint)?.disableDownload ? "" : ", 点击可以下载" }}
             </span>
           </NPopover>
         </NTabPane>
@@ -172,11 +198,11 @@ const videoButtonClick = async (video) => {
       "
       class="py-6"
     >
-      <NResult status="418" title="此节点中暂无文件" size="small" />
+      <NResult status="418" title="暂无文件" size="small" />
       <div class="text-center">
         <div class="text-base my-1">可能原因</div>
         <ul>
-          <li>1. 当前节点不含有此动画</li>
+          <li>1. 所有存储节点均不包含此动画</li>
           <li>
             2. 当前动画暂无资源或未放送，根据 Bangumi，开播时间为
             {{ store.animeData.date || "未知 / 暂未定档" }}

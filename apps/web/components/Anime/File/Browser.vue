@@ -9,7 +9,7 @@
         <NFlex vertical>
           <!-- Drive Select -->
           <NSelect
-            :value="store.activeDrive?.id"
+            :value="store.preferredDrive?.id"
             @update:value="handleDriveSelect"
             :options="driveSelectList"
           />
@@ -94,7 +94,7 @@ const handleDriveSelect = (value: string) => {
 
 // 计算属性，判断是否允许下载
 const allowDownload = computed(() => {
-  return !store.activeDrive?.description?.includes("请勿下载");
+  return !store.preferredDrive?.description?.includes("请勿下载");
 });
 
 // 计算属性，判断是否有选中的文件

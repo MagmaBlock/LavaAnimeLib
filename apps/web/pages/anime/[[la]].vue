@@ -150,11 +150,11 @@ const isMobileOpenDetails = ref(false);
       </NFlex>
       <!-- 右视图 占一列 -->
       <NFlex vertical :size="16" class="col-span-1">
+        <AnimeFileList />
+        <AnimeFileErrorDisplay />
         <AnimeDriveSelector />
         <!-- 番剧公告（V2）临时 -->
         <AnimeNotice />
-        <AnimeFileList />
-        <AnimeFileErrorDisplay />
         <!-- 关联作品 -->
         <AnimeRelations v-if="!store.state.animeData.isLoading" />
       </NFlex>
@@ -197,9 +197,9 @@ const isMobileOpenDetails = ref(false);
           <AnimePlayerActionBar />
         </div>
       </AnimeCardBasic>
-      <AnimeDriveSelector />
       <AnimeFileList />
       <AnimeFileErrorDisplay />
+      <AnimeDriveSelector />
       <!-- 关联作品 -->
       <AnimeRelations v-if="!store.state.animeData.isLoading" />
     </div>
