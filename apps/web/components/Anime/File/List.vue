@@ -50,6 +50,21 @@ const musicButtonClick = async (file) => {
   }
   store.changeVideo(file.url, true);
 };
+
+const attachmentClick = async (file) => {
+  if (!file.url) {
+    const index = store.fileData.fileList.indexOf(file);
+    if (index !== -1) {
+      try {
+        await store.resolveFileUrl(index);
+      } catch (err) {
+        window.$message?.error("获取文件链接失败");
+        return;
+      }
+    }
+  }
+  window.open(file.url, "_blank", "noopener,noreferrer");
+};
 </script>
 <template>
   <div>
@@ -172,8 +187,8 @@ const musicButtonClick = async (file) => {
             <template #trigger>
               <a
                 v-if="!(store.actualEndpoint ?? store.preferredEndpoint)?.disableDownload"
-                :href="file?.url"
-                target="_blank"
+                href="javascript:void(0)"
+                @click="attachmentClick(file)"
                 rel="noopener noreferrer"
               >
                 <AnimeFileInfo :video="file" />

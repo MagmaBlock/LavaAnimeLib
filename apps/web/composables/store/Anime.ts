@@ -183,7 +183,6 @@ export const useAnimeStore = defineStore("anime", {
           errorCode: null as number | null,
           errorMessage: null as string | null,
         },
-        driveLoading: null as string | null,
       },
       animeData: null as AnimeData | null,
       driveData: null as DriveData | null,
@@ -634,42 +633,7 @@ export const useAnimeStore = defineStore("anime", {
         this.state.driveData.isLoading = false;
       }
     },
-    async getFileData(laID: number, drive: string, endpoint?: number) {
-      this.state.driveLoading = drive; // Loading
-      this.showArtPlayer = false;
-      this.fileData = {
-        activeEpisode: null,
-        activeFileIndex: null,
-        fileList: [],
-        actualDriveId: null,
-        actualEndpointId: null,
-      };
-      this.state.fileData = {
-        isLoading: true,
-        errorCode: null,
-        errorMessage: null,
-      };
-      try {
-        const params: Record<string, string | number> = { id: laID, drive: drive };
-        if (endpoint != null) {
-          params.endpoint = endpoint;
-        }
-        let result = await api.get("/v2/anime/file", { params });
-        this.fileData.fileList = result.data.data;
-        if (this.fileData.fileList.length) {
-          // 确保没有出错以及有结果才启动播放器
-          this.showArtPlayer = true;
-        }
-      } catch (error: any) {
-        console.log("获取文件列表时发生", error, "错误");
-        this.state.fileData.errorCode = error?.response?.status ?? error.code;
-        this.state.fileData.errorMessage =
-          error?.response?.data?.message ?? error.message;
-      } finally {
-        this.state.fileData.isLoading = false;
-        this.state.driveLoading = null; // End loading
-      }
-    },
+
     async getAggregatedFileData(laID: number) {
       this.showArtPlayer = false;
       this.fileData = {
@@ -803,38 +767,7 @@ export const useAnimeStore = defineStore("anime", {
       ) return;
       this.resolveFileUrl(activeIndex, true);
     },
-    /**
-     * 通过节点 ID 切换当前节点
-     * @param {String} newDrive 节点 ID
-     * @param {Number} endpointId 指定线路 ID
-     */
-    async changeDrive(newDrive: string, endpointId?: number) {
-      try {
-        const epId = endpointId ?? this.myDrive.selectedEndpoints[newDrive];
-        await this.getFileData(this.laID, newDrive, epId);
-        this.myDrive.selectedDrive = newDrive; // 持久化保存
-        this.autoPlay();
-      } catch (error) {
-        console.error("切换节点失败:", error);
-      }
-    },
-    /**
-     * 在当前节点下切换线路
-     * @param {Number} endpointId 线路 ID
-     */
-    async changeEndpoint(endpointId: number) {
-      const driveId = this.preferredDrive?.id;
-      if (!driveId) return;
-      try {
-        await this.getFileData(this.laID, driveId, endpointId);
-        this.preferredEndpointId = endpointId;
-        const newEndpoints = { ...this.myDrive.selectedEndpoints, [driveId]: endpointId };
-        this.myDrive.selectedEndpoints = newEndpoints;
-        this.autoPlay();
-      } catch (error) {
-        console.error("切换线路失败:", error);
-      }
-    },
+
     /**
      * 切换当前选择的集数, 会优先选择浏览器支持的视频
      * @param newEpisode

@@ -33,8 +33,15 @@ const createSubtitles = async (subtitleFile) => {
     // 使用本地字幕内容
     content = store.subtitleData.localSubtitle.content;
   } else {
+    // 聚合模式下 URL 可能未解析，按需解析
+    let url = subtitleFile.url;
+    if (!url) {
+      const index = store.fileData.fileList.indexOf(subtitleFile);
+      if (index === -1) throw new Error("字幕文件未找到");
+      url = await store.resolveFileUrl(index);
+    }
     // 从服务器获取字幕内容
-    content = await fetch(subtitleFile.url).then((res) => res.text());
+    content = await fetch(url).then((res) => res.text());
   }
   
   // 根据字幕格式转换内容
