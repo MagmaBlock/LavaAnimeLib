@@ -24,33 +24,22 @@
   </AnimeCardBasic>
 </template>
 
-<script>
-export default {
-  props: {
-    mobileShow: {
-      // 控制移动端默认是否展开
-      type: Boolean,
-      default: false,
-    },
-    desktopShow: {
-      // 是否展开，非移动端
-      type: Boolean,
-      default: true,
-    },
-  },
-  data() {
-    return {
-      openTab: false,
-    };
-  },
-  mounted() {
-    if (document.body.clientWidth < 1024) {
-      // 应用手机端展开设置
-      this.openTab = this.mobileShow;
-    } else {
-      // 应用非移动端设置
-      this.openTab = this.desktopShow;
-    }
-  },
-};
+<script lang="ts" setup>
+const props = withDefaults(defineProps<{
+  mobileShow?: boolean
+  desktopShow?: boolean
+}>(), {
+  mobileShow: false,
+  desktopShow: true,
+})
+
+const openTab = ref<boolean | null>(null)
+
+onMounted(() => {
+  if (document.body.clientWidth < 1024) {
+    openTab.value = props.mobileShow!
+  } else {
+    openTab.value = props.desktopShow!
+  }
+})
 </script>
