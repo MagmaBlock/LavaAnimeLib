@@ -13,7 +13,7 @@
               <Icon icon="material-symbols:bookmark-remove" />
             </NIcon>
           </template>
-          {{ store.getColorEgg?.follow.remove ?? "取消" }}
+          {{ followLabelRemove ?? "取消" }}
         </NButton>
         <NButton
           secondary
@@ -25,7 +25,7 @@
           <template #icon>
             <NIcon> <Icon icon="material-symbols:bookmark-add" /> </NIcon>
           </template>
-          {{ store.getColorEgg?.follow.add ?? "追番" }}
+          {{ followLabelAdd ?? "追番" }}
         </NButton>
       </div>
     </NDropdown>
@@ -39,11 +39,11 @@
 </template>
 
 <script setup lang="ts">
-const store = useAnimeStore();
-
-const { animeId } = defineProps({
-  animeId: { type: [Number], require: true },
-});
+const { animeId } = defineProps<{
+  animeId?: number
+  followLabelAdd?: string
+  followLabelRemove?: string
+}>()
 
 const followInfo: Ref<any> = ref({});
 const loading = ref(false);

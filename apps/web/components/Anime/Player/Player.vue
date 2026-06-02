@@ -9,48 +9,59 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import Artplayer from "artplayer";
 import SubtitlesOctopus from "libass-wasm/dist/js/subtitles-octopus.js";
 import { useLocalStorage, useThrottleFn, watchDebounced } from "@vueuse/core";
+import type { FileData, ParseResult } from "~/composables/store/Anime";
 
-const store = useAnimeStore();
+const props = defineProps<{
+  activeFile?: (FileData[number] & { parseResult: ParseResult }) | null
+  activeSubtitle?: any | null
+  subtitleEnabled?: boolean
+  localSubtitle?: { name: string; content: string; type: string } | null
+  fileList?: FileData
+
+  findNextEpisode: (ep?: string) => string | undefined
+  changeEpisode: (ep: string) => Promise<string | undefined>
+  reportView: (isWebPlayer: boolean, watchMethod: string) => Promise<void>
+  resolveFileUrl: (index: number) => Promise<string>
+}>()
+
+const emit = defineEmits<{
+  'player-created': [instance: any]
+}>()
+
 const message = useMessage();
 const notification = useNotification();
-const refreshPlayer = inject("refreshPlayer");
+const refreshPlayer = inject("refreshPlayer") as () => Promise<void>;
 const route = useRoute();
 
 const rememberRate = useLocalStorage("rememberRate", false);
 
-let subtitleInstance = null;
+let subtitleInstance: any = null;
 
-const createSubtitles = async (subtitleFile) => {
-  let content;
-  
-  // 处理本地上传的字幕（已经有内容）和服务器字幕（需要获取内容）
-  if (store.subtitleData.localSubtitle &&
-      subtitleFile.name === store.subtitleData.localSubtitle.name) {
-    // 使用本地字幕内容
-    content = store.subtitleData.localSubtitle.content;
+const createSubtitles = async (subtitleFile: any) => {
+  let content: string;
+
+  if (props.localSubtitle && subtitleFile.name === props.localSubtitle.name) {
+    content = props.localSubtitle.content;
   } else {
-    // 聚合模式下 URL 可能未解析，按需解析
     let url = subtitleFile.url;
     if (!url) {
-      const index = store.fileData.fileList.indexOf(subtitleFile);
+      const index = props.fileList?.indexOf(subtitleFile) ?? -1;
       if (index === -1) throw new Error("字幕文件未找到");
-      url = await store.resolveFileUrl(index);
+      url = await props.resolveFileUrl(index);
     }
-    // 从服务器获取字幕内容
     content = await fetch(url).then((res) => res.text());
   }
-  
-  // 根据字幕格式转换内容
+
   const assContent = subtitleFile.name.match(/.srt$/i)
     ? srtToAss(content)
     : content;
 
   subtitleInstance = new SubtitlesOctopus({
-    video: store.artInstance.video,
+    video: artInstance.video,
     subContent: assContent,
     workerUrl: "/libass-wasm/subtitles-octopus-worker.js",
     fallbackFont: "/libass-wasm/default.woff2",
@@ -62,7 +73,7 @@ const createSubtitles = async (subtitleFile) => {
     debug: true,
     targetFps: 24,
     renderMode: "wasm-blend",
-    onError: function (error) {
+    onError: function (error: any) {
       console.error("Subtitle Error:", error);
     },
   });
@@ -72,39 +83,38 @@ const disposeSubtitles = () => {
   if (subtitleInstance) {
     subtitleInstance.dispose();
     subtitleInstance = null;
-    const canvas = document.querySelector("#artContainer canvas");
+    const canvas = document.querySelector<HTMLCanvasElement>("#artContainer canvas");
     if (canvas) {
       canvas.style.display = "none";
     }
   }
 };
 
-// 每次字幕变化时，都更新字幕
 watch(
-  () => store.activeSubtitle,
+  () => props.activeSubtitle,
   (subtitleFile) => {
     if (subtitleFile) {
       disposeSubtitles();
       createSubtitles(subtitleFile);
     } else {
-      // 如果没有字幕，清除当前字幕
       disposeSubtitles();
     }
   }
 );
 
-// 监听字幕开关状态
 watch(
-  () => store.subtitleData.enabled,
+  () => props.subtitleEnabled,
   (enabled) => {
     if (!enabled) {
       disposeSubtitles();
-    } else if (store.activeSubtitle) {
+    } else if (props.activeSubtitle) {
       disposeSubtitles();
-      createSubtitles(store.activeSubtitle);
+      createSubtitles(props.activeSubtitle);
     }
   }
 );
+
+let artInstance: any;
 
 onMounted(() => {
   const options = {
@@ -131,7 +141,7 @@ onMounted(() => {
         html: "记住播放倍速",
         tooltip: rememberRate.value ? "记住" : "关闭",
         switch: rememberRate.value,
-        onSwitch: function (item) {
+        onSwitch: function (item: any) {
           const nextState = !item.switch;
           rememberRate.value = nextState;
           item.tooltip = nextState ? "记住" : "关闭";
@@ -147,10 +157,9 @@ onMounted(() => {
         html: '<i class="art-icon" style="display: flex;width: 26px;height: 26px;margin-top: 1px"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24"><path d="M7.58 16.89l5.77-4.07c.56-.4.56-1.24 0-1.63L7.58 7.11C6.91 6.65 6 7.12 6 7.93v8.14c0 .81.91 1.28 1.58.82zM16 7v10c0 .55.45 1 1 1s1-.45 1-1V7c0-.55-.45-1-1-1s-1 .45-1 1z" fill="currentColor"></path></svg></i>',
         tooltip: "下一话",
         click: useThrottleFn(function () {
-          const newEp = store.findNextEpisode();
-          console.log("切换集数:", newEp);
+          const newEp = props.findNextEpisode();
           if (newEp) {
-            store.changeEpisode(newEp).catch((err) => {
+            props.changeEpisode(newEp).catch((err: any) => {
               console.error("切换集数失败:", err);
             });
           }
@@ -159,12 +168,11 @@ onMounted(() => {
     ],
   };
 
-  const artInstance = reactive(new Artplayer(options));
-  store.artInstance = artInstance;
+  artInstance = reactive(new Artplayer(options as any));
+  emit('player-created', artInstance);
 
-  // 监听文件变化情况
   watchDebounced(
-    () => store.activeFile,
+    () => props.activeFile,
     async (newFile) => {
       if (!newFile?.url) return;
 
@@ -181,11 +189,9 @@ onMounted(() => {
     { immediate: true, debounce: 500 }
   );
 
-  // 播放器出错损坏处理
-  artInstance.on("error", (error, reconnectTime) => {
+  artInstance.on("error", (error: any, reconnectTime: number) => {
     console.log(error, reconnectTime);
     if (reconnectTime == 5) {
-      // 销毁重建播放器
       refreshPlayer();
       message.error("无法连接到此播放节点，请尝试换一个节点或检查网络", {
         duration: 10000,
@@ -193,11 +199,10 @@ onMounted(() => {
     }
   });
 
-  // 播放行为上报
   const reportPlaying = () => {
     if (
-      !store.artInstance?.duration ||
-      store.activeFile?.parseResult?.extensionName?.type != "video"
+      !artInstance?.duration ||
+      props.activeFile?.parseResult?.extensionName?.type != "video"
     ) {
       return;
     }
@@ -206,19 +211,16 @@ onMounted(() => {
       return;
     }
 
-    store.reportView(true, "WebPlayer");
+    props.reportView(true, "WebPlayer");
   };
 
-  // 视频播放事件触发
   artInstance.on("video:timeupdate", useThrottleFn(reportPlaying, 8000));
   artInstance.on("seek", useThrottleFn(reportPlaying, 3000));
   artInstance.on("video:ended", reportPlaying);
 
-  // 尝试在被浏览器限制时静音开播
   artInstance.on("ready", () => {
     setTimeout(async () => {
       const count = usePageLifeCycle().getClickCount();
-      console.log("以下是 Vue 实例挂载后 window 的点击次数：", count);
       if (count > 0) {
         artInstance.play();
       } else {
@@ -238,15 +240,13 @@ onMounted(() => {
     }, 200);
   });
 
-  // 记录播放速率变化
-  artInstance.on("video:ratechange", (e) => {
+  artInstance.on("video:ratechange", (e: any) => {
     const rate = e.target?.playbackRate;
     if (typeof rate == "number") {
-      localStorage.setItem("playbackRate", rate);
+      localStorage.setItem("playbackRate", String(rate));
     }
   });
 
-  // (每次) 视频能够播放时, 更改播放速率
   artInstance.on("video:canplaythrough", () => {
     const rate = localStorage.getItem("playbackRate");
     if (typeof rate == "string" && rememberRate.value) {
@@ -254,26 +254,22 @@ onMounted(() => {
     }
   });
 
-  // 监听文件变化, 重新检查是否有可以播放的下一话
   watch(
-    () => store.activeFile,
+    () => props.activeFile,
     () => {
       artInstance.controls.update({
         ...options.controls[0],
-        disable: !store.findNextEpisode(),
+        disable: !props.findNextEpisode(),
       });
     },
     { immediate: true }
   );
 
-  // 视频结束连播提示
   artInstance.on(
     "video:timeupdate",
     useThrottleFn(() => {
-      // 如果视频总长度 < 20s 或者没有下一话, 返回
-      if (artInstance.duration < 20 || !store.findNextEpisode()) return;
+      if (artInstance.duration < 20 || !props.findNextEpisode()) return;
       const endingTime = artInstance.duration - artInstance.currentTime;
-      // 即将下一话
       if (endingTime <= 10) {
         artInstance.notice.show = `将在 ${Math.round(
           endingTime
@@ -282,13 +278,11 @@ onMounted(() => {
     }, 1000)
   );
 
-  // 视频结束切换下一话
   artInstance.on("video:ended", () => {
-    const nextEp = store.findNextEpisode();
-    if (nextEp) store.changeEpisode(nextEp);
+    const nextEp = props.findNextEpisode();
+    if (nextEp) props.changeEpisode(nextEp);
   });
 
-  // 销毁
   onBeforeUnmount(() => {
     artInstance.destroy();
   });

@@ -1,19 +1,17 @@
 <template>
   <NCollapseTransition>
     <div class="flex items-center gap-2 flex-nowrap">
-      <NSwitch v-model:value="animeStore.subtitleData.enabled" />
+      <NSwitch v-model:value="subtitleEnabled" />
       <Icon name="material-symbols:subtitles-outline" class="w-6 h-6" />
       <NSelect
         :placeholder="
-          animeStore.subtitleData.localSubtitle
-            ? `本地字幕: ${getShortName(
-                animeStore.subtitleData.localSubtitle.name
-              )}`
+          localSubtitle
+            ? `本地字幕: ${getShortName(localSubtitle.name)}`
             : '未选择外挂字幕'
         "
         size="small"
         :options="subtitleSelectList"
-        :value="subtitleSelectCurrentValue"
+        :value="activeSubtitleName"
         :dropdown-props="{ trigger: 'click', showArrow: true }"
         @update:value="handleSubtitleSelect"
         class="truncate"
@@ -36,10 +34,10 @@
             </NPopover>
 
             <NButton
-              v-if="animeStore.subtitleData.localSubtitle"
+              v-if="localSubtitle"
               size="small"
               type="error"
-              @click="handleClearLocalSubtitle"
+              @click="emit('clear-local-subtitle')"
             >
               <template #icon>
                 <Icon name="material-symbols:delete-outline" class="w-5 h-5" />
@@ -48,7 +46,7 @@
             </NButton>
 
             <NButton
-              v-if="!animeStore.subtitleData.localSubtitle"
+              v-if="!localSubtitle"
               size="small"
               type="primary"
               @click="handleUploadSubtitle"
@@ -66,20 +64,32 @@
 </template>
 
 <script lang="ts" setup>
-const animeStore = useAnimeStore();
+import type { FileData } from "~/composables/store/Anime";
+
+const subtitleEnabled = defineModel<boolean>('subtitleEnabled', { default: true })
+
+const props = defineProps<{
+  localSubtitle?: { name: string; content: string; type: string } | null
+  subtitleList: FileData
+  activeSubtitleName?: string | null
+}>()
+
+const emit = defineEmits<{
+  'select-subtitle': [fileName: string]
+  'upload-local-subtitle': [file: File]
+  'clear-local-subtitle': []
+}>()
+
 const message = useMessage();
 
-// 获取截断的文件名显示
 function getShortName(name: string) {
   return name.length > 20 ? `...${name.slice(-18)}` : name;
 }
 
-// 计算字幕选择列表
 const subtitleSelectList = computed(() => {
-  return animeStore.subtitleList.map((file) => {
+  return props.subtitleList.map((file) => {
     const displayName =
       file.name.length > 60 ? `...${file.name.slice(-30)}` : file.name;
-
     return {
       label: displayName,
       value: file.name,
@@ -87,28 +97,18 @@ const subtitleSelectList = computed(() => {
   });
 });
 
-// 当前选中的字幕值
-const subtitleSelectCurrentValue = computed(() => {
-  return animeStore.activeSubtitle?.name;
-});
-
-// 处理字幕选择
 function handleSubtitleSelect(value: string) {
-  handleClearLocalSubtitle();
-  animeStore.subtitleData.subtitleFileName = value;
-  animeStore.subtitleData.enabled = true;
+  emit('clear-local-subtitle');
+  emit('select-subtitle', value);
 }
 
-// 处理本地字幕上传
 function handleUploadSubtitle() {
-  // 创建文件输入元素
   const fileInput = document.createElement("input");
   fileInput.type = "file";
   fileInput.accept = ".srt,.ass,.ssa,.vtt";
   fileInput.style.display = "none";
   document.body.appendChild(fileInput);
 
-  // 监听文件选择事件
   fileInput.onchange = async (event) => {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) {
@@ -117,8 +117,7 @@ function handleUploadSubtitle() {
     }
 
     try {
-      // 调用store中的方法处理上传的字幕文件
-      await animeStore.uploadLocalSubtitle(file);
+      emit('upload-local-subtitle', file);
       message.success(`字幕 "${file.name}" 上传成功`);
     } catch (error) {
       message.error(`字幕上传失败: ${error}`);
@@ -127,12 +126,6 @@ function handleUploadSubtitle() {
     }
   };
 
-  // 触发文件选择对话框
   fileInput.click();
-}
-
-// 清除本地上传的字幕
-function handleClearLocalSubtitle() {
-  animeStore.clearLocalSubtitle();
 }
 </script>

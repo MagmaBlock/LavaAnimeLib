@@ -1,17 +1,16 @@
 <template>
-  <AnimeCardFlod class="select-none" :desktop-show="false" v-if="!store.state.driveData.isLoading && store.driveData">
+  <AnimeCardFlod class="select-none" :desktop-show="false" v-if="!isLoading && driveData">
     <template #title>
       <div>
         播放来源
-        <span v-if="store.driveData.list.length" class="mx-1 text-xs opacity-75">
+        <span v-if="driveData.list.length" class="mx-1 text-xs opacity-75">
           {{ availabilityText }}
         </span>
       </div>
     </template>
 
-    <!-- 展开态：驱动列表 + 线路选择 -->
     <div class="grid gap-1">
-      <template v-for="drive in store.driveData.list" :key="drive.id">
+      <template v-for="drive in driveData.list" :key="drive.id">
         <div
           v-if="epCount(drive) === 1"
           class="cursor-pointer"
@@ -20,8 +19,8 @@
           <AnimeDriveButton
             :name="drive.name"
             :description="drive.endpoints![0].name"
-            :disable="store.animeData?.type?.nsfw && drive.endpoints![0].banNSFW"
-            :active="store.preferredDrive?.id == drive.id"
+            :disable="isNsfw && drive.endpoints![0].banNSFW"
+            :active="preferredDrive?.id == drive.id"
           />
         </div>
         <div v-else>
@@ -51,7 +50,7 @@
                   >
                     <NRadio
                       :value="ep.id"
-                      :disabled="!!(store.animeData?.type?.nsfw && ep.banNSFW)"
+                      :disabled="!!(isNsfw && ep.banNSFW)"
                     >
                       <span class="text-sm">{{ ep.name }}</span>
                       <span class="text-xs opacity-60 ml-1">线路</span>
@@ -65,29 +64,28 @@
       </template>
     </div>
 
-    <div v-if="store.isFallback" class="mt-2 text-xs opacity-50 pl-1">
-      ↳ 当前文件由 {{ store.actualDriveName }} · {{ store.actualEndpointName }} 提供
+    <div v-if="isFallback" class="mt-2 text-xs opacity-50 pl-1">
+      ↳ 当前文件由 {{ actualDriveName }} · {{ actualEndpointName }} 提供
     </div>
 
     <NCheckbox
-      v-model:checked="store.myDrive.rememberMyChoice"
+      v-model:checked="rememberMyChoice"
       class="mt-2 mx-1"
       size="small"
     >
       记住我的选择
     </NCheckbox>
 
-    <!-- 收起态：紧凑的首选驱动信息 -->
     <template #close>
-      <div v-if="store.preferredDrive" class="py-0.5">
+      <div v-if="preferredDrive" class="py-0.5">
         <div class="flex items-center gap-2 rounded-md py-1 px-3 select-none bg-blue-600 text-white">
           <div class="min-w-0">
-            <div class="text-sm truncate font-medium">{{ store.preferredDrive.name }}</div>
-            <div class="text-xs opacity-80 truncate">{{ store.preferredEndpoint?.name ?? "" }}</div>
+            <div class="text-sm truncate font-medium">{{ preferredDrive.name }}</div>
+            <div class="text-xs opacity-80 truncate">{{ preferredEndpoint?.name ?? "" }}</div>
           </div>
         </div>
-        <div v-if="store.isFallback" class="mt-1 text-xs opacity-50 pl-1">
-          ↳ 当前文件由 {{ store.actualDriveName }} · {{ store.actualEndpointName }} 提供
+        <div v-if="isFallback" class="mt-1 text-xs opacity-50 pl-1">
+          ↳ 当前文件由 {{ actualDriveName }} · {{ actualEndpointName }} 提供
         </div>
       </div>
       <div v-else class="text-xs opacity-50 px-3 py-1">
@@ -98,15 +96,34 @@
 </template>
 
 <script setup lang="ts">
-import type { DriveInfo, EndpointInfo } from "@lavaanime/shared";
-import { ref, watch, computed } from "vue";
-import { NRadioGroup, NRadio } from "naive-ui";
+import type { DriveInfo, EndpointInfo, DriveListResult } from "@lavaanime/shared";
+import type { FileData } from "~/composables/store/Anime";
 
-const store = useAnimeStore();
+const rememberMyChoice = defineModel<boolean>('rememberMyChoice', { default: false })
+
+const props = defineProps<{
+  driveData?: DriveListResult | null
+  isLoading: boolean
+  preferredDrive?: DriveInfo | null
+  preferredEndpoint?: EndpointInfo | null
+  preferredEndpointId?: number | null
+  selectedEndpoints?: Record<string, number>
+  isFallback: boolean
+  actualDriveName?: string | null
+  actualEndpointName?: string | null
+  isNsfw?: boolean
+  activeFile?: FileData[number] | null
+}>()
+
+const emit = defineEmits<{
+  'select-drive': [driveId: string, endpointId?: number]
+  'select-endpoint': [endpointId: number]
+}>()
+
 const expandedId = ref<string | null>(null);
 
 const availabilityText = computed(() => {
-  const activeFile = store.activeFile;
+  const activeFile = props.activeFile;
   let driveCount: number;
   let endpointCount: number;
 
@@ -114,13 +131,13 @@ const availabilityText = computed(() => {
     driveCount = activeFile.drives.length;
     endpointCount = 0;
     for (const d of activeFile.drives) {
-      const driveInfo = store.driveData?.list.find((di) => di.id === d.driveId);
+      const driveInfo = props.driveData?.list.find((di) => di.id === d.driveId);
       endpointCount += driveInfo?.endpoints?.length ?? 0;
     }
   } else {
-    driveCount = store.driveData?.list?.length ?? 0;
+    driveCount = props.driveData?.list?.length ?? 0;
     endpointCount = 0;
-    store.driveData?.list?.forEach((d) => {
+    props.driveData?.list?.forEach((d) => {
       endpointCount += d.endpoints?.length ?? 0;
     });
   }
@@ -129,10 +146,10 @@ const availabilityText = computed(() => {
 });
 
 watch(
-  () => store.preferredDrive?.id,
+  () => props.preferredDrive?.id,
   (activeId) => {
     if (activeId) {
-      const drive = store.driveData?.list.find((d) => d.id === activeId);
+      const drive = props.driveData?.list.find((d) => d.id === activeId);
       if (drive && epCount(drive) > 1) {
         expandedId.value = activeId;
       }
@@ -147,7 +164,7 @@ function epCount(d: DriveInfo): number {
 
 function driveBarClass(d: DriveInfo): string[] {
   const c: string[] = [];
-  if (store.preferredDrive?.id === d.id) {
+  if (props.preferredDrive?.id === d.id) {
     c.push("bg-blue-600", "text-white");
   } else {
     c.push("bg-zinc-100", "dark:bg-zinc-800", "hover:bg-zinc-200", "dark:hover:bg-zinc-700");
@@ -159,15 +176,15 @@ function driveBarClass(d: DriveInfo): string[] {
 }
 
 function activeEpId(d: DriveInfo): number | null {
-  if (store.preferredDrive?.id === d.id) {
-    return store.preferredEndpointId ?? store.preferredEndpoint?.id ?? null;
+  if (props.preferredDrive?.id === d.id) {
+    return props.preferredEndpointId ?? props.preferredEndpoint?.id ?? null;
   }
   return null;
 }
 
 function epRadioBg(d: DriveInfo, ep: EndpointInfo): string {
-  if (store.preferredDrive?.id !== d.id) return "";
-  const activeId = store.preferredEndpointId ?? store.preferredEndpoint?.id;
+  if (props.preferredDrive?.id !== d.id) return "";
+  const activeId = props.preferredEndpointId ?? props.preferredEndpoint?.id;
   return activeId === ep.id
     ? "bg-blue-50 dark:bg-blue-900/20"
     : "bg-zinc-50 dark:bg-zinc-900";
@@ -182,23 +199,23 @@ function toggleExpand(d: DriveInfo) {
 }
 
 function selectDrive(driveId: string, epId?: number) {
-  store.setPreferredDrive(driveId, epId);
+  emit('select-drive', driveId, epId);
 }
 
 function selectEp(driveId: string, epId: number) {
-  if (store.preferredDrive?.id === driveId) {
-    store.setPreferredEndpoint(epId);
+  if (props.preferredDrive?.id === driveId) {
+    emit('select-endpoint', epId);
   } else {
-    store.setPreferredDrive(driveId, epId);
+    emit('select-drive', driveId, epId);
   }
 }
 
 function endpointLabel(d: DriveInfo): string {
-  if (store.preferredDrive?.id === d.id && store.preferredEndpoint) {
-    return store.preferredEndpoint.name;
+  if (props.preferredDrive?.id === d.id && props.preferredEndpoint) {
+    return props.preferredEndpoint.name;
   }
   if (d.endpoints?.length) {
-    const sel = store.myDrive.selectedEndpoints;
+    const sel = props.selectedEndpoints;
     if (sel && sel[d.id] != null) {
       const found = d.endpoints.find((ep) => ep.id === sel[d.id]);
       if (found) return found.name;

@@ -11,17 +11,12 @@
   </NSpin>
 </template>
 
-<script setup>
-const { active, name, description, disable } = defineProps({
-  active: Boolean,
-  name: String,
-  description: String,
-  disable: Boolean,
-  loading: Boolean,
-});
-
-const activeClass = "bg-blue-600 text-white ";
-const normalClass =
-  "bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 active:bg-zinc-300 active:dark:bg-blue-600 active:dark:text-white";
-const disableClass = "opacity-50 brightness-75";
+<script setup lang="ts">
+defineProps<{
+  active?: boolean
+  name?: string
+  description?: string
+  disable?: boolean
+  loading?: boolean
+}>()
 </script>

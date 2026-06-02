@@ -4,22 +4,22 @@
       <!-- 标题和追番 -->
       <NFlex justify="space-between" :wrap="false">
         <NFlex :align="'baseline'" @click="emits('open-details')">
-          <AnimeMetaCardTitle :title="store.animeData?.title" />
+          <AnimeMetaCardTitle :title="animeData?.title" />
         </NFlex>
-        <AnimeFollowButton v-if="store.laID" :anime-id="store.laID" />
+        <AnimeFollowButton v-if="laID" :anime-id="laID" :follow-label-add="followLabelAdd" :follow-label-remove="followLabelRemove" />
       </NFlex>
       <!-- 基础信息行 -->
       <NFlex vertical size="small" @click="emits('open-details')">
         <NFlex justify="space-between">
           <NFlex class="text-gray-500">
-            <AnimeMetaCardViewCount :views="store.animeData?.views" />
+            <AnimeMetaCardViewCount :views="animeData?.views" />
             <AnimeMetaCardRating
-              :rating="store.animeData?.rating?.score"
-              :rank="store.animeData?.rating?.rank"
+              :rating="animeData?.rating?.score"
+              :rank="animeData?.rating?.rank"
             />
             <AnimeMetaCardAttributeLabels
-              :bdrip="store.animeData?.type?.bdrip"
-              :nsfw="store.animeData?.type?.nsfw"
+              :bdrip="animeData?.type?.bdrip"
+              :nsfw="animeData?.type?.nsfw"
             />
           </NFlex>
           <AnimeMetaCardDetailsButton />
@@ -30,7 +30,17 @@
 </template>
 
 <script lang="ts" setup>
-const store = useAnimeStore();
+defineProps<{
+  laID?: number
+  followLabelAdd?: string
+  followLabelRemove?: string
+  animeData?: {
+    title?: string
+    views?: number
+    rating?: { score?: number; rank?: number }
+    type?: { bdrip?: boolean; nsfw?: boolean }
+  }
+}>()
 
 const emits = defineEmits(["open-details"]);
 </script>

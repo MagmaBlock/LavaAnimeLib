@@ -1,121 +1,80 @@
-<script setup>
-import { useLocalStorage } from "@vueuse/core";
+<script setup lang="ts">
+import type { FileData } from "~/composables/store/Anime";
+import { useBytesToSize } from "~/composables/bytesToSize";
 
-const store = useAnimeStore();
-const ascOrder = useLocalStorage("AnimeFileAscOrder", true);
+interface EpisodeGroup {
+  episode: string
+  list: FileData
+}
 
-const videoButtonClick = async (video) => {
-  if (!video.url) {
-    const index = store.fileData.fileList.indexOf(video);
-    if (index !== -1) {
-      try {
-        await store.resolveFileUrl(index);
-      } catch (err) {
-        window.$message?.error("获取文件链接失败");
-        return;
-      }
-    }
-  }
-  if (video.url === store.activeFile?.url) return;
-  let result = await Promise.allSettled([
-    store.getAnimeViewHistory(),
-    store.changeVideo(video.url),
-  ]);
-  if (result[0].status !== "rejected") {
-    let viewHistory = result[0].value;
-    if (viewHistory.data.data.length) {
-      let recentRecord =
-        viewHistory.data.data.find((record) => {
-          return record.fileName == video.name;
-        }) ??
-        viewHistory.data.data.find((record) => {
-          return record.episode == video?.parseResult?.episode;
-        });
-      store.seekByHistory(recentRecord);
-    }
-  }
-};
+const props = defineProps<{
+  isLoading: boolean
+  errorCode: number | null
+  fileList: FileData
+  episodeList: EpisodeGroup[]
+  noEpisodeList: FileData
+  musicList: FileData
+  otherList: FileData
+  activeEpisode: string | null
+  activeFileName: string | null
+  animeDate: string
+  ascOrder: boolean
+  allowDownload: boolean
+  colorEggTitle?: string
 
-const musicButtonClick = async (file) => {
-  if (!file.url) {
-    const index = store.fileData.fileList.indexOf(file);
-    if (index !== -1) {
-      try {
-        await store.resolveFileUrl(index);
-      } catch (err) {
-        window.$message?.error("获取文件链接失败");
-        return;
-      }
-    }
-  }
-  store.changeVideo(file.url, true);
-};
+  // 回调
+  episodeListFind: (episode: string) => EpisodeGroup | undefined
+  changeEpisodeAutoHistory: (episode: string) => Promise<void>
+  selectAndPlayVideo: (fileIndex: number) => Promise<void>
+  selectAndPlayMusic: (fileIndex: number) => Promise<void>
+  openAttachment: (fileIndex: number) => Promise<void>
+}>()
 
-const attachmentClick = async (file) => {
-  if (!file.url) {
-    const index = store.fileData.fileList.indexOf(file);
-    if (index !== -1) {
-      try {
-        await store.resolveFileUrl(index);
-      } catch (err) {
-        window.$message?.error("获取文件链接失败");
-        return;
-      }
-    }
-  }
-  window.open(file.url, "_blank", "noopener,noreferrer");
-};
+const emit = defineEmits<{
+  'toggle-sort-order': []
+}>()
+
+function getFileIndex(file: FileData[number]): number {
+  return props.fileList.indexOf(file)
+}
 </script>
 <template>
   <div>
-    <!-- Loading -->
-    <AnimeFileListLoading v-if="store.state.fileData.isLoading" />
+    <AnimeFileListLoading v-if="isLoading" />
 
-    <!-- 正常 -->
     <AnimeCardBasic
-      v-if="
-        !store.state.fileData.isLoading &&
-        !store.state.fileData.errorCode &&
-        store.fileData.fileList.length
-      "
+      v-if="!isLoading && !errorCode && fileList.length"
     >
-      <!-- 卡片标题 -->
       <template #header>
-        <div class="flex place-items-center" @click="ascOrder = !ascOrder">
-          <div>{{ store.getColorEgg?.fileList?.title ?? "播放列表" }}</div>
+        <div class="flex place-items-center" @click="emit('toggle-sort-order')">
+          <div>{{ colorEggTitle ?? "播放列表" }}</div>
           <div class="flex-1"></div>
           <Icon name="mdi:sort-ascending" size="16" v-if="ascOrder" />
           <Icon name="mdi:sort-descending" size="16" v-else />
         </div>
       </template>
-      <!-- 视频的各个分类 -->
       <NTabs type="bar" size="small" animated>
-        <!-- 有集数时的正片 -->
-        <NTabPane name="正片" tab="正片" v-if="store.episodeList.length">
-          <!-- 正片集数方块 -->
+        <NTabPane name="正片" tab="正片" v-if="episodeList.length">
           <div class="grid grid-cols-6 gap-1">
-            <!-- 集数方块 -->
             <NPopover
               trigger="hover"
               :disabled="episode.list.length == 1"
-              v-for="episode in store.episodeList"
+              v-for="episode in episodeList"
             >
               <template #trigger>
                 <AnimeCardButton
                   class="relative h-10 grid content-center"
-                  :active="store.fileData.activeEpisode == episode.episode"
-                  @click="store.changeEpisodeAutoHistory(episode.episode)"
+                  :active="activeEpisode == episode.episode"
+                  @click="changeEpisodeAutoHistory(episode.episode)"
                 >
-                  <!-- 集数 -->
                   <div class="leading-none pb-0.5 text-center">
                     {{ episode.episode }}
                   </div>
-                  <!-- 多集数时展现 -->
                   <div
                     v-if="episode.list.length > 1"
                     class="absolute h-0.5 w-1.5 mx-auto inset-x-0 bottom-1 rounded"
                     :class="
-                      store.fileData.activeEpisode == episode.episode
+                      activeEpisode == episode.episode
                         ? 'bg-gray-50'
                         : 'bg-gray-400'
                     "
@@ -125,18 +84,15 @@ const attachmentClick = async (file) => {
               <span>当前集数有 {{ episode.list.length }} 个视频</span>
             </NPopover>
           </div>
-          <!-- 正片集数列表 -->
-          <NCollapseTransition :show="!!store.fileData?.activeEpisode">
+          <NCollapseTransition :show="!!activeEpisode">
             <div class="my-1">
               <Transition mode="out-in" name="fade">
-                <div :key="store.fileData?.activeEpisode">
+                <div :key="activeEpisode ?? ''">
                   <AnimeFileInfo
-                    v-for="video in store.episodeListFind(
-                      store.fileData.activeEpisode
-                    ).list"
+                    v-for="video in episodeListFind(activeEpisode!)?.list"
                     :video="video"
-                    @click="videoButtonClick(video)"
-                    :active="video.name == store.activeFile?.name"
+                    @click="selectAndPlayVideo(getFileIndex(video))"
+                    :active="video.name == activeFileName"
                   />
                 </div>
               </Transition>
@@ -144,51 +100,47 @@ const attachmentClick = async (file) => {
           </NCollapseTransition>
         </NTabPane>
 
-        <!-- 未识别到集数的视频 -->
         <NTabPane
           name="无集数视频"
           :tab="
-            store.episodeList.length
-              ? `相关视频 (${store.noEpisodeList.length})`
-              : `视频 (${store.noEpisodeList.length})`
+            episodeList.length
+              ? `相关视频 (${noEpisodeList.length})`
+              : `视频 (${noEpisodeList.length})`
           "
-          v-if="store.noEpisodeList.length"
+          v-if="noEpisodeList.length"
         >
-          <!-- 其他视频显示 -->
           <AnimeFileInfo
-            v-for="video in store.noEpisodeList"
+            v-for="video in noEpisodeList"
             :video="video"
-            @click="videoButtonClick(video)"
-            :active="video.name == store.activeFile?.name"
+            @click="selectAndPlayVideo(getFileIndex(video))"
+            :active="video.name == activeFileName"
           />
         </NTabPane>
 
-        <!-- 音乐 -->
         <NTabPane
           name="音乐"
-          :tab="`音乐 (${store.musicList.length})`"
-          v-if="store.musicList.length"
+          :tab="`音乐 (${musicList.length})`"
+          v-if="musicList.length"
         >
           <AnimeFileInfo
             :video="file"
-            @click="musicButtonClick(file)"
-            :active="file.name == store.activeFile?.name"
-            v-for="file in store.musicList"
+            @click="selectAndPlayMusic(getFileIndex(file))"
+            :active="file.name == activeFileName"
+            v-for="file in musicList"
           />
         </NTabPane>
 
-        <!-- 附件文件，以上都没匹配到的文件就会过来 -->
         <NTabPane
           name="附件"
-          :tab="`附件 (${store.otherList.length})`"
-          v-if="store.otherList.length"
+          :tab="`附件 (${otherList.length})`"
+          v-if="otherList.length"
         >
-          <NPopover trigger="hover" v-for="file in store.otherList">
+          <NPopover trigger="hover" v-for="file in otherList">
             <template #trigger>
               <a
-                v-if="!(store.actualEndpoint ?? store.preferredEndpoint)?.disableDownload"
+                v-if="allowDownload"
                 href="javascript:void(0)"
-                @click="attachmentClick(file)"
+                @click="openAttachment(getFileIndex(file))"
                 rel="noopener noreferrer"
               >
                 <AnimeFileInfo :video="file" />
@@ -197,20 +149,15 @@ const attachmentClick = async (file) => {
             </template>
             <span>
               这是一个 {{ file?.parseResult?.extensionName?.result }} 附件, 大小
-              {{ useBytesToSize(file?.size) }}{{ (store.actualEndpoint ?? store.preferredEndpoint)?.disableDownload ? "" : ", 点击可以下载" }}
+              {{ useBytesToSize(file?.size) }}{{ allowDownload ? ", 点击可以下载" : "" }}
             </span>
           </NPopover>
         </NTabPane>
       </NTabs>
     </AnimeCardBasic>
 
-    <!-- 404 -->
     <AnimeCardBasic
-      v-if="
-        !store.state.fileData.isLoading &&
-        !store.state.fileData.errorCode &&
-        !store.fileData.fileList.length
-      "
+      v-if="!isLoading && !errorCode && !fileList.length"
       class="py-6"
     >
       <NResult status="418" title="暂无文件" size="small" />
@@ -220,7 +167,7 @@ const attachmentClick = async (file) => {
           <li>1. 所有存储节点均不包含此动画</li>
           <li>
             2. 当前动画暂无资源或未放送，根据 Bangumi，开播时间为
-            {{ store.animeData.date || "未知 / 暂未定档" }}
+            {{ animeDate || "未知 / 暂未定档" }}
           </li>
         </ul>
       </div>

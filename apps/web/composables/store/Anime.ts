@@ -1207,5 +1207,73 @@ export const useAnimeStore = defineStore("anime", {
     clearLocalSubtitle() {
       this.subtitleData.localSubtitle = null;
     },
+
+    /**
+     * 选择并播放视频文件 (从 File/List.vue 抽取)
+     */
+    async selectAndPlayVideo(fileIndex: number) {
+      const file = this.fileData.fileList[fileIndex];
+      if (!file) return;
+      if (!file.url) {
+        try {
+          await this.resolveFileUrl(fileIndex);
+        } catch {
+          window.$message?.error("获取文件链接失败");
+          return;
+        }
+      }
+      if (file.url === this.activeFile?.url) return;
+      const result = await Promise.allSettled([
+        this.getAnimeViewHistory(),
+        this.changeVideo(file.url!),
+      ]);
+      if (result[0].status !== "rejected") {
+        const viewHistory = (result[0] as PromiseFulfilledResult<any>).value;
+        if (viewHistory?.data?.data?.length) {
+          const recentRecord =
+            viewHistory.data.data.find(
+              (record: any) => record.fileName == file.name
+            ) ??
+            viewHistory.data.data.find(
+              (record: any) => record.episode == file.parseResult?.episode
+            );
+          this.seekByHistory(recentRecord);
+        }
+      }
+    },
+
+    /**
+     * 选择并播放音乐文件 (从 File/List.vue 抽取)
+     */
+    async selectAndPlayMusic(fileIndex: number) {
+      const file = this.fileData.fileList[fileIndex];
+      if (!file) return;
+      if (!file.url) {
+        try {
+          await this.resolveFileUrl(fileIndex);
+        } catch {
+          window.$message?.error("获取文件链接失败");
+          return;
+        }
+      }
+      this.changeVideo(file.url!, true);
+    },
+
+    /**
+     * 打开附件文件 (从 File/List.vue 抽取)
+     */
+    async openAttachment(fileIndex: number) {
+      const file = this.fileData.fileList[fileIndex];
+      if (!file) return;
+      if (!file.url) {
+        try {
+          await this.resolveFileUrl(fileIndex);
+        } catch {
+          window.$message?.error("获取文件链接失败");
+          return;
+        }
+      }
+      window.open(file.url, "_blank", "noopener,noreferrer");
+    },
   },
 });

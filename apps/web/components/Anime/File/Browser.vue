@@ -21,9 +21,7 @@
           </NButton>
         </NFlex>
       </NCard>
-      <!-- Content -->
-      <div v-if="store.fileData?.fileList?.length">
-        <!-- No Download alert -->
+      <div v-if="fileList?.length">
         <NEmpty
           v-if="!allowDownload"
           class="my-8"
@@ -31,9 +29,8 @@
         />
 
         <div v-show="allowDownload">
-          <!-- File List -->
           <div
-            v-for="file in store.fileData.fileList"
+            v-for="file in fileList"
             :key="file.name"
             class="mb-2"
           >
@@ -46,10 +43,9 @@
         </div>
       </div>
 
-      <!-- Loading -->
       <NFlex vertical>
         <NSkeleton
-          v-if="store.state.fileData.isLoading"
+          v-if="isLoading"
           v-for="a in 10"
           height="32px"
           :sharp="false"
@@ -60,14 +56,17 @@
 </template>
 
 <script lang="ts" setup>
-const store = useAnimeStore();
+import type { FileData } from "~/composables/store/Anime";
+
+const props = defineProps<{
+  fileList: FileData
+  isLoading: boolean
+  allowDownload: boolean
+  resolveFileUrl: (index: number) => Promise<string>
+}>()
 
 const selectedFiles = ref<Record<string, boolean>>({});
 const isResolving = ref(false);
-
-const allowDownload = computed(() => {
-  return !store.preferredDrive?.description?.includes("请勿下载");
-});
 
 const hasSelectedFiles = computed(() => {
   return Object.values(selectedFiles.value).some(Boolean);
@@ -83,11 +82,11 @@ const toggleSelect = (name: string) => {
 
 const resolveSelectedUrls = async () => {
   const results: { name: string; url: string }[] = [];
-  for (let i = 0; i < store.fileData.fileList.length; i++) {
-    const file = store.fileData.fileList[i];
+  for (let i = 0; i < props.fileList.length; i++) {
+    const file = props.fileList[i];
     if (selectedFiles.value[file.name]) {
       try {
-        const url = await store.resolveFileUrl(i);
+        const url = await props.resolveFileUrl(i);
         results.push({ name: file.name, url });
       } catch {
         window.$message?.error(`获取 ${file.name} 链接失败`);

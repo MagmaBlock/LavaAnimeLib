@@ -10,9 +10,9 @@
     </AnimeCardButton>
   </a>
 </template>
-<script setup>
-const props = defineProps({
-  icon: String,
-  href: String,
-});
+<script setup lang="ts">
+defineProps<{
+  icon?: string
+  href?: string
+}>()
 </script>

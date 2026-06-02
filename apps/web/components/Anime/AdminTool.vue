@@ -1,6 +1,6 @@
 <template>
   <NDrawer
-    v-model:show="store.showAdminTools"
+    v-model:show="show"
     placement="bottom"
     :default-height="540"
     resizable
@@ -19,17 +19,17 @@
             <NButton @click="copy(getPath)"> 复制 </NButton>
           </template>
         </NListItem>
-        <NListItem v-if="store.animeData?.name">
-          <NThing title="Name" :description="store.animeData.name"> </NThing>
+        <NListItem v-if="animeData?.name">
+          <NThing title="Name" :description="animeData.name"> </NThing>
           <template #suffix>
-            <NButton @click="copy(store.animeData.name)"> 复制 </NButton>
+            <NButton @click="copy(animeData.name!)"> 复制 </NButton>
           </template>
         </NListItem>
-        <NListItem v-if="store.animeData?.name_cn">
-          <NThing title="NameCN" :description="store.animeData.name_cn">
+        <NListItem v-if="animeData?.name_cn">
+          <NThing title="NameCN" :description="animeData.name_cn">
           </NThing>
           <template #suffix>
-            <NButton @click="copy(store.animeData.name_cn)"> 复制 </NButton>
+            <NButton @click="copy(animeData.name_cn!)"> 复制 </NButton>
           </template>
         </NListItem>
         <NListItem v-if="getWebsite">
@@ -46,27 +46,34 @@
   </NDrawer>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useClipboard } from "@vueuse/core";
 
-const store = useAnimeStore();
+const show = defineModel<boolean>('show', { default: false })
 
-// 剪贴板工具
+const props = defineProps<{
+  animeData?: {
+    name?: string
+    name_cn?: string
+    index?: { year?: string; type?: string; name?: string }
+    infobox?: any[]
+  }
+}>()
+
 const { copy } = useClipboard();
-// 计算
+
 const getPath = computed(() => {
-  return `D:\\Downloads\\LavaAnimeLib\\${store.animeData?.index.year}\\${store.animeData?.index.type}\\${store.animeData?.index.name}`;
+  return `D:\\Downloads\\LavaAnimeLib\\${props.animeData?.index?.year}\\${props.animeData?.index?.type}\\${props.animeData?.index?.name}`;
 });
 const getRuleName = computed(() => {
-  let month = store.animeData?.index.type.match(/^\d{1,2}/);
-  if (!month) {
-    month = "other";
-  }
-  return `【${month}】${store.animeData?.index.name}`;
+  const typeStr = props.animeData?.index?.type ?? ''
+  const match = typeStr.match(/^\d{1,2}/)
+  const month = match ? match[0] : "other"
+  return `【${month}】${props.animeData?.index?.name}`;
 });
 const getWebsite = computed(() => {
-  if (!store.animeData?.infobox) return;
-  let result = store.animeData?.infobox?.find((kv) => {
+  if (!props.animeData?.infobox) return;
+  let result = props.animeData?.infobox?.find((kv: { key: string; value: string }) => {
     return ["官方网站", "官网", "网站"].includes(kv.key);
   });
   if (result?.value) {

@@ -20,20 +20,20 @@
   </AnimePlayerActionBarIcon>
   <!-- 缓存 -->
   <AnimePlayerActionBarIcon
-    v-if="!(store.actualEndpoint ?? store.preferredEndpoint)?.disableDownload"
+    v-if="!disableDownload"
     icon="/PlayersIcon/download.svg"
-    :href="store.activeFile?.url"
+    :href="activeFileUrl"
     @click="handleButtonClick('Download')"
   >
     缓存
   </AnimePlayerActionBarIcon>
   <!-- 缓存 -->
   <AnimePlayerActionBarIcon
-    v-if="!(store.actualEndpoint ?? store.preferredEndpoint)?.disableDownload"
+    v-if="!disableDownload"
     @click="
       () => {
         handleButtonClick('Download');
-        store.isFileBrowserOpen = true;
+        isFileBrowserOpen = true;
       }
     "
   >
@@ -47,7 +47,7 @@
     icon="/PlayersIcon/DanDanPlay.svg"
     :href="getUrl().ddplayWindows"
     @click="handleButtonClick('DanDanPlayWindows')"
-    v-if="ua.os.name == 'Windows' || props.allos"
+    v-if="(ua.os.name ?? '') == 'Windows' || props.allos"
   >
     弹弹Play <span v-if="props.allos" class="ml-1 text-xs">(Windows)</span>
   </AnimePlayerActionBarIcon>
@@ -56,7 +56,7 @@
     icon="/PlayersIcon/DanDanPlay.svg"
     :href="getUrl().ddplayAndroid"
     @click="handleButtonClick('DanDanPlayAndroid')"
-    v-if="ua.os.name.match(/Android|Android-x86|HarmonyOS/i) || props.allos"
+    v-if="(ua.os.name ?? '').match(/Android|Android-x86|HarmonyOS/i) || props.allos"
   >
     弹弹Play <span v-if="props.allos" class="ml-1 text-xs">(Android)</span>
   </AnimePlayerActionBarIcon>
@@ -65,7 +65,7 @@
     icon="/PlayersIcon/PotPlayer.svg"
     :href="getUrl().potplayer"
     @click="handleButtonClick('PotPlayer')"
-    v-if="ua.os.name == 'Windows' || props.allos"
+    v-if="(ua.os.name ?? '') == 'Windows' || props.allos"
   >
     PotPlayer
   </AnimePlayerActionBarIcon>
@@ -74,7 +74,7 @@
     icon="/PlayersIcon/mpv.svg"
     :href="getUrl().mpv"
     @click="handleButtonClick('mpv')"
-    v-if="ua.os.name.match(/Android|Android-x86|HarmonyOS/i) || props.allos"
+    v-if="(ua.os.name ?? '').match(/Android|Android-x86|HarmonyOS/i) || props.allos"
   >
     MPV
   </AnimePlayerActionBarIcon>
@@ -91,7 +91,7 @@
     icon="/PlayersIcon/iina.svg"
     :href="getUrl().iina"
     @click="handleButtonClick('IINA')"
-    v-if="ua.os.name == 'Mac OS' || props.allos"
+    v-if="(ua.os.name ?? '') == 'Mac OS' || props.allos"
   >
     IINA
   </AnimePlayerActionBarIcon>
@@ -100,7 +100,7 @@
     icon="/PlayersIcon/nplayer.svg"
     :href="getUrl().nPlayer"
     @click="handleButtonClick('nPlayer')"
-    v-if="ua.os.name.match(/Android|Android-x86|HarmonyOS|iOS/i) || props.allos"
+    v-if="(ua.os.name ?? '').match(/Android|Android-x86|HarmonyOS|iOS/i) || props.allos"
   >
     nPlayer
   </AnimePlayerActionBarIcon>
@@ -109,7 +109,7 @@
     icon="/PlayersIcon/mxplayer.svg"
     :href="getUrl().mxPlayerPro"
     @click="handleButtonClick('MXPlayer')"
-    v-if="ua.os.name.match(/Android|Android-x86|HarmonyOS/i) || props.allos"
+    v-if="(ua.os.name ?? '').match(/Android|Android-x86|HarmonyOS/i) || props.allos"
   >
     MXPlayer Pro
   </AnimePlayerActionBarIcon>
@@ -117,48 +117,49 @@
     icon="/PlayersIcon/mxplayer.svg"
     :href="getUrl().mxPlayer"
     @click="handleButtonClick('MXPlayer')"
-    v-if="ua.os.name.match(/Android|Android-x86|HarmonyOS/i) || props.allos"
+    v-if="(ua.os.name ?? '').match(/Android|Android-x86|HarmonyOS/i) || props.allos"
   >
     MXPlayer
   </AnimePlayerActionBarIcon>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useClipboard, useThrottleFn } from "@vueuse/core";
 import uaParser from "ua-parser-js";
 
-const store = useAnimeStore();
+const isFileBrowserOpen = defineModel<boolean>('isFileBrowserOpen', { default: false })
+
+const props = defineProps<{
+  allos?: boolean
+  activeFileUrl?: string
+  activeFileName?: string
+  disableDownload?: boolean
+  reportView: (type: string) => void
+}>()
+
 const ua = uaParser();
 const { copy, copied, isSupported } = useClipboard({
-  source: computed(() => store.activeFile?.url),
+  source: computed(() => props.activeFileUrl ?? ''),
   legacy: true,
 });
 
-const props = defineProps({
-  allos: Boolean,
-});
-
-/**
- * 处理点击按钮事件
- * @param {String} type
- */
-function handleButtonClick(type) {
-  useThrottleFn(store.reportView(false, type), 2000);
+function handleButtonClick(type: string) {
+  useThrottleFn(() => props.reportView(type), 2000)();
 }
 
 const getUrl = () => {
+  const url = props.activeFileUrl ?? ''
+  const name = props.activeFileName ?? ''
   return {
-    ddplayWindows: `ddplay:${encodeURIComponent(
-      store.activeFile?.url + "|filePath=" + store.activeFile?.name
-    )}`,
-    ddplayAndroid: `intent:${store.activeFile?.url}#Intent;package=com.xyoye.dandanplay;end`,
-    potplayer: `potplayer://${store.activeFile?.url}`,
-    vlc: `vlc://${store.activeFile?.url}`,
-    iina: `iina://weblink?url=${store.activeFile?.url}`,
-    mpv: `intent:${store.activeFile?.url}#Intent;package=is.xyz.mpv;end`,
-    nPlayer: `nplayer-${store.activeFile?.url}`,
-    mxPlayer: `intent:${store.activeFile?.url}#Intent;package=com.mxtech.videoplayer.ad;S.title=${store.activeFile?.name};end`,
-    mxPlayerPro: `intent:${store.activeFile?.url}#Intent;package=com.mxtech.videoplayer.pro;S.title=${store.activeFile?.name};end`,
+    ddplayWindows: `ddplay:${encodeURIComponent(url + "|filePath=" + name)}`,
+    ddplayAndroid: `intent:${url}#Intent;package=com.xyoye.dandanplay;end`,
+    potplayer: `potplayer://${url}`,
+    vlc: `vlc://${url}`,
+    iina: `iina://weblink?url=${url}`,
+    mpv: `intent:${url}#Intent;package=is.xyz.mpv;end`,
+    nPlayer: `nplayer-${url}`,
+    mxPlayer: `intent:${url}#Intent;package=com.mxtech.videoplayer.ad;S.title=${name};end`,
+    mxPlayerPro: `intent:${url}#Intent;package=com.mxtech.videoplayer.pro;S.title=${name};end`,
   };
 };
 </script>

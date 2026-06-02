@@ -1,7 +1,7 @@
 <template>
   <AnimeCardBasic
     class="select-none"
-    v-if="store.animeData?.relations && store.animeData?.relations[0]"
+    v-if="relations && relations[0]"
   >
     <template #header>
       <div
@@ -19,12 +19,12 @@
 
     <!-- 新版 Grid 展示 -->
     <NCollapseTransition :show="relationGrid">
-      <ContainerAnimeCard :animes="store.animeData?.relations" size="small" />
+      <ContainerAnimeCard :animes="relations" size="small" />
     </NCollapseTransition>
     <!-- 旧版展示 -->
     <NCollapseTransition :show="!relationGrid">
       <div
-        v-for="anime in store.animeData?.relations"
+        v-for="anime in relations"
         class="flex flex-wrap gap-1 my-2"
       >
         <NuxtLink
@@ -63,10 +63,17 @@
   </AnimeCardBasic>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useStorage } from "@vueuse/core";
 
-const store = useAnimeStore();
+const props = defineProps<{
+  relations?: Array<{
+    id: number
+    title: string
+    relation: string
+    type: { bdrip: boolean; nsfw: boolean }
+  }>
+}>()
 
 const relationGrid = useStorage("relationGrid", true);
 </script>

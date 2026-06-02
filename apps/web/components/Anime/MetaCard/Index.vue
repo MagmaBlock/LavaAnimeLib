@@ -1,82 +1,73 @@
 <template>
   <NCard size="small" :bordered="false">
     <template #header>
-      <!-- 头部面包屑 -->
       <AnimeMetaCardIndexBreadcrumb
-        :year="store.animeData?.index?.year"
-        :type="store.animeData?.index?.type"
-        :name="store.animeData?.index?.name"
-        @open-admin-tools="() => (store.showAdminTools = true)"
+        :year="animeData?.index?.year"
+        :type="animeData?.index?.type"
+        :name="animeData?.index?.name"
+        @open-admin-tools="showAdminTools = true"
       />
     </template>
     <template #header-extra>
-      <AnimeFollowButton v-if="store.laID" :anime-id="store.laID" />
+      <AnimeFollowButton v-if="laID" :anime-id="laID" :follow-label-add="followLabelAdd" :follow-label-remove="followLabelRemove" />
     </template>
     <template #default>
-      <!-- 左右容器 -->
       <NFlex :wrap="false">
-        <!-- 左侧封面图 -->
         <AnimeMetaCardPosterImage
-          :poster-url="store.animeData?.images?.poster"
+          :poster-url="animeData?.images?.poster"
           class="hidden sm:block"
         />
-        <!-- 纵向容器 -->
         <NFlex vertical>
           <NFlex :wrap="false" justify="space-between">
             <NFlex vertical>
-              <!-- 标题行 -->
               <NFlex :align="'baseline'">
                 <AnimeMetaCardTitle
-                  :title="store.animeData?.title"
-                  :original-title="store.animeData?.name"
-                  :loading="store.state.animeData.isLoading"
+                  :title="animeData?.title"
+                  :original-title="animeData?.name"
+                  :loading="isLoading"
                 />
                 <AnimeMetaCardAttributeLabels
-                  :bdrip="store.animeData?.type?.bdrip"
-                  :nsfw="store.animeData?.type?.nsfw"
+                  :bdrip="animeData?.type?.bdrip"
+                  :nsfw="animeData?.type?.nsfw"
                 />
               </NFlex>
-              <!-- 手机端封面图 -->
               <AnimeMetaCardPosterImage
-                :poster-url="store.animeData?.images?.poster"
+                :poster-url="animeData?.images?.poster"
                 :mini="true"
                 class="sm:hidden"
               />
-              <!-- 基础信息行 -->
               <NFlex vertical size="small">
                 <NFlex class="text-gray-500">
                   <AnimeMetaCardPlatform
-                    :platform="store.animeData?.platform"
+                    :platform="animeData?.platform"
                   />
-                  <AnimeMetaCardReleaseDate :date="store.animeData?.date" />
+                  <AnimeMetaCardReleaseDate :date="animeData?.date" />
                   <AnimeMetaCardTotalEpisodesCount
-                    :count="store.animeData?.eps"
+                    :count="animeData?.eps"
+                    :episode-name="episodeName"
                   />
                 </NFlex>
                 <NFlex class="text-gray-500">
-                  <AnimeMetaCardViewCount :views="store.animeData?.views" />
+                  <AnimeMetaCardViewCount :views="animeData?.views" />
                   <AnimeMetaCardRating
-                    :rating="store.animeData?.rating?.score"
-                    :rank="store.animeData?.rating?.rank"
+                    :rating="animeData?.rating?.score"
+                    :rank="animeData?.rating?.rank"
                   />
-                  <AnimeMetaCardAnimeID :id="store.animeData?.id" />
+                  <AnimeMetaCardAnimeID :id="animeData?.id" />
                 </NFlex>
               </NFlex>
             </NFlex>
           </NFlex>
-
-          <!-- Tags -->
           <AnimeMetaCardTags
-            :tags="store.animeData?.tags"
-            :loading="store.state.animeData.isLoading"
+            :tags="animeData?.tags"
+            :loading="isLoading"
           />
         </NFlex>
       </NFlex>
     </template>
     <template #action>
-      <!-- 外部链接 -->
       <AnimeMetaCardExternalLinks
-        :bgm-id="store.bgmID"
+        :bgm-id="bgmID"
         :official-website="getWebsite"
       />
     </template>
@@ -84,16 +75,38 @@
 </template>
 
 <script lang="ts" setup>
-const store = useAnimeStore();
+const showAdminTools = defineModel<boolean>('showAdminTools', { default: false })
+
+const props = defineProps<{
+  laID?: number
+  followLabelAdd?: string
+  followLabelRemove?: string
+  isLoading?: boolean
+  bgmID?: number | null
+  episodeName?: string
+  animeData?: {
+    title?: string
+    name?: string
+    platform?: string
+    date?: string
+    eps?: number
+    views?: number
+    id?: number
+    images?: { poster?: string }
+    rating?: { score?: number; rank?: number }
+    type?: { bdrip?: boolean; nsfw?: boolean }
+    tags?: { name: string; count: number }[]
+    index?: { year?: string; type?: string; name?: string }
+    infobox?: Array<{ key: string; value: string }>
+  }
+}>()
 
 const getWebsite = computed(() => {
-  if (!store.animeData?.infobox) return;
-  let result = store.animeData?.infobox?.find((kv) => {
+  if (!props.animeData?.infobox) return;
+  const result = props.animeData.infobox.find((kv) => {
     return ["官方网站", "官网", "网站"].includes(kv.key);
   });
-  if (result?.value) {
-    return result.value;
-  } else return;
+  return result?.value;
 });
 </script>
 

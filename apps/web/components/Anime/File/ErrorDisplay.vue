@@ -1,26 +1,26 @@
 <template>
-  <AnimeCardBasic class="py-4" v-if="store.state.fileData.errorCode">
+  <AnimeCardBasic class="py-4" v-if="errorCode">
     <NResult
       status="info"
       title="出现错误"
       :description="
-        store.state.fileData.errorCode +
-        '  ' +
-        store.state.fileData.errorMessage
+        errorCode + '  ' + errorMessage
       "
     >
       <template #footer>
-        <NButton @click="retry">重试</NButton>
+        <NButton @click="emit('retry')">重试</NButton>
       </template>
     </NResult>
   </AnimeCardBasic>
 </template>
 
-<script setup>
-const store = useAnimeStore();
+<script setup lang="ts">
+defineProps<{
+  errorCode?: number | null
+  errorMessage?: string | null
+}>()
 
-const retry = async () => {
-  await store.getAggregatedFileData(store.laID);
-  store.autoPlay();
-};
+const emit = defineEmits<{
+  retry: []
+}>()
 </script>

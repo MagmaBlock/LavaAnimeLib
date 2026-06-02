@@ -1,13 +1,10 @@
 <template>
-  <NCollapseTransition :show="store.activeFile?.url !== undefined">
-    <!-- 浏览器无法播放部分视频的警告 -->
-    <AnimeNoBrowserNotice v-if="store.isNoBrowser" class="mb-2" />
-    <!-- 操作栏部分 -->
+  <NCollapseTransition :show="hasActiveFile">
+    <AnimeNoBrowserNotice v-if="isNoBrowser" class="mb-2" />
     <NScrollbar x-scrollable>
       <div class="flex flex-nowrap flex-shrink-0 gap-1 md:gap-2">
-        <AnimePlayerActionBarIcons ref="icons">
+        <AnimePlayerActionBarIcons ref="icons" v-model:is-file-browser-open="isFileBrowserOpen" :active-file-url="activeFileUrl" :active-file-name="activeFileName" :disable-download="disableDownload" :report-view="reportView">
           <template #showAll>
-            <!-- 展开全部 -->
             <AnimePlayerActionBarIcon
               class="mr-2"
               @click="
@@ -21,7 +18,6 @@
         </AnimePlayerActionBarIcons>
       </div>
     </NScrollbar>
-    <!-- Model 模态框 -->
     <NModal v-model:show="moreModel" class="h-fit select-none">
       <NCard
         class="max-w-xl"
@@ -38,7 +34,7 @@
           ></i>
         </template>
         <div class="flex flex-wrap gap-1 md:gap-2 mb-4">
-          <AnimePlayerActionBarIcons :allos="true" />
+          <AnimePlayerActionBarIcons :allos="true" v-model:is-file-browser-open="isFileBrowserOpen" :active-file-url="activeFileUrl" :active-file-name="activeFileName" :disable-download="disableDownload" :report-view="reportView" />
         </div>
         <div class="text-gray-600 dark:text-gray-400 text-xs">
           番剧库会根据您使用的设备，判断支持的外部播放器。<br />而这里是所有设备可用的播放器，它们可能不支持您的设备。<br />
@@ -47,7 +43,7 @@
           to="/help?article=WhyExternalPlayer"
           class="text-blue-500 text-xs block mt-2"
         >
-          部分视频提示 “需要外部播放器”？
+          部分视频提示 "需要外部播放器"？
         </NuxtLink>
         <NuxtLink
           to="/help?article=ExternalPlayerList"
@@ -63,11 +59,18 @@
   </NCollapseTransition>
 </template>
 
-<script setup>
-const store = useAnimeStore();
-const moreModel = ref(false);
+<script setup lang="ts">
+const isFileBrowserOpen = defineModel<boolean>('isFileBrowserOpen', { default: false })
 
-function pausePlayer() {
-  store?.artInstance?.pause();
-}
+defineProps<{
+  hasActiveFile: boolean
+  isNoBrowser: boolean
+  pausePlayer: () => void
+  activeFileUrl?: string
+  activeFileName?: string
+  disableDownload?: boolean
+  reportView: (type: string) => void
+}>()
+
+const moreModel = ref(false);
 </script>
