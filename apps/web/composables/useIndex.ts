@@ -1,13 +1,13 @@
-export function useIndex() {
-  const activityCard = ref({
+const activityCard = ref({
+  enable: false,
+  link: {
     enable: false,
-    link: {
-      enable: false,
-      url: "",
-    },
-    image: "",
-  });
+    url: "",
+  },
+  image: "",
+});
 
+export function useIndex() {
   async function getActivity() {
     try {
       const data = await api.get("/v2/site/setting/get", {

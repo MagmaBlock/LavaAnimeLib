@@ -1,8 +1,8 @@
 import { AxiosError } from "axios";
 
-export function useUser() {
-  const userInfo = ref<any>({});
+const userInfo = ref<any>({});
 
+export function useUser() {
   async function getUserInfo() {
     try {
       const result = await api.get("/v2/user/info");

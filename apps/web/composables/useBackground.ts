@@ -1,8 +1,8 @@
-export function useBackground() {
-  const enable = ref(false);
-  const imageUrl = ref("");
-  const customClass = ref("");
+const enable = ref(false);
+const imageUrl = ref("");
+const customClass = ref("");
 
+export function useBackground() {
   function setBackground(backgroundUrl: string, cls?: string) {
     enable.value = true;
     imageUrl.value = backgroundUrl;

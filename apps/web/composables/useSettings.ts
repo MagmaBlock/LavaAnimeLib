@@ -1,14 +1,14 @@
 import { useStorage } from "@vueuse/core";
 
-export function useSettings() {
-  const darkMode = useStorage("settings", {
-    enable: true,
-    autoDarkMode: true,
-    autoMode: "system" as "system" | "time",
-    darkTime: 19,
-    lightTime: 7,
-  });
+const darkMode = useStorage("darkMode", {
+  enable: true,
+  autoDarkMode: true,
+  autoMode: "system" as "system" | "time",
+  darkTime: 19,
+  lightTime: 7,
+}, localStorage, { deep: true });
 
+export function useSettings() {
   function applyTimeDark() {
     if (darkMode.value.autoMode == "time" && darkMode.value.autoDarkMode) {
       const now = new Date().getHours();
