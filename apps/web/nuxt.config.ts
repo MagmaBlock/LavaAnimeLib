@@ -12,9 +12,6 @@ export default defineNuxtConfig({
     },
   },
   ssr: false,
-  imports: {
-    dirs: ["composables/store/*.{js,ts}"],
-  },
   app: {
     head: {
       meta: [
