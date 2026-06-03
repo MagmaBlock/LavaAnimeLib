@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FileData } from "~/composables/store/Anime";
+import type { FileData } from "~/composables/anime";
 import { useBytesToSize } from "~/composables/bytesToSize";
 
 interface EpisodeGroup {

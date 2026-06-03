@@ -64,7 +64,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { FileData } from "~/composables/store/Anime";
+import type { FileData } from "~/composables/anime";
 
 const subtitleEnabled = defineModel<boolean>('subtitleEnabled', { default: true })
 

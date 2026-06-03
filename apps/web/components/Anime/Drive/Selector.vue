@@ -97,7 +97,7 @@
 
 <script setup lang="ts">
 import type { DriveInfo, EndpointInfo, DriveListResult } from "@lavaanime/shared";
-import type { FileData } from "~/composables/store/Anime";
+import type { FileData } from "~/composables/anime";
 
 const rememberMyChoice = defineModel<boolean>('rememberMyChoice', { default: false })
 

@@ -2,7 +2,7 @@
 import { watchOnce } from "@vueuse/core";
 import { breakpointsTailwind, useBreakpoints } from "@vueuse/core";
 
-const store = useAnimeStore();
+const anime = useAnime();
 const background = useBackgroundStore();
 
 const route = useRoute();
@@ -13,21 +13,21 @@ const breakpoints = useBreakpoints(breakpointsTailwind);
 const currentMobilePage = ref("play");
 
 const refreshPlayer = async () => {
-  store.showArtPlayer = false;
+  anime.showArtPlayer = false;
   await nextTick();
-  store.showArtPlayer = true;
+  anime.showArtPlayer = true;
 };
 provide("refreshPlayer", refreshPlayer);
 
 const buildPage = () => {
-  store.buildPage(route.params.la, route.query.episode);
+  anime.buildPage(route.params.la, route.query.episode);
   watchOnce(
-    () => store.state.animeData.isLoading,
+    () => anime.state.animeData.isLoading,
     async () => {
       window.scrollTo({
         top: 0,
         left: 0,
-        behavior: "smooth", // 平滑滚动
+        behavior: "smooth",
       });
     }
   );
@@ -37,8 +37,8 @@ const buildPage = () => {
 watch(
   () => route.params.la,
   () => {
-    if (route.name != "anime-la") return; // 排除退出番剧界面的路由变化
-    store.$reset();
+    if (route.name != "anime-la") return;
+    anime.$reset();
     buildPage();
   },
   { immediate: true }
@@ -46,11 +46,11 @@ watch(
 
 // 集数监控更改路由查询参数
 watch(
-  () => store.fileData.activeEpisode,
+  () => anime.fileData.activeEpisode,
   () => {
-    if (store.fileData.activeEpisode) {
+    if (anime.fileData.activeEpisode) {
       router.replace({
-        query: { ...route.query, episode: store.fileData.activeEpisode },
+        query: { ...route.query, episode: anime.fileData.activeEpisode },
       });
     } else {
       router.replace({ query: { ...route.query, episode: undefined } });
@@ -61,18 +61,18 @@ watch(
 // title 显示
 useHead({
   title: computed(() => {
-    if (store.state.animeData.isLoading) {
+    if (anime.state.animeData.isLoading) {
       return "加载中...";
     } else if (
-      store.animeData?.title &&
-      !store.activeFile?.parseResult?.episode
+      anime.animeData?.title &&
+      !anime.activeFile?.parseResult?.episode
     ) {
-      return `${store.animeData?.title}`;
+      return `${anime.animeData?.title}`;
     } else if (
-      store.animeData?.title &&
-      store.activeFile?.parseResult?.episode
+      anime.animeData?.title &&
+      anime.activeFile?.parseResult?.episode
     ) {
-      return `${store.animeData?.title} 第${store.activeFile.parseResult?.episode}话`;
+      return `${anime.animeData?.title} 第${anime.activeFile.parseResult?.episode}话`;
     }
   }),
 });
@@ -81,16 +81,16 @@ useHead({
  * 背景图相关
  */
 // 监听 poster 变化
-watch(() => store.animeData?.images?.poster, refreshBackground);
+watch(() => anime.animeData?.images?.poster, refreshBackground);
 // 监听断点变化
 watch(breakpoints.greaterOrEqual("sm"), refreshBackground, { immediate: true });
 // 刷新背景
 function refreshBackground() {
-  if (store.animeData?.images?.poster) {
+  if (anime.animeData?.images?.poster) {
     if (breakpoints.isGreaterOrEqual("sm") == true) {
       // 启用背景
       background.setBackground(
-        store.animeData.images.poster,
+        anime.animeData.images.poster,
         "blur-3xl opacity-50"
       );
     } else {
@@ -106,7 +106,7 @@ onUnmounted(() => {
 const isMobileOpenDetails = ref(false);
 
 const notice = computed(() => {
-  const fileList = store.fileData?.fileList;
+  const fileList = anime.fileData?.fileList;
   if (Array.isArray(fileList) && fileList.length > 0) {
     const noticeFile = fileList.find((file) => {
       return file?.name && typeof file.name === 'string' && file.name.endsWith(".notice");
@@ -123,24 +123,24 @@ const notice = computed(() => {
   <ContainerPageMobileFull>
     <!-- 开发模式视图 -->
     <DevOnly>
-      <AnimeDevTool :la-i-d="store.laID" class="sm:mb-4" />
+      <AnimeDevTool :la-i-d="anime.laID" class="sm:mb-4" />
     </DevOnly>
     <!-- (模态框等) DOM 位置无关组件 -->
-    <AnimeAdminTool v-model:show="store.showAdminTools" :anime-data="{ name: store.animeData?.name, name_cn: store.animeData?.name_cn, index: store.animeData?.index, infobox: store.animeData?.infobox }" />
+    <AnimeAdminTool v-model:show="anime.showAdminTools" :anime-data="{ name: anime.animeData?.name, name_cn: anime.animeData?.name_cn, index: anime.animeData?.index, infobox: anime.animeData?.infobox }" />
     <!-- 文件浏览器模态框 -->
     <NModal
-      v-model:show="store.isFileBrowserOpen"
+      v-model:show="anime.isFileBrowserOpen"
       preset="card"
       title="链接复制工具"
       style="max-width: 1024px"
     >
-      <AnimeFileBrowser :file-list="store.fileData.fileList" :is-loading="store.state.fileData.isLoading" :allow-download="!store.preferredDrive?.description?.includes('请勿下载')" :resolve-file-url="(idx) => store.resolveFileUrl(idx)" />
+      <AnimeFileBrowser :file-list="anime.fileData.fileList" :is-loading="anime.state.fileData.isLoading" :allow-download="!anime.preferredDrive?.description?.includes('请勿下载')" :resolve-file-url="(idx) => anime.resolveFileUrl(idx)" />
     </NModal>
     <!-- PC 端主视图，Grid 布局，仅在 lg 以上可用 -->
     <div
       class="grid grid-cols-3 gap-6 w-full"
       v-if="
-        store.state.animeData.errorCode == null &&
+        anime.state.animeData.errorCode == null &&
         breakpoints.greaterOrEqual('lg').value
       "
     >
@@ -148,45 +148,45 @@ const notice = computed(() => {
       <NFlex vertical :size="16" class="col-span-2">
         <!-- 视频框 -->
         <div class="rounded-md overflow-clip">
-          <AnimePlayer v-if="store.showArtPlayer" :active-file="store.activeFile" :active-subtitle="store.activeSubtitle" :subtitle-enabled="store.subtitleData.enabled" :local-subtitle="store.subtitleData.localSubtitle" :file-list="store.fileData.fileList" :find-next-episode="(ep) => store.findNextEpisode(ep)" :change-episode="(ep) => store.changeEpisode(ep)" :report-view="(...args) => store.reportView(...args)" :resolve-file-url="(idx) => store.resolveFileUrl(idx)" @player-created="(inst) => store.artInstance = inst" />
-          <AnimePlayerEmpty v-if="!store.showArtPlayer" />
+          <AnimePlayer v-if="anime.showArtPlayer" :active-file="anime.activeFile" :active-subtitle="anime.activeSubtitle" :subtitle-enabled="anime.subtitleData.enabled" :local-subtitle="anime.subtitleData.localSubtitle" :file-list="anime.fileData.fileList" :find-next-episode="(ep) => anime.findNextEpisode(ep)" :change-episode="(ep) => anime.changeEpisode(ep)" :report-view="(...args) => anime.reportView(...args)" :resolve-file-url="(idx) => anime.resolveFileUrl(idx)" @player-created="(inst) => anime.artInstance = inst" />
+          <AnimePlayerEmpty v-if="!anime.showArtPlayer" />
         </div>
         <!-- 本地播放器调用 -->
         <AnimeCardBasic>
           <div class="flex flex-col gap-2">
-            <AnimeSubtitleControl v-model:subtitle-enabled="store.subtitleData.enabled" :local-subtitle="store.subtitleData.localSubtitle" :subtitle-list="store.subtitleList" :active-subtitle-name="store.activeSubtitle?.name" @select-subtitle="(name) => { store.subtitleData.subtitleFileName = name; store.subtitleData.enabled = true }" @upload-local-subtitle="(file) => store.uploadLocalSubtitle(file)" @clear-local-subtitle="store.clearLocalSubtitle" />
-            <AnimePlayerActionBar v-model:is-file-browser-open="store.isFileBrowserOpen" :has-active-file="!!store.activeFile?.url" :is-no-browser="store.isNoBrowser" :pause-player="() => store.artInstance?.pause()" :active-file-url="store.activeFile?.url" :active-file-name="store.activeFile?.name" :disable-download="!!(store.actualEndpoint ?? store.preferredEndpoint)?.disableDownload" :report-view="(type) => store.reportView(false, type)" />
+            <AnimeSubtitleControl v-model:subtitle-enabled="anime.subtitleData.enabled" :local-subtitle="anime.subtitleData.localSubtitle" :subtitle-list="anime.subtitleList" :active-subtitle-name="anime.activeSubtitle?.name" @select-subtitle="(name) => { anime.subtitleData.subtitleFileName = name; anime.subtitleData.enabled = true }" @upload-local-subtitle="(file) => anime.uploadLocalSubtitle(file)" @clear-local-subtitle="anime.clearLocalSubtitle" />
+            <AnimePlayerActionBar v-model:is-file-browser-open="anime.isFileBrowserOpen" :has-active-file="!!anime.activeFile?.url" :is-no-browser="anime.isNoBrowser" :pause-player="() => anime.artInstance?.pause()" :active-file-url="anime.activeFile?.url" :active-file-name="anime.activeFile?.name" :disable-download="!!(anime.actualEndpoint ?? anime.preferredEndpoint)?.disableDownload" :report-view="(type) => anime.reportView(false, type)" />
           </div>
         </AnimeCardBasic>
         <!-- 番剧卡 -->
-        <AnimeMetaCard v-model:show-admin-tools="store.showAdminTools" :la-i-d="store.laID" :is-loading="store.state.animeData.isLoading" :bgm-i-d="store.bgmID" :episode-name="store.getColorEgg?.episodeName" :anime-data="store.animeData" :follow-label-add="store.getColorEgg?.follow?.add" :follow-label-remove="store.getColorEgg?.follow?.remove" />
+        <AnimeMetaCard v-model:show-admin-tools="anime.showAdminTools" :la-i-d="anime.laID" :is-loading="anime.state.animeData.isLoading" :bgm-i-d="anime.bgmID" :episode-name="anime.getColorEgg?.episodeName" :anime-data="anime.animeData" :follow-label-add="anime.getColorEgg?.follow?.add" :follow-label-remove="anime.getColorEgg?.follow?.remove" />
       </NFlex>
       <!-- 右视图 占一列 -->
       <NFlex vertical :size="16" class="col-span-1">
-        <AnimeFileList :is-loading="store.state.fileData.isLoading" :error-code="store.state.fileData.errorCode" :file-list="store.fileData.fileList" :episode-list="store.episodeList" :no-episode-list="store.noEpisodeList" :music-list="store.musicList" :other-list="store.otherList" :active-episode="store.fileData.activeEpisode" :active-file-name="store.activeFile?.name" :anime-date="store.animeData?.date ?? ''" :asc-order="store.ascOrder" :allow-download="!(store.actualEndpoint ?? store.preferredEndpoint)?.disableDownload" :color-egg-title="store.getColorEgg?.fileList?.title" :episode-list-find="(ep) => store.episodeListFind(ep)" :change-episode-auto-history="(ep) => store.changeEpisodeAutoHistory(ep)" :select-and-play-video="(idx) => store.selectAndPlayVideo(idx)" :select-and-play-music="(idx) => store.selectAndPlayMusic(idx)" :open-attachment="(idx) => store.openAttachment(idx)" @toggle-sort-order="store.ascOrder = !store.ascOrder" />
-        <AnimeFileErrorDisplay :error-code="store.state.fileData.errorCode" :error-message="store.state.fileData.errorMessage" @retry="async () => { await store.getAggregatedFileData(store.laID); store.autoPlay() }" />
-        <AnimeDriveSelector v-model:remember-my-choice="store.myDrive.rememberMyChoice" :drive-data="store.driveData" :is-loading="store.state.driveData.isLoading" :preferred-drive="store.preferredDrive" :preferred-endpoint="store.preferredEndpoint" :preferred-endpoint-id="store.preferredEndpointId" :selected-endpoints="store.myDrive.selectedEndpoints" :is-fallback="store.isFallback" :actual-drive-name="store.actualDriveName" :actual-endpoint-name="store.actualEndpointName" :is-nsfw="store.animeData?.type?.nsfw" :active-file="store.activeFile" @select-drive="(driveId, epId) => store.setPreferredDrive(driveId, epId)" @select-endpoint="(epId) => store.setPreferredEndpoint(epId)" />
+        <AnimeFileList :is-loading="anime.state.fileData.isLoading" :error-code="anime.state.fileData.errorCode" :file-list="anime.fileData.fileList" :episode-list="anime.episodeList" :no-episode-list="anime.noEpisodeList" :music-list="anime.musicList" :other-list="anime.otherList" :active-episode="anime.fileData.activeEpisode" :active-file-name="anime.activeFile?.name" :anime-date="anime.animeData?.date ?? ''" :asc-order="anime.ascOrder" :allow-download="!(anime.actualEndpoint ?? anime.preferredEndpoint)?.disableDownload" :color-egg-title="anime.getColorEgg?.fileList?.title" :episode-list-find="(ep) => anime.episodeListFind(ep)" :change-episode-auto-history="(ep) => anime.changeEpisodeAutoHistory(ep)" :select-and-play-video="(idx) => anime.selectAndPlayVideo(idx)" :select-and-play-music="(idx) => anime.selectAndPlayMusic(idx)" :open-attachment="(idx) => anime.openAttachment(idx)" @toggle-sort-order="anime.ascOrder = !anime.ascOrder" />
+        <AnimeFileErrorDisplay :error-code="anime.state.fileData.errorCode" :error-message="anime.state.fileData.errorMessage" @retry="async () => { await anime.getAggregatedFileData(anime.laID); anime.autoPlay() }" />
+        <AnimeDriveSelector v-model:remember-my-choice="anime.myDrive.rememberMyChoice" :drive-data="anime.driveData" :is-loading="anime.state.driveData.isLoading" :preferred-drive="anime.preferredDrive" :preferred-endpoint="anime.preferredEndpoint" :preferred-endpoint-id="anime.preferredEndpointId" :selected-endpoints="anime.myDrive.selectedEndpoints" :is-fallback="anime.isFallback" :actual-drive-name="anime.actualDriveName" :actual-endpoint-name="anime.actualEndpointName" :is-nsfw="anime.animeData?.type?.nsfw" :active-file="anime.activeFile" @select-drive="(driveId, epId) => anime.setPreferredDrive(driveId, epId)" @select-endpoint="(epId) => anime.setPreferredEndpoint(epId)" />
         <!-- 番剧公告（V2）临时 -->
         <AnimeNotice :notice="notice" />
         <!-- 关联作品 -->
-        <AnimeRelations v-if="!store.state.animeData.isLoading" :relations="store.animeData?.relations" />
+        <AnimeRelations v-if="!anime.state.animeData.isLoading" :relations="anime.animeData?.relations" />
       </NFlex>
     </div>
     <!-- 移动端主视图 -->
     <div
       v-if="
-        store.state.animeData.errorCode == null &&
+        anime.state.animeData.errorCode == null &&
         breakpoints.smaller('lg').value
       "
     >
       <!-- 视频框 -->
       <div class="overflow-clip sm:rounded-md">
-        <AnimePlayer v-if="store.showArtPlayer" :active-file="store.activeFile" :active-subtitle="store.activeSubtitle" :subtitle-enabled="store.subtitleData.enabled" :local-subtitle="store.subtitleData.localSubtitle" :file-list="store.fileData.fileList" :find-next-episode="(ep) => store.findNextEpisode(ep)" :change-episode="(ep) => store.changeEpisode(ep)" :report-view="(...args) => store.reportView(...args)" :resolve-file-url="(idx) => store.resolveFileUrl(idx)" @player-created="(inst) => store.artInstance = inst" />
-        <AnimePlayerEmpty v-if="!store.showArtPlayer" />
+        <AnimePlayer v-if="anime.showArtPlayer" :active-file="anime.activeFile" :active-subtitle="anime.activeSubtitle" :subtitle-enabled="anime.subtitleData.enabled" :local-subtitle="anime.subtitleData.localSubtitle" :file-list="anime.fileData.fileList" :find-next-episode="(ep) => anime.findNextEpisode(ep)" :change-episode="(ep) => anime.changeEpisode(ep)" :report-view="(...args) => anime.reportView(...args)" :resolve-file-url="(idx) => anime.resolveFileUrl(idx)" @player-created="(inst) => anime.artInstance = inst" />
+        <AnimePlayerEmpty v-if="!anime.showArtPlayer" />
       </div>
 
       <AnimeNotice :notice="notice" />
-      <AnimeMetaCardMini :la-i-d="store.laID" :follow-label-add="store.getColorEgg?.follow?.add" :follow-label-remove="store.getColorEgg?.follow?.remove" :anime-data="{ title: store.animeData?.title, views: store.animeData?.views, rating: store.animeData?.rating, type: store.animeData?.type }" @open-details="isMobileOpenDetails = true" />
+      <AnimeMetaCardMini :la-i-d="anime.laID" :follow-label-add="anime.getColorEgg?.follow?.add" :follow-label-remove="anime.getColorEgg?.follow?.remove" :anime-data="{ title: anime.animeData?.title, views: anime.animeData?.views, rating: anime.animeData?.rating, type: anime.animeData?.type }" @open-details="isMobileOpenDetails = true" />
       <NDrawer
         v-model:show="isMobileOpenDetails"
         :default-height="502"
@@ -198,31 +198,31 @@ const notice = computed(() => {
           title="详情"
           body-content-style="padding: 0px;"
         >
-          <AnimeMetaCard v-model:show-admin-tools="store.showAdminTools" :la-i-d="store.laID" :is-loading="store.state.animeData.isLoading" :bgm-i-d="store.bgmID" :episode-name="store.getColorEgg?.episodeName" :anime-data="store.animeData" :follow-label-add="store.getColorEgg?.follow?.add" :follow-label-remove="store.getColorEgg?.follow?.remove" />
+          <AnimeMetaCard v-model:show-admin-tools="anime.showAdminTools" :la-i-d="anime.laID" :is-loading="anime.state.animeData.isLoading" :bgm-i-d="anime.bgmID" :episode-name="anime.getColorEgg?.episodeName" :anime-data="anime.animeData" :follow-label-add="anime.getColorEgg?.follow?.add" :follow-label-remove="anime.getColorEgg?.follow?.remove" />
         </NDrawerContent>
       </NDrawer>
       <AnimeCardBasic>
         <div class="flex flex-col gap-2">
-          <AnimeSubtitleControl v-model:subtitle-enabled="store.subtitleData.enabled" :local-subtitle="store.subtitleData.localSubtitle" :subtitle-list="store.subtitleList" :active-subtitle-name="store.activeSubtitle?.name" @select-subtitle="(name) => { store.subtitleData.subtitleFileName = name; store.subtitleData.enabled = true }" @upload-local-subtitle="(file) => store.uploadLocalSubtitle(file)" @clear-local-subtitle="store.clearLocalSubtitle" />
-          <AnimePlayerActionBar v-model:is-file-browser-open="store.isFileBrowserOpen" :has-active-file="!!store.activeFile?.url" :is-no-browser="store.isNoBrowser" :pause-player="() => store.artInstance?.pause()" :active-file-url="store.activeFile?.url" :active-file-name="store.activeFile?.name" :disable-download="!!(store.actualEndpoint ?? store.preferredEndpoint)?.disableDownload" :report-view="(type) => store.reportView(false, type)" />
+          <AnimeSubtitleControl v-model:subtitle-enabled="anime.subtitleData.enabled" :local-subtitle="anime.subtitleData.localSubtitle" :subtitle-list="anime.subtitleList" :active-subtitle-name="anime.activeSubtitle?.name" @select-subtitle="(name) => { anime.subtitleData.subtitleFileName = name; anime.subtitleData.enabled = true }" @upload-local-subtitle="(file) => anime.uploadLocalSubtitle(file)" @clear-local-subtitle="anime.clearLocalSubtitle" />
+          <AnimePlayerActionBar v-model:is-file-browser-open="anime.isFileBrowserOpen" :has-active-file="!!anime.activeFile?.url" :is-no-browser="anime.isNoBrowser" :pause-player="() => anime.artInstance?.pause()" :active-file-url="anime.activeFile?.url" :active-file-name="anime.activeFile?.name" :disable-download="!!(anime.actualEndpoint ?? anime.preferredEndpoint)?.disableDownload" :report-view="(type) => anime.reportView(false, type)" />
         </div>
       </AnimeCardBasic>
-      <AnimeFileList :is-loading="store.state.fileData.isLoading" :error-code="store.state.fileData.errorCode" :file-list="store.fileData.fileList" :episode-list="store.episodeList" :no-episode-list="store.noEpisodeList" :music-list="store.musicList" :other-list="store.otherList" :active-episode="store.fileData.activeEpisode" :active-file-name="store.activeFile?.name" :anime-date="store.animeData?.date ?? ''" :asc-order="store.ascOrder" :allow-download="!(store.actualEndpoint ?? store.preferredEndpoint)?.disableDownload" :color-egg-title="store.getColorEgg?.fileList?.title" :episode-list-find="(ep) => store.episodeListFind(ep)" :change-episode-auto-history="(ep) => store.changeEpisodeAutoHistory(ep)" :select-and-play-video="(idx) => store.selectAndPlayVideo(idx)" :select-and-play-music="(idx) => store.selectAndPlayMusic(idx)" :open-attachment="(idx) => store.openAttachment(idx)" @toggle-sort-order="store.ascOrder = !store.ascOrder" />
-      <AnimeFileErrorDisplay :error-code="store.state.fileData.errorCode" :error-message="store.state.fileData.errorMessage" @retry="async () => { await store.getAggregatedFileData(store.laID); store.autoPlay() }" />
-      <AnimeDriveSelector v-model:remember-my-choice="store.myDrive.rememberMyChoice" :drive-data="store.driveData" :is-loading="store.state.driveData.isLoading" :preferred-drive="store.preferredDrive" :preferred-endpoint="store.preferredEndpoint" :preferred-endpoint-id="store.preferredEndpointId" :selected-endpoints="store.myDrive.selectedEndpoints" :is-fallback="store.isFallback" :actual-drive-name="store.actualDriveName" :actual-endpoint-name="store.actualEndpointName" :is-nsfw="store.animeData?.type?.nsfw" :active-file="store.activeFile" @select-drive="(driveId, epId) => store.setPreferredDrive(driveId, epId)" @select-endpoint="(epId) => store.setPreferredEndpoint(epId)" />
+      <AnimeFileList :is-loading="anime.state.fileData.isLoading" :error-code="anime.state.fileData.errorCode" :file-list="anime.fileData.fileList" :episode-list="anime.episodeList" :no-episode-list="anime.noEpisodeList" :music-list="anime.musicList" :other-list="anime.otherList" :active-episode="anime.fileData.activeEpisode" :active-file-name="anime.activeFile?.name" :anime-date="anime.animeData?.date ?? ''" :asc-order="anime.ascOrder" :allow-download="!(anime.actualEndpoint ?? anime.preferredEndpoint)?.disableDownload" :color-egg-title="anime.getColorEgg?.fileList?.title" :episode-list-find="(ep) => anime.episodeListFind(ep)" :change-episode-auto-history="(ep) => anime.changeEpisodeAutoHistory(ep)" :select-and-play-video="(idx) => anime.selectAndPlayVideo(idx)" :select-and-play-music="(idx) => anime.selectAndPlayMusic(idx)" :open-attachment="(idx) => anime.openAttachment(idx)" @toggle-sort-order="anime.ascOrder = !anime.ascOrder" />
+      <AnimeFileErrorDisplay :error-code="anime.state.fileData.errorCode" :error-message="anime.state.fileData.errorMessage" @retry="async () => { await anime.getAggregatedFileData(anime.laID); anime.autoPlay() }" />
+      <AnimeDriveSelector v-model:remember-my-choice="anime.myDrive.rememberMyChoice" :drive-data="anime.driveData" :is-loading="anime.state.driveData.isLoading" :preferred-drive="anime.preferredDrive" :preferred-endpoint="anime.preferredEndpoint" :preferred-endpoint-id="anime.preferredEndpointId" :selected-endpoints="anime.myDrive.selectedEndpoints" :is-fallback="anime.isFallback" :actual-drive-name="anime.actualDriveName" :actual-endpoint-name="anime.actualEndpointName" :is-nsfw="anime.animeData?.type?.nsfw" :active-file="anime.activeFile" @select-drive="(driveId, epId) => anime.setPreferredDrive(driveId, epId)" @select-endpoint="(epId) => anime.setPreferredEndpoint(epId)" />
       <!-- 关联作品 -->
-      <AnimeRelations v-if="!store.state.animeData.isLoading" :relations="store.animeData?.relations" />
+      <AnimeRelations v-if="!anime.state.animeData.isLoading" :relations="anime.animeData?.relations" />
     </div>
 
     <!-- 错误处理视图 -->
     <div
-      v-if="store.state.animeData.errorCode == 404"
+      v-if="anime.state.animeData.errorCode == 404"
       class="w-full grid place-content-center mt-16"
     >
       <NResult
         status="404"
         title="404 资源不存在"
-        :description="store.state.animeData.errorMessage ?? '未知错误'"
+        :description="anime.state.animeData.errorMessage ?? '未知错误'"
         class="w-fit p-10 rounded-md"
       />
     </div>

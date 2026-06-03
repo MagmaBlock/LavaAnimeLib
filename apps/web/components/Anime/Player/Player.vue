@@ -13,7 +13,7 @@
 import Artplayer from "artplayer";
 import SubtitlesOctopus from "libass-wasm/dist/js/subtitles-octopus.js";
 import { useLocalStorage, useThrottleFn, watchDebounced } from "@vueuse/core";
-import type { FileData, ParseResult } from "~/composables/store/Anime";
+import type { FileData, ParseResult } from "~/composables/anime";
 
 const props = defineProps<{
   activeFile?: (FileData[number] & { parseResult: ParseResult }) | null
