@@ -1,7 +1,6 @@
 import { useLocalStorage, useStorage } from "@vueuse/core";
 import axios from "axios";
 import type Artplayer from "artplayer";
-import { useMessage } from "naive-ui";
 import type {
   DriveListResult,
   AnimeDetail,
@@ -94,12 +93,6 @@ export type AnimeData = AnimeDetail;
 
 export type DriveData = DriveListResult;
 
-declare global {
-  interface Window {
-    $message: ReturnType<typeof useMessage>;
-  }
-}
-
 export function useAnime() {
   // ========== STATE ==========
   const laID = ref(0);
@@ -170,6 +163,11 @@ export function useAnime() {
   ]);
 
   const isFileBrowserOpen = ref(false);
+
+  // notify 回调 — 页面注入以便 composable 与 UI 解耦
+  const notifyError = ref<(msg: string) => void>(() => {});
+  const notifySuccess = ref<(msg: string) => void>(() => {});
+  const notifyInfo = ref<(msg: string, options?: { duration: number }) => void>(() => {});
 
   // ========== GETTERS ==========
   const bgmID = computed(() => {
@@ -426,7 +424,7 @@ export function useAnime() {
           return await changeEpisodeAutoHistory(forceEpisode);
         } catch (error) {
           if (error == "episodeNotFound")
-            window.$message.error(
+            notifyError.value(
               `第 ${forceEpisode} 话不存在, 按正常情况播放`
             );
         }
@@ -865,7 +863,7 @@ export function useAnime() {
       !history.currentTime ||
       history.totalTime - history.currentTime < 20
     ) {
-      window.$message.success("本话上次已看完");
+      notifySuccess.value("本话上次已看完");
       return;
     }
 
@@ -877,7 +875,7 @@ export function useAnime() {
       .toString()
       .padStart(2, "0");
     const s = (history?.currentTime % 60).toString().padStart(2, "0");
-    window.$message.info(`上次${ep}播放到 ${m}:${s}, 已自动跳转`, {
+    notifyInfo.value(`上次${ep}播放到 ${m}:${s}, 已自动跳转`, {
       duration: 5000,
     });
   }
@@ -1023,7 +1021,7 @@ export function useAnime() {
       try {
         await resolveFileUrl(fileIndex);
       } catch {
-        window.$message?.error("获取文件链接失败");
+        notifyError.value("获取文件链接失败");
         return;
       }
     }
@@ -1054,7 +1052,7 @@ export function useAnime() {
       try {
         await resolveFileUrl(fileIndex);
       } catch {
-        window.$message?.error("获取文件链接失败");
+        notifyError.value("获取文件链接失败");
         return;
       }
     }
@@ -1068,7 +1066,7 @@ export function useAnime() {
       try {
         await resolveFileUrl(fileIndex);
       } catch {
-        window.$message?.error("获取文件链接失败");
+        notifyError.value("获取文件链接失败");
         return;
       }
     }
@@ -1114,6 +1112,11 @@ export function useAnime() {
     ascOrder,
     colorEgg,
     isFileBrowserOpen,
+
+    // notify 回调 (页面注入)
+    notifyError,
+    notifySuccess,
+    notifyInfo,
 
     // getters
     bgmID,

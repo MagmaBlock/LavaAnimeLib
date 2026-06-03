@@ -67,6 +67,7 @@ const props = defineProps<{
 
 const selectedFiles = ref<Record<string, boolean>>({});
 const isResolving = ref(false);
+const message = useMessage();
 
 const hasSelectedFiles = computed(() => {
   return Object.values(selectedFiles.value).some(Boolean);
@@ -89,7 +90,7 @@ const resolveSelectedUrls = async () => {
         const url = await props.resolveFileUrl(i);
         results.push({ name: file.name, url });
       } catch {
-        window.$message?.error(`获取 ${file.name} 链接失败`);
+        message.error(`获取 ${file.name} 链接失败`);
       }
     }
   }
@@ -102,7 +103,7 @@ const copySelectedLinks = async () => {
     const results = await resolveSelectedUrls();
     if (!results.length) return;
     navigator.clipboard.writeText(results.map((r) => r.url).join("\n"));
-    window.$message?.success(`已复制 ${results.length} 个链接`);
+    message.success(`已复制 ${results.length} 个链接`);
   } finally {
     isResolving.value = false;
   }
@@ -114,7 +115,7 @@ const copySelectedFileNamesAndLinks = async () => {
     const results = await resolveSelectedUrls();
     if (!results.length) return;
     navigator.clipboard.writeText(results.map((r) => `${r.name} ${r.url}`).join("\n"));
-    window.$message?.success(`已复制 ${results.length} 个链接`);
+    message.success(`已复制 ${results.length} 个链接`);
   } finally {
     isResolving.value = false;
   }

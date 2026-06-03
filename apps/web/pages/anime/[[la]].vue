@@ -1,9 +1,15 @@
 <script setup>
 import { watchOnce } from "@vueuse/core";
 import { breakpointsTailwind, useBreakpoints } from "@vueuse/core";
+import { useMessage } from "naive-ui";
 
 const anime = useAnime();
+const message = useMessage();
 const background = useBackgroundStore();
+
+anime.notifyError = message.error;
+anime.notifySuccess = message.success;
+anime.notifyInfo = message.info;
 
 const route = useRoute();
 const router = useRouter();
