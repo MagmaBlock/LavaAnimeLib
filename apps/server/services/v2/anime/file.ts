@@ -8,6 +8,7 @@ import { getAnimeByID } from "./index.js";
 import * as fileIndexService from "./file-index.js";
 import { log } from "../../../common/tools/logger.js";
 import type { DriveConfigOverride } from "@lavaanime/shared";
+import type { FileParseResult } from "@lavaanime/shared";
 import { parseJsonField } from "../../../common/tools/parse-json-field.js";
 
 interface FileItem {
@@ -17,7 +18,7 @@ interface FileItem {
   driver: string;
   thumbnail: string;
   type: "dir" | "file";
-  parseResult?: ReturnType<typeof parseFileName>;
+  parseResult?: FileParseResult;
   url?: string;
 }
 

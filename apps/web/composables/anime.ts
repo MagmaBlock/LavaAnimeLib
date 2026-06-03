@@ -4,93 +4,13 @@ import type Artplayer from "artplayer";
 import type {
   DriveListResult,
   AnimeDetail,
+  FileParseResult,
+  AnimeFileItem,
 } from "@lavaanime/shared";
 
-// 类型定义
-export interface ParseResult {
-  animeTitle: string;
-  animeYear: number | null;
-  episode?: string;
-  extensionName: {
-    result: string;
-    type: string;
-    raw: string;
-    trueName: string;
-  };
-  fileName: string;
-  groups: Array<{
-    result: string;
-    raw: string;
-    type: string;
-  }>;
-  noBrowser?: boolean;
-  videoSource?: Array<{
-    result: string;
-    raw: string;
-    type: string;
-  }>;
-  videoQuality?: Array<{
-    result: string;
-    raw: string;
-    type: string;
-  }>;
-  videoSubtitle?: Array<{
-    result: string;
-    raw: string;
-    type: string;
-  }>;
-}
-
-export type FileData = Array<{
-  name: string;
-  size: number;
-  updated: string;
-  driver: string;
-  thumbnail: string;
-  type: string;
-  url?: string;
-  parseResult: ParseResult;
-  animeTitle: string;
-  animeYear: number | null;
-  episode?: string;
-  extensionName: {
-    result: string;
-    type: string;
-    raw: string;
-    trueName: string;
-  };
-  fileName: string;
-  groups: Array<{
-    result: string;
-    raw: string;
-    type: string;
-  }>;
-  noBrowser?: boolean;
-  videoSource?: Array<{
-    result: string;
-    raw: string;
-    type: string;
-  }>;
-  videoQuality?: Array<{
-    result: string;
-    raw: string;
-    type: string;
-  }>;
-  videoSubtitle?: Array<{
-    result: string;
-    raw: string;
-    type: string;
-  }>;
-  drives?: Array<{
-    driveId: string;
-    driveName: string;
-    path: string;
-  }>;
-  modified?: string | null;
-}>;
-
+export type ParseResult = FileParseResult;
+export type FileData = Array<AnimeFileItem>;
 export type AnimeData = AnimeDetail;
-
 export type DriveData = DriveListResult;
 
 export function useAnime() {

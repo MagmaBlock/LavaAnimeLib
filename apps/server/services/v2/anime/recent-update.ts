@@ -4,6 +4,7 @@ import { uploadMessage } from "../../../common/database/schema/upload-message.js
 import { anime } from "../../../common/database/schema/anime.js";
 import { eq, desc } from "drizzle-orm";
 import { parseAnime, type RawAnimeRow } from "../parser/anime.js";
+import type { FileParseResult } from "@lavaanime/shared";
 
 interface RecentUpdateRecord {
   id: number;
@@ -11,7 +12,7 @@ interface RecentUpdateRecord {
   animeID: number | null;
   bangumiID: number | null;
   fileName: string | null;
-  parseResult: ReturnType<typeof parseFileName>;
+  parseResult: FileParseResult;
   messageSentStatus: number;
   messageSkiped: number;
   uploadTime: Date;

@@ -21,6 +21,8 @@ export type {
   FileIndexListData,
   FileDriveSource,
   AggregatedFileItem,
+  FileParseResult,
+  AnimeFileItem,
 } from "./models.js";
 export type {
   BangumiImages,

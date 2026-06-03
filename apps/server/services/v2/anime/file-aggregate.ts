@@ -1,16 +1,16 @@
+import type { AggregatedFileItem, FileParseResult } from "@lavaanime/shared";
 import parseFileName from "anime-file-parser";
 import { asc, eq } from "drizzle-orm";
 import { db } from "../../../common/database/connection.js";
 import { drives } from "../../../common/database/schema/drive.js";
 import { createDriver } from "../../../common/filesystem/factory.js";
-import { getAnimeByID } from "./index.js";
-import * as fileIndexService from "./file-index.js";
 import { log } from "../../../common/tools/logger.js";
 import { mapDriveRecord } from "../admin/drive.js";
-import type { AggregatedFileItem, FileDriveSource } from "@lavaanime/shared";
+import * as fileIndexService from "./file-index.js";
+import { getAnimeByID } from "./index.js";
 
 interface AggregatedFileResult extends AggregatedFileItem {
-  parseResult?: ReturnType<typeof parseFileName>;
+  parseResult?: FileParseResult;
 }
 
 export async function getAggregatedFiles(laID: number): Promise<AggregatedFileResult[]> {

@@ -170,3 +170,55 @@ export interface AggregatedFileItem {
   modified: string | null;
   drives: FileDriveSource[];
 }
+
+export interface FileParseResult {
+  animeTitle: string;
+  animeYear: number | null;
+  episode?: string;
+  extensionName: {
+    result: string;
+    type: string;
+    raw: string;
+    trueName: string;
+  };
+  fileName: string;
+  groups: Array<{
+    result: string;
+    raw: string;
+    type: string;
+  }>;
+  noBrowser?: boolean;
+  videoSource?: Array<{
+    result: string;
+    raw: string;
+    type: string;
+  }>;
+  videoQuality?: Array<{
+    result: string;
+    raw: string;
+    type: string;
+  }>;
+  videoSubtitle?: Array<{
+    result: string;
+    raw: string;
+    type: string;
+  }>;
+}
+
+export interface AnimeFileItem extends AggregatedFileItem {
+  url?: string;
+  driver?: string;
+  thumbnail?: string;
+  updated?: string;
+  parseResult: FileParseResult;
+  animeTitle: string;
+  animeYear: number | null;
+  episode?: string;
+  extensionName: FileParseResult["extensionName"];
+  fileName: string;
+  groups: FileParseResult["groups"];
+  noBrowser?: boolean;
+  videoSource?: FileParseResult["videoSource"];
+  videoQuality?: FileParseResult["videoQuality"];
+  videoSubtitle?: FileParseResult["videoSubtitle"];
+}
