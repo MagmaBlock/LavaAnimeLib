@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-const store = useIndexStore();
+const store = useIndex();
 
 store.getActivity();
 </script>

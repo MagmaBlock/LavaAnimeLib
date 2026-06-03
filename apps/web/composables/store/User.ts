@@ -1,24 +1,23 @@
 import { AxiosError } from "axios";
 
-export const useUserStore = defineStore("user", {
-  state: () => ({
-    userInfo: {},
-  }),
-  actions: {
-    async getUserInfo() {
-      try {
-        let result = await api.get("/v2/user/info");
-        if (result.data.code == 200) {
-          this.userInfo = result.data.data;
-          return this.userInfo;
-        }
-      } catch (error) {
-        if (error instanceof AxiosError && error.status == 401) {
-          console.error("用户未登录");
-        }
-        this.userInfo = {};
-        return this.userInfo;
+export function useUser() {
+  const userInfo = ref<any>({});
+
+  async function getUserInfo() {
+    try {
+      const result = await api.get("/v2/user/info");
+      if (result.data.code == 200) {
+        userInfo.value = result.data.data;
+        return userInfo.value;
       }
-    },
-  },
-});
+    } catch (error) {
+      if (error instanceof AxiosError && error.status == 401) {
+        console.error("用户未登录");
+      }
+      userInfo.value = {};
+      return userInfo.value;
+    }
+  }
+
+  return reactive({ userInfo, getUserInfo });
+}

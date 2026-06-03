@@ -69,7 +69,7 @@ definePageMeta({
 
 useHead({ title: "修改头像" });
 
-const userStore = useUserStore();
+const userStore = useUser();
 userStore.getUserInfo();
 
 const newAvatarURL = ref("");

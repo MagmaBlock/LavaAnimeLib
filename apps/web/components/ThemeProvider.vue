@@ -13,7 +13,7 @@
 import { darkTheme, dateZhCN, zhCN } from "naive-ui";
 import { usePreferredDark } from "@vueuse/core";
 
-const settings = useSettingsStore();
+const settings = useSettings();
 
 // 用户的系统深色模式设置
 const isDark = usePreferredDark();

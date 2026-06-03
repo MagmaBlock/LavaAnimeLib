@@ -94,7 +94,7 @@ definePageMeta({
 
 useHead({ title: "索引页活动管理" });
 
-const store = useIndexStore();
+const store = useIndex();
 const message = useMessage();
 const submitting = ref(false);
 

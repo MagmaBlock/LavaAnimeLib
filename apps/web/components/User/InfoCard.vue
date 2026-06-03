@@ -54,7 +54,7 @@
 <script setup lang="jsx">
 const router = useRouter();
 
-const userStore = useUserStore();
+const userStore = useUser();
 userStore.getUserInfo();
 
 const logoutMenu = [

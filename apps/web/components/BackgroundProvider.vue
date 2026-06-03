@@ -12,7 +12,7 @@
 </template>
 
 <script lang="ts" setup>
-const background = useBackgroundStore();
+const background = useBackground();
 
 useHeadSafe({
   bodyAttrs: {

@@ -63,7 +63,7 @@
 import { Icon } from "@iconify/vue";
 
 const router = useRouter();
-const userStore = useUserStore();
+const userStore = useUser();
 
 const isMobile = ref(typeof window !== "undefined" ? window.innerWidth < 1024 : false);
 const drawerOpen = ref(false);

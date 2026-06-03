@@ -5,7 +5,7 @@ import { useMessage } from "naive-ui";
 
 const anime = useAnime();
 const message = useMessage();
-const background = useBackgroundStore();
+const background = useBackground();
 
 anime.notifyError = message.error;
 anime.notifySuccess = message.success;

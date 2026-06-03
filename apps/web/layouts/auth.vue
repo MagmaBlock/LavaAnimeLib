@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-const background = useBackgroundStore();
+const background = useBackground();
 
 background.setBackground("/login-background.jpg");
 

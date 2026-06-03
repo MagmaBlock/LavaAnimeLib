@@ -37,5 +37,5 @@
 
 <script setup>
 useHead({ title: "我的" });
-const userStore = useUserStore();
+const userStore = useUser();
 </script>

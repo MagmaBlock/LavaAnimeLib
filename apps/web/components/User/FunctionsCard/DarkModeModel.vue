@@ -103,7 +103,7 @@
 </template>
 
 <script setup>
-const settings = useSettingsStore();
+const settings = useSettings();
 defineProps({
   show: Boolean,
 });

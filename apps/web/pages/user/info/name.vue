@@ -29,7 +29,7 @@ definePageMeta({
 
 useHead({ title: "修改用户名" });
 
-const userStore = useUserStore();
+const userStore = useUser();
 userStore.getUserInfo();
 
 const newName = ref("");

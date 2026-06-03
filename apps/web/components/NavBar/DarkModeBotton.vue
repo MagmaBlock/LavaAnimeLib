@@ -13,7 +13,7 @@
 </template>
 
 <script setup>
-const settings = useSettingsStore();
+const settings = useSettings();
 
 function switchDarkMode() {
   settings.darkMode.enable = !settings.darkMode.enable;

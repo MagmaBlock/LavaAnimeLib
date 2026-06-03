@@ -20,7 +20,7 @@ import { useThrottleFn } from "@vueuse/core";
 
 // 以下内容用做前端防止未登录用户访问界面的情况
 const router = useRouter();
-const userStore = useUserStore();
+const userStore = useUser();
 
 // 创建一个节流函数，1 秒内最多执行一次
 const throttledGetUserInfo = useThrottleFn(() => {

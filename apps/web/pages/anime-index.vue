@@ -1,5 +1,4 @@
 <script>
-import { storeToRefs } from "pinia";
 
 export default {
   data() {

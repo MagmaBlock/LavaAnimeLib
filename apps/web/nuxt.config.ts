@@ -4,10 +4,7 @@ export default defineNuxtConfig({
   modules: [
     "@nuxtjs/tailwindcss",
     "@bg-dev/nuxt-naiveui",
-    "@pinia/nuxt",
-    "@pinia-plugin-persistedstate/nuxt",
     "@vite-pwa/nuxt",
-    // "nuxt-icon",
   ],
   runtimeConfig: {
     public: {
@@ -17,9 +14,6 @@ export default defineNuxtConfig({
   ssr: false,
   imports: {
     dirs: ["composables/store/*.{js,ts}"],
-  },
-  piniaPersistedstate: {
-    storage: "localStorage",
   },
   app: {
     head: {

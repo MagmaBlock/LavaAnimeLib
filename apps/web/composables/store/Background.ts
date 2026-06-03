@@ -1,26 +1,27 @@
-// 控制全局背景
-export const useBackgroundStore = defineStore("background", {
-  state: () => ({
-    enable: false,
-    imageUrl: "",
-    customClass: "",
-  }),
-  actions: {
-    setBackground(backgroundUrl: string, customClass?: string) {
-      this.enable = true;
-      this.imageUrl = backgroundUrl;
-      if (customClass) this.customClass = customClass;
-    },
-    resetBackground() {
-      this.enable = false;
-      this.imageUrl = "";
-      this.customClass = "";
-    },
-    setCustomClass(customClass: string) {
-      this.customClass = customClass;
-    },
-    setEnable(isEnable: boolean) {
-      this.enable = isEnable;
-    },
-  },
-});
+export function useBackground() {
+  const enable = ref(false);
+  const imageUrl = ref("");
+  const customClass = ref("");
+
+  function setBackground(backgroundUrl: string, cls?: string) {
+    enable.value = true;
+    imageUrl.value = backgroundUrl;
+    if (cls) customClass.value = cls;
+  }
+
+  function resetBackground() {
+    enable.value = false;
+    imageUrl.value = "";
+    customClass.value = "";
+  }
+
+  function setCustomClass(cls: string) {
+    customClass.value = cls;
+  }
+
+  function setEnable(isEnable: boolean) {
+    enable.value = isEnable;
+  }
+
+  return reactive({ enable, imageUrl, customClass, setBackground, resetBackground, setCustomClass, setEnable });
+}

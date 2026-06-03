@@ -179,7 +179,7 @@ definePageMeta({
 useHead({ title: "管理员仪表盘" });
 
 const router = useRouter();
-const userStore = useUserStore();
+const userStore = useUser();
 
 const userInfo = computed(() => (userStore.userInfo as Record<string, any>) || {});
 
