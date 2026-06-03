@@ -1,4 +1,5 @@
 import { and, asc, count, eq, inArray, isNotNull, lt, sql } from "drizzle-orm";
+import type { BangumiSubject } from "@lavaanime/shared";
 import config from "../../../common/env.js";
 import { db } from "../../../common/database/connection.js";
 import { bangumiData } from "../../../common/database/schema/bangumi-data.js";
@@ -262,9 +263,9 @@ async function getAllBgmIDInAnimeTable(): Promise<number[]> {
 
 async function updateAnimePosterByBangumiSubject(
   bgmID: number,
-  subject: Record<string, unknown>
+  subject: BangumiSubject
 ): Promise<void> {
-  const images = subject.images as Record<string, string | undefined> | undefined;
+  const images = subject.images;
   const poster = images?.large
     ? `${images.large.replace("https://lain.bgm.tv", config.bangumiImage.host)}/poster`
     : "https://anime-img.5t5.top/assets/noposter.png";

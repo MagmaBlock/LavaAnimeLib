@@ -3,7 +3,11 @@ import { defineStore } from "pinia";
 import axios from "axios";
 import type Artplayer from "artplayer";
 import { useMessage } from "naive-ui";
-import type { DriveListResult } from "@lavaanime/shared";
+import type {
+  DriveListResult,
+  AnimeDetail,
+  BangumiRelatedCharacter,
+} from "@lavaanime/shared";
 
 // 类型定义
 export interface ParseResult {
@@ -88,72 +92,7 @@ export type FileData = Array<{
   modified?: string | null;
 }>;
 
-export type AnimeData = {
-  date: string;
-  platform: string;
-  images: {
-    small: string;
-    grid: string;
-    large: string;
-    medium: string;
-    common: string;
-    poster: string;
-  };
-  summary: string;
-  name: string;
-  name_cn: string;
-  tags: { name: string; count: number }[];
-  bgmID: number;
-  rating: {
-    rank: number;
-    total: number;
-    count: {
-      "1": number;
-      "2": number;
-      "3": number;
-      "4": number;
-      "5": number;
-      "6": number;
-      "7": number;
-      "8": number;
-      "9": number;
-      "10": number;
-    };
-    score: number;
-  };
-  infobox: any[];
-  total_episodes: number;
-  collection: {
-    on_hold: number;
-    dropped: number;
-    wish: number;
-    collect: number;
-    doing: number;
-  };
-  id: number;
-  type: {
-    bdrip: boolean;
-    nsfw: boolean;
-  };
-  rating_count: number;
-  rank: number;
-  popularity: number;
-  favorites: number;
-  watching: number;
-  completed: number;
-  on_hold: number;
-  dropped: number;
-  plan_to_watch: number;
-  characters: any[];
-  title?: string;
-  views?: number;
-  eps?: number;
-  index?: {
-    year?: string;
-    type?: string;
-    name?: string;
-  };
-};
+export type AnimeData = AnimeDetail;
 
 export type DriveData = DriveListResult;
 
@@ -538,61 +477,33 @@ export const useAnimeStore = defineStore("anime", {
         errorMessage: null,
       };
       this.animeData = {
-        date: "",
-        platform: "",
-        images: {
-          small: "",
-          grid: "",
-          large: "",
-          medium: "",
-          common: "",
-          poster: "",
-        },
-        summary: "",
+        id: 0,
+        index: { year: "", type: "", name: "" },
+        views: 0,
+        title: "",
+        type: { bdrip: false, nsfw: false },
+        images: { large: "", common: "", medium: "", small: "", grid: "", poster: "" },
+        deleted: false,
         name: "",
         name_cn: "",
-        tags: [],
-        bgmID: 0,
+        summary: "",
+        nsfw: false,
+        locked: false,
+        platform: "",
+        meta_tags: [],
+        volumes: 0,
+        eps: 0,
+        series: false,
+        total_episodes: 0,
         rating: {
           rank: 0,
           total: 0,
-          count: {
-            "1": 0,
-            "2": 0,
-            "3": 0,
-            "4": 0,
-            "5": 0,
-            "6": 0,
-            "7": 0,
-            "8": 0,
-            "9": 0,
-            "10": 0,
-          },
+          count: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0, "8": 0, "9": 0, "10": 0 },
           score: 0,
         },
-        infobox: [],
-        total_episodes: 0,
-        collection: {
-          on_hold: 0,
-          dropped: 0,
-          wish: 0,
-          collect: 0,
-          doing: 0,
-        },
-        id: 0,
-        type: {
-          bdrip: false,
-          nsfw: false,
-        },
-        rating_count: 0,
-        rank: 0,
-        popularity: 0,
-        favorites: 0,
-        watching: 0,
-        completed: 0,
-        on_hold: 0,
-        dropped: 0,
-        plan_to_watch: 0,
+        collection: { wish: 0, collect: 0, doing: 0, on_hold: 0, dropped: 0 },
+        tags: [],
+        relations: [],
         characters: [],
       };
 

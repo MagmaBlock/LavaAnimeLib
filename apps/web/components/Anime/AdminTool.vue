@@ -48,6 +48,7 @@
 
 <script setup lang="ts">
 import { useClipboard } from "@vueuse/core";
+import type { BangumiInfoboxItem } from "@lavaanime/shared";
 
 const show = defineModel<boolean>('show', { default: false })
 
@@ -56,7 +57,7 @@ const props = defineProps<{
     name?: string
     name_cn?: string
     index?: { year?: string; type?: string; name?: string }
-    infobox?: any[]
+    infobox?: BangumiInfoboxItem[]
   }
 }>()
 
@@ -73,15 +74,16 @@ const getRuleName = computed(() => {
 });
 const getWebsite = computed(() => {
   if (!props.animeData?.infobox) return;
-  let result = props.animeData?.infobox?.find((kv: { key: string; value: string }) => {
+  const result = props.animeData?.infobox?.find((kv) => {
     return ["官方网站", "官网", "网站"].includes(kv.key);
   });
-  if (result?.value) {
+  if (result && typeof result.value === "string") {
     return [
       result.value,
       result.value + (result.value.endsWith("/") ? "story" : "/story"),
       result.value + (result.value.endsWith("/") ? "episodes" : "/episodes"),
     ];
-  } else return;
+  }
+  return;
 });
 </script>

@@ -22,3 +22,19 @@ export type {
   FileDriveSource,
   AggregatedFileItem,
 } from "./models.js";
+export type {
+  BangumiImages,
+  BangumiRating,
+  BangumiCollection,
+  BangumiTag,
+  BangumiInfoboxValue,
+  BangumiInfoboxItem,
+  BangumiSubject,
+  BangumiSubjectRelation,
+  BangumiPerson,
+  BangumiRelatedCharacter,
+  PersonImages,
+  AnimeBase,
+  AnimeRelation,
+  AnimeDetail,
+} from "./bangumi.js";

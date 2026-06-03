@@ -1,4 +1,12 @@
 import _ from "lodash";
+import type {
+  BangumiSubject,
+  BangumiSubjectRelation,
+  BangumiRelatedCharacter,
+  AnimeDetail,
+  AnimeBase,
+  AnimeRelation,
+} from "@lavaanime/shared";
 import config from "../../../common/env.js";
 import { db } from "../../../common/database/connection.js";
 import { bangumiData } from "../../../common/database/schema/bangumi-data.js";
@@ -22,33 +30,23 @@ interface RawAnimeRow {
 
 export type { RawAnimeRow };
 
-interface ParsedAnime {
-  id: number;
-  bgmID?: number;
-  index: { year: string; type: string; name: string };
-  views: number;
-  title: string;
-  type: { bdrip: boolean; nsfw: boolean };
-  images: Record<string, string | undefined>;
-  deleted: boolean;
+/**
+ * 解析器内部类型：full=true 时为完整 AnimeDetail，full=false 时仅含 AnimeBase 字段
+ */
+interface ParsedAnime
+  extends Partial<Omit<BangumiSubject, "id" | "type" | "images">>,
+    AnimeBase {
+  relations?: AnimeRelation[];
+  characters?: BangumiRelatedCharacter[];
   [key: string]: unknown;
 }
 
 export type { ParsedAnime };
 
 interface BgmDataEntry {
-  relations: Record<string, unknown>[];
-  subjects: Record<string, unknown>;
-  characters: unknown[];
-}
-
-interface BangumiImages {
-  small?: string;
-  grid?: string;
-  large?: string;
-  medium?: string;
-  common?: string;
-  [key: string]: string | undefined;
+  relations: BangumiSubjectRelation[];
+  subjects: BangumiSubject;
+  characters: BangumiRelatedCharacter[];
 }
 
 export async function parseAnime(rawData: RawAnimeRow | RawAnimeRow[], full = false): Promise<ParsedAnime[]> {
@@ -95,8 +93,10 @@ async function parseSingleAnimeData(
         nsfw: /\[NSFW\]/i.test(rawData.title || ""),
       },
       images: {
-        ...(thisbgmData.subjects.images as BangumiImages),
-        poster: (thisbgmData.subjects.images as BangumiImages).large + "/poster",
+        ...thisbgmData.subjects.images,
+        poster: thisbgmData.subjects.images.large
+          ? thisbgmData.subjects.images.large + "/poster"
+          : undefined,
       },
       deleted: false,
     };
@@ -181,23 +181,25 @@ async function getAllBangumiData(bgmIDList: number[]): Promise<Record<string, Bg
         );
       }
       bgmData[row.bgmid] = {
-        relations: JSON.parse(row.relations_anime!),
-        subjects: JSON.parse(row.subjects!),
-        characters: JSON.parse(row.characters!),
+        relations: JSON.parse(row.relations_anime!) as BangumiSubjectRelation[],
+        subjects: JSON.parse(row.subjects!) as BangumiSubject,
+        characters: JSON.parse(row.characters!) as BangumiRelatedCharacter[],
       };
     }
   }
   return bgmData;
 }
 
-async function parseBangumiRelations(relations: Record<string, unknown>[]) {
-  const parsedRelations = [];
-  for (const i in relations) {
-    const thisBgmIDAnimes = await getAnimesByBgmID(Number(relations[i].id));
-    for (const j in thisBgmIDAnimes) {
+async function parseBangumiRelations(
+  relations: BangumiSubjectRelation[]
+): Promise<AnimeRelation[]> {
+  const parsedRelations: AnimeRelation[] = [];
+  for (const relation of relations) {
+    const thisBgmIDAnimes = await getAnimesByBgmID(Number(relation.id));
+    for (const anime of thisBgmIDAnimes) {
       parsedRelations.push({
-        ...thisBgmIDAnimes[j],
-        relation: relations[i].relation,
+        ...(anime as unknown as AnimeBase),
+        relation: relation.relation,
       });
     }
   }

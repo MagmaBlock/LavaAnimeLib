@@ -75,6 +75,8 @@
 </template>
 
 <script lang="ts" setup>
+import type { BangumiInfoboxItem } from "@lavaanime/shared";
+
 const showAdminTools = defineModel<boolean>('showAdminTools', { default: false })
 
 const props = defineProps<{
@@ -97,7 +99,7 @@ const props = defineProps<{
     type?: { bdrip?: boolean; nsfw?: boolean }
     tags?: { name: string; count: number }[]
     index?: { year?: string; type?: string; name?: string }
-    infobox?: Array<{ key: string; value: string }>
+    infobox?: BangumiInfoboxItem[]
   }
 }>()
 
@@ -106,7 +108,10 @@ const getWebsite = computed(() => {
   const result = props.animeData.infobox.find((kv) => {
     return ["官方网站", "官网", "网站"].includes(kv.key);
   });
-  return result?.value;
+  if (result && typeof result.value === "string") {
+    return result.value;
+  }
+  return;
 });
 </script>
 
