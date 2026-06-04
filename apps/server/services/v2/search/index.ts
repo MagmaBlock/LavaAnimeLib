@@ -4,6 +4,10 @@ import { anime } from "../../../common/database/schema/anime.js";
 import { subjects } from "../../../common/database/schema/subjects.js";
 import { subjectAliases } from "../../../common/database/schema/subject-aliases.js";
 import { like, and, desc, eq, or, sql } from "drizzle-orm";
+
+function bgmidJoin() {
+  return eq(anime.bgmid, sql`CAST(${subjects.bgmid} AS CHAR) COLLATE utf8mb4_uca1400_as_ci`);
+}
 import { parseAnime } from "../parser/anime.js";
 import type { ParsedAnime } from "../parser/anime.js";
 
@@ -42,7 +46,7 @@ export async function searchAnimes(value: string): Promise<ParsedAnime[]> {
       poster: anime.poster,
     })
     .from(anime)
-    .leftJoin(subjects, eq(anime.bgmid, sql`cast(${subjects.bgmid} as char)`))
+    .leftJoin(subjects, bgmidJoin())
     .leftJoin(subjectAliases, eq(subjects.id, subjectAliases.subject_id))
     .where(
       and(
@@ -67,7 +71,7 @@ export async function quickSearch(value: string): Promise<string[]> {
   const queryResults = await db
     .selectDistinct({ title: anime.title })
     .from(anime)
-    .leftJoin(subjects, eq(anime.bgmid, sql`cast(${subjects.bgmid} as char)`))
+    .leftJoin(subjects, bgmidJoin())
     .leftJoin(subjectAliases, eq(subjects.id, subjectAliases.subject_id))
     .where(
       and(
