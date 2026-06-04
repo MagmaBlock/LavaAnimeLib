@@ -50,6 +50,13 @@
       "when": 1780162653330,
       "tag": "0006_mean_maelstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1780599227660,
+      "tag": "0007_dark_supreme_intelligence",
+      "breakpoints": true
     }
   ]
 }

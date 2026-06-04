@@ -75,6 +75,22 @@ const isDesktop = breakpoints.greaterOrEqual("lg");
         :follow-label-add="props.anime.getColorEgg?.follow?.add"
         :follow-label-remove="props.anime.getColorEgg?.follow?.remove"
       />
+      <AnimeRatingDetail
+        :counts="props.anime.animeData?.structured?.rating?.counts ?? null"
+        :loading="props.anime.state.animeData.isLoading"
+      />
+      <AnimeInfobox
+        :items="props.anime.animeData?.structured?.infobox ?? null"
+        :loading="props.anime.state.animeData.isLoading"
+      />
+      <AnimeCharacters
+        :characters="props.anime.animeData?.structured?.characters ?? null"
+        :loading="props.anime.state.animeData.isLoading"
+      />
+      <AnimeEpisodesList
+        :episodes="props.anime.animeData?.structured?.episodes ?? null"
+        :loading="props.anime.state.animeData.isLoading"
+      />
     </NFlex>
     <NFlex vertical :size="16" class="col-span-1">
       <AnimeFileList

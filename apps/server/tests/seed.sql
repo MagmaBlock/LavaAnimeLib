@@ -53,3 +53,44 @@ VALUES
 -- 测试站点设置
 REPLACE INTO `settings` (`key`, `value`)
 VALUES ('site_name', '"LavaAnime Test"');
+
+-- 结构化番剧数据（新表）
+REPLACE INTO `subjects` (`id`, `bgmid`, `type`, `name`, `name_cn`, `summary`, `nsfw`, `platform`, `air_date`, `eps`, `total_episodes`, `rating_score`, `rating_total`, `image_large`, `image_common`, `image_medium`, `image_small`, `image_grid`, `collect_wish`, `collect_collect`)
+VALUES
+  (1, 123456, 2, 'テストA', '测试番剧A', '测试番剧A简介', 0, 'TV', '2024-01', 12, 12, '8.5', 1000, 'https://example.com/large.jpg', 'https://example.com/common.jpg', 'https://example.com/medium.jpg', 'https://example.com/small.jpg', 'https://example.com/grid.jpg', 200, 500),
+  (2, 234567, 2, 'Test Anime B', '测试番剧B', 'Test Anime B Summary', 0, 'TV', '2024-04', 24, 24, '7.8', 500, 'https://example.com/large_b.jpg', 'https://example.com/common_b.jpg', 'https://example.com/medium_b.jpg', 'https://example.com/small_b.jpg', 'https://example.com/grid_b.jpg', 100, 300),
+  (3, 345678, 2, 'Test Anime C', '测试番剧C', 'Test Anime C Summary', 0, 'WEB', '2024-07', 13, 13, '9.0', 2000, 'https://example.com/large_c.jpg', 'https://example.com/common_c.jpg', 'https://example.com/medium_c.jpg', 'https://example.com/small_c.jpg', 'https://example.com/grid_c.jpg', 500, 1000);
+
+REPLACE INTO `subject_aliases` (`id`, `subject_id`, `alias`) VALUES
+  (1, 1, 'テストA'),
+  (2, 1, '测试番剧A'),
+  (3, 1, 'Test A'),
+  (4, 2, 'Test Anime B'),
+  (5, 2, '测试番剧B'),
+  (6, 3, 'Test Anime C'),
+  (7, 3, '测试番剧C');
+
+REPLACE INTO `subject_tags` (`id`, `subject_id`, `name`, `count`) VALUES
+  (1, 1, '科幻', 50),
+  (2, 1, '冒险', 30),
+  (3, 2, '恋爱', 40),
+  (4, 2, '喜剧', 25),
+  (5, 3, '机甲', 60);
+
+REPLACE INTO `subject_meta_tags` (`id`, `subject_id`, `tag`) VALUES
+  (1, 1, '原创'),
+  (2, 2, '轻小说改编'),
+  (3, 3, '漫画改编');
+
+REPLACE INTO `subject_rating_counts` (`subject_id`, `star`, `count`) VALUES
+  (1, 1, 10), (1, 2, 5), (1, 3, 15), (1, 4, 30), (1, 5, 50), (1, 6, 100), (1, 7, 200), (1, 8, 300), (1, 9, 200), (1, 10, 90),
+  (2, 1, 5), (2, 2, 10), (2, 3, 20), (2, 4, 40), (2, 5, 60), (2, 6, 100), (2, 7, 120), (2, 8, 80), (2, 9, 40), (2, 10, 25);
+
+REPLACE INTO `subject_infobox` (`id`, `subject_id`, `key`, `sub_key`, `value`, `sort_order`) VALUES
+  (1, 1, '中文名', NULL, '测试番剧A', 0),
+  (2, 1, '话数', NULL, '12', 0),
+  (3, 1, '放送开始', NULL, '2024年1月', 0),
+  (4, 1, '官方网站', NULL, 'https://example.com', 0),
+  (5, 2, '中文名', NULL, '测试番剧B', 0),
+  (6, 2, '话数', NULL, '24', 0);
+

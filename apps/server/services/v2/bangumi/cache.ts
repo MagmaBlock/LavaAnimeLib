@@ -11,6 +11,7 @@ import {
   getBangumiRelations,
   getBangumiSubjects,
 } from "./api.js";
+import { syncAll } from "./sync.js";
 
 export const BANGUMI_CACHE_SETTINGS_KEY = "bangumi_cache";
 const DEFAULT_EXPIRE_HOURS = 24 * 7;
@@ -192,6 +193,11 @@ export async function refreshBangumiCache(bgmID: number): Promise<boolean> {
 
   await updateAnimePosterByBangumiSubject(bgmID, subject);
   log.info("Bangumi cache refreshed: bgm%d", bgmID);
+
+  syncAll(bgmID).catch((error) =>
+    log.error(error, "Structured sync failed: bgm%d", bgmID)
+  );
+
   return true;
 }
 

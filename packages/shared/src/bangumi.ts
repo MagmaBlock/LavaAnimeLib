@@ -111,6 +111,85 @@ export interface BangumiRelatedCharacter {
   name_cn?: string;
 }
 
+/** `/v0/episodes?subject_id=` 响应 */
+export interface BangumiEpisode {
+  id: number;
+  type: number;
+  name: string;
+  name_cn: string;
+  sort: number;
+  ep?: number;
+  airdate?: string;
+  duration?: string;
+  desc?: string;
+  status?: string;
+  subject_id: number;
+}
+
+// --- 内部结构化类型（重构后的新格式） ---
+
+export interface StructuredImages {
+  large?: string | null;
+  common?: string | null;
+  medium?: string | null;
+  small?: string | null;
+  grid?: string | null;
+}
+
+export interface StructuredRating {
+  score?: number | null;
+  rank?: number | null;
+  total?: number | null;
+  counts?: Array<{ star: number; count: number }>;
+}
+
+export interface StructuredTag {
+  name: string;
+  count: number;
+}
+
+export interface StructuredInfoboxItem {
+  key: string;
+  sub_key?: string | null;
+  value: string;
+  sort_order: number;
+}
+
+export interface StructuredEpisode {
+  id: number;
+  bgm_ep_id?: number | null;
+  type: number;
+  sort: number;
+  ep?: number | null;
+  name?: string | null;
+  name_cn?: string | null;
+  airdate?: string | null;
+  duration?: string | null;
+  desc?: string | null;
+  status?: string | null;
+}
+
+export interface StructuredPerson {
+  id: number;
+  name: string;
+  type?: number | null;
+  short_summary?: string | null;
+  locked: boolean;
+  images?: PersonImages;
+  careers: string[];
+}
+
+export interface StructuredCharacter {
+  id: number;
+  name: string;
+  name_cn?: string | null;
+  type?: number | null;
+  summary?: string | null;
+  images?: PersonImages;
+  relation: string;
+  actors: StructuredPerson[];
+}
+
 // --- 番剧库内部组合类型 ---
 
 export interface AnimeBase {
@@ -130,11 +209,30 @@ export interface AnimeRelation extends AnimeBase {
 
 /**
  * /v2/anime/get?full=true 返回的完整番剧数据
- * 由 Bangumi Subject 字段 + Anime 自有字段 + relations/characters 组成
+ * 包含旧字段（向后兼容）和新结构化字段
  */
 export interface AnimeDetail
   extends Omit<BangumiSubject, "id" | "type" | "images">,
     AnimeBase {
   relations: AnimeRelation[];
   characters: BangumiRelatedCharacter[];
+
+  /** 结构化数据（新） */
+  structured?: {
+    rating: StructuredRating;
+    tags: StructuredTag[];
+    meta_tags: string[];
+    ep_count: number;
+    infobox: StructuredInfoboxItem[];
+    episodes: StructuredEpisode[];
+    characters: StructuredCharacter[];
+    // 向后兼容的旧格式也在顶层保留
+    collection: {
+      wish: number;
+      collect: number;
+      doing: number;
+      on_hold: number;
+      dropped: number;
+    };
+  };
 }
