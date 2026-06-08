@@ -85,32 +85,9 @@ export async function upsertEntries(
   entries: FileIndexUpsert[]
 ): Promise<void> {
   for (const entry of entries) {
-    const existing = await db
-      .select({ id: fileIndex.id, deleted: fileIndex.deleted })
-      .from(fileIndex)
-      .where(
-        and(
-          eq(fileIndex.driveId, entry.driveId),
-          eq(fileIndex.path, entry.path),
-        ),
-      )
-      .limit(1);
-
-    if (existing.length > 0) {
-      await db
-        .update(fileIndex)
-        .set({
-          name: entry.name,
-          size: entry.size ?? 0,
-          type: entry.type,
-          modified: entry.modified ?? null,
-          deleted: 0,
-          indexedAt: sql`NOW()`,
-          animeId: entry.animeId ?? null,
-        })
-        .where(eq(fileIndex.id, existing[0].id));
-    } else {
-      await db.insert(fileIndex).values({
+    await db
+      .insert(fileIndex)
+      .values({
         driveId: entry.driveId,
         animeId: entry.animeId ?? null,
         path: entry.path,
@@ -120,8 +97,18 @@ export async function upsertEntries(
         modified: entry.modified ?? null,
         deleted: 0,
         indexedAt: sql`NOW()`,
+      })
+      .onDuplicateKeyUpdate({
+        set: {
+          name: entry.name,
+          size: entry.size ?? 0,
+          type: entry.type,
+          modified: entry.modified ?? null,
+          deleted: 0,
+          indexedAt: sql`NOW()`,
+          animeId: entry.animeId ?? null,
+        },
       });
-    }
   }
 }
 
