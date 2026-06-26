@@ -1,7 +1,6 @@
 import path from "path";
 import { db } from "../../../common/database/connection.js";
 import { anime } from "../../../common/database/schema/anime.js";
-import { bangumiData } from "../../../common/database/schema/bangumi-data.js";
 import { uploadMessage } from "../../../common/database/schema/upload-message.js";
 import { eq, and } from "drizzle-orm";
 
@@ -27,16 +26,6 @@ export async function reportUploadMessage(index: string, fileName: string): Prom
   const parseBangumiID = Number.parseInt(String(bangumiID));
   if (!isNaN(parseBangumiID)) {
     bangumiID = parseBangumiID;
-  }
-
-  const bgmRows = await db
-    .select()
-    .from(bangumiData)
-    .where(eq(bangumiData.bgmid, Number(bangumiID)));
-  const bgmData = bgmRows[0] || null;
-
-  if (bgmData === null) {
-    bangumiID = null;
   }
 
   await db.insert(uploadMessage).values({

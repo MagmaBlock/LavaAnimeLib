@@ -33,7 +33,7 @@ describe("getBangumiSubjects", () => {
 });
 
 describe("getBangumiRelations", () => {
-  it("应过滤出在 anime 表中存在的关联条目", async () => {
+  it("应原样返回上游关联条目", async () => {
     mockGet.mockResolvedValueOnce({
       data: [
         { id: 100, name: "Related A" },
@@ -41,27 +41,26 @@ describe("getBangumiRelations", () => {
         { id: 300, name: "Related C" },
       ],
     });
-    const allBgmIDInAnimeTable = [100, 300];
-    const result = await getBangumiRelations(1, allBgmIDInAnimeTable);
+    const result = await getBangumiRelations(1);
     expect(mockGet).toHaveBeenCalledWith("/v0/subjects/1/subjects");
-    expect(result).toHaveLength(2);
     expect(result).toEqual([
       { id: 100, name: "Related A" },
+      { id: 200, name: "Related B" },
       { id: 300, name: "Related C" },
     ]);
   });
 
-  it("无匹配时应返回空数组", async () => {
+  it("空响应时应返回空数组", async () => {
     mockGet.mockResolvedValueOnce({
-      data: [{ id: 999, name: "Unrelated" }],
+      data: [],
     });
-    const result = await getBangumiRelations(1, [1, 2, 3]);
+    const result = await getBangumiRelations(1);
     expect(result).toEqual([]);
   });
 
   it("API 错误应向上抛出", async () => {
     mockGet.mockRejectedValueOnce(new Error("Not Found"));
-    await expect(getBangumiRelations(1, [1])).rejects.toThrow("Not Found");
+    await expect(getBangumiRelations(1)).rejects.toThrow("Not Found");
   });
 });
 

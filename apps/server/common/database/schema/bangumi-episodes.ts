@@ -7,10 +7,10 @@ import {
   decimal,
   index,
 } from "drizzle-orm/mysql-core";
-import { subjects } from "./subjects.js";
+import { subjects } from "./bangumi-subjects.js";
 
 export const subjectEpisodes = mysqlTable(
-  "subject_episodes",
+  "bangumi_episodes",
   {
     id: int().notNull().autoincrement().primaryKey(),
     subject_id: int()

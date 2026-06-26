@@ -8,6 +8,7 @@ import driveRouter from "./drive.js";
 import adminRouter from "./admin.js";
 import siteRouter from "./site.js";
 import reportRouter from "./report.js";
+import bangumiWikiRouter from "./bangumi-wiki.js";
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use("/v2/drive", driveRouter);
 router.use("/v2/admin", adminRouter);
 router.use("/v2/site", siteRouter);
 router.use("/v2/report", reportRouter);
+router.use("/v2/bangumi-wiki", bangumiWikiRouter);
 
 export default router;

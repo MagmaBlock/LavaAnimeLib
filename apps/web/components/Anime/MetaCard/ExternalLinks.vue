@@ -1,5 +1,5 @@
 <template>
-  <NFlex class="text-sm text-blue-600">
+  <NFlex class="text-xs text-blue-600">
     <a
       :href="'https://bgm.tv/subject/' + bgmId"
       target="_blank"

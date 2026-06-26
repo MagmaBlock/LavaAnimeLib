@@ -36,6 +36,52 @@
     </NCard>
 
     <template v-if="selectedDrive">
+      <NCard v-if="refreshStatus" :bordered="false" class="!rounded-xl mb-4" size="small">
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-sm font-medium text-gray-800 dark:text-gray-200">索引刷新进度</div>
+          <NTag
+            size="small"
+            :type="refreshStatus.status === 'running' ? 'info' : refreshStatus.status === 'completed' ? 'success' : 'error'"
+            :bordered="false"
+          >
+            {{ refreshStatus.status === 'running' ? '运行中' : refreshStatus.status === 'completed' ? '已完成' : '失败' }}
+          </NTag>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+          <div><div class="text-xs text-gray-400 mb-0.5">已扫描目录</div><div class="text-lg font-bold text-gray-800 dark:text-gray-200">{{ refreshStatus.dirsScanned }}</div></div>
+          <div><div class="text-xs text-gray-400 mb-0.5">发现文件</div><div class="text-lg font-bold text-gray-800 dark:text-gray-200">{{ refreshStatus.filesFound }}</div></div>
+          <div><div class="text-xs text-gray-400 mb-0.5">发现目录</div><div class="text-lg font-bold text-gray-800 dark:text-gray-200">{{ refreshStatus.dirsFound }}</div></div>
+          <div><div class="text-xs text-gray-400 mb-0.5">错误</div><div class="text-lg font-bold" :class="refreshStatus.errors > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-800 dark:text-gray-200'">{{ refreshStatus.errors }}</div></div>
+        </div>
+
+        <div v-if="refreshStatus.status === 'running'" class="text-xs text-gray-500 dark:text-gray-400 font-mono truncate mb-2">
+          正在扫描: {{ refreshStatus.currentPath }}
+        </div>
+        <div v-else class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+          起始路径 <code class="font-mono">{{ refreshStatus.startPath }}</code> · 耗时 {{ refreshDuration }}
+        </div>
+
+        <div v-if="refreshStatus.log.length > 0">
+          <div class="text-xs text-gray-400 mb-1.5">最近扫描</div>
+          <div class="max-h-36 overflow-y-auto space-y-1">
+            <div
+              v-for="(entry, idx) in [...refreshStatus.log].reverse()"
+              :key="idx"
+              class="flex items-center gap-2 font-mono text-xs"
+            >
+              <span class="text-gray-400">{{ formatLogTime(entry.time) }}</span>
+              <span class="text-gray-700 dark:text-gray-300 truncate">{{ entry.path }}</span>
+              <span class="text-gray-400 shrink-0">{{ entry.files }}f/{{ entry.dirs }}d</span>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="refreshStatus.lastError" class="text-xs text-red-500 mt-2 truncate">
+          {{ refreshStatus.lastError }}
+        </div>
+      </NCard>
+
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         <NCard :bordered="false" class="!rounded-xl" size="small">
           <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">文件总数</div>
@@ -248,6 +294,70 @@ const refreshingDir = ref(false);
 const refreshingDrive = ref(false);
 const refreshDirModal = ref(false);
 const refreshDirPath = ref("");
+
+type RefreshLogEntry = { time: number; path: string; files: number; dirs: number };
+type RefreshStatus = {
+  driveId: string;
+  startPath: string;
+  status: "running" | "completed" | "failed";
+  startedAt: number;
+  finishedAt: number | null;
+  dirsScanned: number;
+  filesFound: number;
+  dirsFound: number;
+  errors: number;
+  currentPath: string;
+  lastError: string | null;
+  log: RefreshLogEntry[];
+};
+
+const refreshStatus = ref<RefreshStatus | null>(null);
+let refreshStatusTimer: ReturnType<typeof setTimeout> | null = null;
+
+const isRefreshRunning = computed(() => refreshStatus.value?.status === "running");
+
+const refreshDuration = computed(() => {
+  const j = refreshStatus.value;
+  if (!j) return "-";
+  const end = j.finishedAt ?? Date.now();
+  const sec = Math.max(1, Math.round((end - j.startedAt) / 1000));
+  if (sec < 60) return `${sec}s`;
+  return `${Math.floor(sec / 60)}m${sec % 60}s`;
+});
+
+function formatLogTime(time: number): string {
+  return dayjs(time).format("HH:mm:ss");
+}
+
+async function loadRefreshStatus() {
+  if (!selectedDrive.value) {
+    scheduleNextRefreshStatus();
+    return;
+  }
+  try {
+    const result = await api.get("/v2/admin/file-index/refresh-status", {
+      params: { driveId: selectedDrive.value },
+      noCatch: true,
+    } as any);
+    if (result.data?.code === 200) refreshStatus.value = result.data.data;
+  } catch (_error) {
+    // 静默处理，保留上次状态
+  } finally {
+    scheduleNextRefreshStatus();
+  }
+}
+
+function scheduleNextRefreshStatus() {
+  if (refreshStatusTimer) clearTimeout(refreshStatusTimer);
+  refreshStatusTimer = setTimeout(loadRefreshStatus, isRefreshRunning.value ? 2000 : 10000);
+}
+
+function stopRefreshStatusPolling() {
+  if (refreshStatusTimer) {
+    clearTimeout(refreshStatusTimer);
+    refreshStatusTimer = null;
+  }
+}
 
 const pagination = reactive({
   page: 1,
@@ -480,7 +590,9 @@ async function onDriveChange() {
   searchKeyword.value = "";
   filterType.value = null;
   filterDeleted.value = null;
-  await Promise.all([loadStats(), loadFileList()]);
+  refreshStatus.value = null;
+  stopRefreshStatusPolling();
+  await Promise.all([loadStats(), loadFileList(), loadRefreshStatus()]);
 }
 
 async function loadStats() {
@@ -550,16 +662,18 @@ async function doRefreshDir() {
     const result = await api.post("/v2/admin/file-index/refresh-dir", {
       driveId: selectedDrive.value,
       dirPath: refreshDirPath.value.trim(),
-    });
+    }, { noCatch: true } as any);
     if (result.data?.code === 200) {
       message.success("目录刷新完成");
       refreshDirModal.value = false;
       await Promise.all([loadStats(), loadFileList()]);
     }
-  } catch (_error) {
-    message.error("刷新目录失败");
+  } catch (error: any) {
+    const msg = error?.response?.data?.message;
+    message.error(msg || "刷新目录失败");
   } finally {
     refreshingDir.value = false;
+    loadRefreshStatus();
   }
 }
 
@@ -569,18 +683,35 @@ async function refreshDrive() {
   try {
     const result = await api.post("/v2/admin/file-index/refresh-drive", {
       driveId: selectedDrive.value,
-    });
+    }, { noCatch: true } as any);
     if (result.data?.code === 200) {
       message.success("已触发全量索引刷新，请稍后查看结果");
+      loadRefreshStatus();
     }
-  } catch (_error) {
-    message.error("触发刷新失败");
+  } catch (error: any) {
+    const msg = error?.response?.data?.message;
+    message.error(msg || "触发刷新失败");
   } finally {
     refreshingDrive.value = false;
   }
 }
 
+watch(
+  () => refreshStatus.value?.status,
+  (cur, prev) => {
+    if (prev === "running" && (cur === "completed" || cur === "failed")) {
+      loadStats();
+      loadFileList();
+    }
+  },
+);
+
 onMounted(() => {
   loadDrives();
+  loadRefreshStatus();
+});
+
+onUnmounted(() => {
+  stopRefreshStatusPolling();
 });
 </script>

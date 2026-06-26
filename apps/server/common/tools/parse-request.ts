@@ -31,3 +31,16 @@ export function parseBody<T extends z.ZodType>(
   }
   return result.data;
 }
+
+export function parseParams<T extends z.ZodType>(
+  schema: T,
+  req: Request,
+  res: Response,
+): z.output<T> | undefined {
+  const result = schema.safeParse(req.params);
+  if (!result.success) {
+    badRequest(res, formatIssues(result.error));
+    return undefined;
+  }
+  return result.data;
+}

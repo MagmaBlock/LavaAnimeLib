@@ -4,10 +4,10 @@ import {
   varchar,
   uniqueIndex,
 } from "drizzle-orm/mysql-core";
-import { subjects } from "./subjects.js";
+import { subjects } from "./bangumi-subjects.js";
 
 export const subjectTags = mysqlTable(
-  "subject_tags",
+  "bangumi_subject_tags",
   {
     id: int().notNull().autoincrement().primaryKey(),
     subject_id: int()

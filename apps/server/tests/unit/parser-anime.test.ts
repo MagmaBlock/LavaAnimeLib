@@ -73,7 +73,7 @@ describe("parseAnime", () => {
     expect(result[0].title).toBeDefined();
     expect(result[0].relations).toBeDefined();
     expect(Array.isArray(result[0].relations)).toBe(true);
-    expect(result[0].characters).toBeDefined();
+    expect(result[0].structured?.characters).toBeDefined();
   });
 
   it("输入原始数据数组应返回等长结果", async () => {

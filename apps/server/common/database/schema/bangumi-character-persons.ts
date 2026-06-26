@@ -3,11 +3,11 @@ import {
   int,
   uniqueIndex,
 } from "drizzle-orm/mysql-core";
-import { characters } from "./characters.js";
-import { persons } from "./persons.js";
+import { characters } from "./bangumi-characters.js";
+import { persons } from "./bangumi-persons.js";
 
 export const characterPersons = mysqlTable(
-  "character_persons",
+  "bangumi_character_persons",
   {
     id: int().notNull().autoincrement().primaryKey(),
     character_id: int()

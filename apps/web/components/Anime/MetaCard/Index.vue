@@ -12,14 +12,14 @@
       <AnimeFollowButton v-if="laID" :anime-id="laID" :follow-label-add="followLabelAdd" :follow-label-remove="followLabelRemove" />
     </template>
     <template #default>
-      <NFlex :wrap="false">
-        <AnimeMetaCardPosterImage
-          :poster-url="animeData?.images?.poster"
-          class="hidden sm:block"
-        />
-        <NFlex vertical>
-          <NFlex :wrap="false" justify="space-between">
-            <NFlex vertical>
+      <div class="space-y-4">
+        <NFlex :wrap="false" class="items-start">
+          <AnimeMetaCardPosterImage
+            :poster-url="animeData?.images?.poster"
+            class="hidden sm:block"
+          />
+          <div class="min-w-0 flex-1 space-y-3">
+            <div class="space-y-2">
               <NFlex :align="'baseline'">
                 <AnimeMetaCardTitle
                   :title="animeData?.title"
@@ -38,9 +38,7 @@
               />
               <NFlex vertical size="small">
                 <NFlex class="text-gray-500">
-                  <AnimeMetaCardPlatform
-                    :platform="animeData?.platform"
-                  />
+                  <AnimeMetaCardPlatform :platform="animeData?.platform" />
                   <AnimeMetaCardReleaseDate :date="animeData?.date" />
                   <AnimeMetaCardTotalEpisodesCount
                     :count="animeData?.eps"
@@ -56,28 +54,61 @@
                   <AnimeMetaCardAnimeID :id="animeData?.id" />
                 </NFlex>
               </NFlex>
-            </NFlex>
-          </NFlex>
-          <AnimeMetaCardTags
-            :tags="animeData?.tags"
-            :loading="isLoading"
-          />
+            </div>
+
+            <AnimeMetaCardTags
+              :tags="animeData?.tags"
+              :loading="isLoading"
+            />
+
+            <section v-if="summary">
+              <div
+                class="text-[14px] leading-7 text-gray-700 dark:text-zinc-300 whitespace-pre-line"
+                :class="{ 'line-clamp-4': !summaryExpanded }"
+              >
+                {{ summary }}
+              </div>
+              <NButton
+                v-if="summary.length > 180"
+                text
+                size="small"
+                type="primary"
+                class="mt-1"
+                @click="summaryExpanded = !summaryExpanded"
+              >
+                <template #icon>
+                  <Icon :name="summaryExpanded ? 'material-symbols:keyboard-arrow-up-rounded' : 'material-symbols:keyboard-arrow-down-rounded'" />
+                </template>
+                {{ summaryExpanded ? "收起" : "展开全文" }}
+              </NButton>
+            </section>
+
+            <AnimeMetaCardExternalLinks
+              :bgm-id="bgmID"
+              :official-website="getWebsite"
+            />
+          </div>
         </NFlex>
-      </NFlex>
-    </template>
-    <template #action>
-      <AnimeMetaCardExternalLinks
-        :bgm-id="bgmID"
-        :official-website="getWebsite"
-      />
+
+        <AnimeInfoPanel
+          :collection="animeData?.structured?.collection ?? animeData?.collection ?? null"
+          :rating-counts="animeData?.structured?.rating?.counts ?? null"
+          :infobox="animeData?.structured?.infobox ?? null"
+          :characters="animeData?.structured?.characters ?? null"
+          :episodes="animeData?.structured?.episodes ?? null"
+          :active-episode="activeEpisode"
+          :loading="isLoading"
+        />
+      </div>
     </template>
   </NCard>
 </template>
 
 <script lang="ts" setup>
-import type { BangumiInfoboxItem } from "@lavaanime/shared";
+import type { AnimeDetail, BangumiInfoboxItem } from "@lavaanime/shared";
 
 const showAdminTools = defineModel<boolean>('showAdminTools', { default: false })
+const summaryExpanded = ref(false);
 
 const props = defineProps<{
   laID?: number
@@ -86,7 +117,8 @@ const props = defineProps<{
   isLoading?: boolean
   bgmID?: number | null
   episodeName?: string
-  animeData?: {
+  activeEpisode?: string | number | null
+  animeData?: Partial<AnimeDetail> & {
     title?: string
     name?: string
     platform?: string
@@ -113,6 +145,8 @@ const getWebsite = computed(() => {
   }
   return;
 });
+
+const summary = computed(() => props.animeData?.summary?.trim() ?? "");
 </script>
 
 <style></style>

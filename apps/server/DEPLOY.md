@@ -84,7 +84,20 @@ mysql -u root -p lavaanime -e "SHOW TABLES;"
 
 ```
 anime
-bangumi_data
+bangumi_subjects
+bangumi_subject_aliases
+bangumi_subject_tags
+bangumi_subject_meta_tags
+bangumi_subject_rating_counts
+bangumi_subject_infobox
+bangumi_episodes
+bangumi_subject_relations
+bangumi_characters
+bangumi_persons
+bangumi_person_careers
+bangumi_subject_characters
+bangumi_character_persons
+bangumi_subject_character_actors
 follow
 invite_code
 settings

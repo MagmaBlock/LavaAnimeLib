@@ -10,7 +10,7 @@ import {
 } from "drizzle-orm/mysql-core";
 
 export const subjects = mysqlTable(
-  "subjects",
+  "bangumi_subjects",
   {
     id: int().notNull().autoincrement().primaryKey(),
     bgmid: int().notNull().unique(),
@@ -24,7 +24,7 @@ export const subjects = mysqlTable(
     locked: tinyint().notNull().default(0),
 
     platform: varchar({ length: 64 }),
-    air_date: varchar({ length: 32 }),
+    date: varchar({ length: 32 }),
     series: tinyint().notNull().default(0),
     volumes: int().notNull().default(0),
 
@@ -47,13 +47,13 @@ export const subjects = mysqlTable(
     image_small: varchar({ length: 1024 }),
     image_grid: varchar({ length: 1024 }),
 
-    updated_at: timestamp({ mode: "date" }).notNull().defaultNow().onUpdateNow(),
+    fetched_at: timestamp({ mode: "date" }).notNull().defaultNow().onUpdateNow(),
   },
   (table) => [
     index("idx_bgmid").on(table.bgmid),
     index("idx_rating").on(table.rating_score),
     index("idx_name_cn").on(table.name_cn),
-    index("idx_air_date").on(table.air_date),
+    index("idx_bangumi_subject_date").on(table.date),
     index("idx_nsfw").on(table.nsfw),
   ]
 );

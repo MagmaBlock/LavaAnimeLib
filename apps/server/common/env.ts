@@ -26,6 +26,10 @@ const envSchema = z.object({
   ),
   BANGUMI_API_HOST: z.string().url(),
   BANGUMI_IMAGE_HOST: z.string().url(),
+  BANGUMI_IMAGE_APPEND_POSTER: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true"),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
   LOG_DIR: z.string().default("logs"),
   LOG_FILE: z.string().default("app.log"),
@@ -55,6 +59,7 @@ const config = {
   },
   bangumiImage: {
     host: raw.BANGUMI_IMAGE_HOST,
+    appendPoster: raw.BANGUMI_IMAGE_APPEND_POSTER,
   },
   log: {
     level: raw.LOG_LEVEL,

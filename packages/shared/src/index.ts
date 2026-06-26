@@ -47,4 +47,6 @@ export type {
   StructuredEpisode,
   StructuredPerson,
   StructuredCharacter,
+  BangumiWikiCharacterResult,
+  BangumiWikiPersonResult,
 } from "./bangumi.js";

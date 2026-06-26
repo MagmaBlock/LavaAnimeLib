@@ -8,14 +8,14 @@ import {
   index,
 } from "drizzle-orm/mysql-core";
 
-export const characters = mysqlTable(
-  "characters",
+export const persons = mysqlTable(
+  "bangumi_persons",
   {
     id: int().notNull().primaryKey(),
     name: varchar({ length: 255 }).notNull(),
-    name_cn: varchar({ length: 255 }),
     type: tinyint(),
-    summary: longtext(),
+    short_summary: longtext(),
+    locked: tinyint().notNull().default(0),
     image_large: varchar({ length: 1024 }),
     image_medium: varchar({ length: 1024 }),
     image_small: varchar({ length: 1024 }),
@@ -23,6 +23,6 @@ export const characters = mysqlTable(
     updated_at: timestamp({ mode: "date" }).notNull().defaultNow().onUpdateNow(),
   },
   (table) => [
-    index("idx_char_name").on(table.name),
+    index("idx_person_name").on(table.name),
   ]
 );

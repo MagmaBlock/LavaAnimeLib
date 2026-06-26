@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { z } from "zod";
-import { parseBody, parseQuery } from "../../common/tools/parse-request.js";
+import { parseBody, parseQuery, parseParams } from "../../common/tools/parse-request.js";
 
-function mockReqRes(body: unknown = {}, query: unknown = {}) {
+function mockReqRes(body: unknown = {}, query: unknown = {}, params: unknown = {}) {
   const req = {
     body: body as Record<string, unknown>,
     query: query as Record<string, unknown>,
-  } as Parameters<typeof parseBody>[1] & Parameters<typeof parseQuery>[1];
+    params: params as Record<string, unknown>,
+  } as Parameters<typeof parseBody>[1] & Parameters<typeof parseQuery>[1] & Parameters<typeof parseParams>[1];
   const res = { status: vi.fn().mockReturnThis(), send: vi.fn() } as unknown as Parameters<typeof parseBody>[2];
   return { req, res };
 }
@@ -115,5 +116,51 @@ describe("parseQuery", () => {
     const { req, res } = mockReqRes(undefined, {});
     const result = parseQuery(schemaWithDefault, req, res);
     expect(result).toEqual({ skip: 0, take: 20 });
+  });
+});
+
+describe("parseParams", () => {
+  const schema = z.object({
+    id: z.coerce.number().int().positive(),
+  });
+
+  it("有效 params 应返回解析后的数据", () => {
+    const { req, res } = mockReqRes(undefined, undefined, { id: "123" });
+    const result = parseParams(schema, req, res);
+    expect(result).toEqual({ id: 123 });
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it("无效 params 应返回 400", () => {
+    const { req, res } = mockReqRes(undefined, undefined, { id: "0" });
+    const result = parseParams(schema, req, res);
+    expect(result).toBeUndefined();
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it("非数字 params 应返回 400", () => {
+    const { req, res } = mockReqRes(undefined, undefined, { id: "abc" });
+    const result = parseParams(schema, req, res);
+    expect(result).toBeUndefined();
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it("缺少 params 应返回 400", () => {
+    const { req, res } = mockReqRes(undefined, undefined, {});
+    const result = parseParams(schema, req, res);
+    expect(result).toBeUndefined();
+    expect(res.status).toHaveBeenCalledWith(400);
+  });
+
+  it("自定义 error message 应透传", () => {
+    const schemaWithMsg = z.object({
+      id: z.coerce.number().int().positive("id must be a positive integer"),
+    });
+    const { req, res } = mockReqRes(undefined, undefined, { id: "-5" });
+    const result = parseParams(schemaWithMsg, req, res);
+    expect(result).toBeUndefined();
+    expect(res.send).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining("id must be a positive integer") }),
+    );
   });
 });

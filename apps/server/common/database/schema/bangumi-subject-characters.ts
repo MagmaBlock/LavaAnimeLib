@@ -4,11 +4,11 @@ import {
   varchar,
   uniqueIndex,
 } from "drizzle-orm/mysql-core";
-import { subjects } from "./subjects.js";
-import { characters } from "./characters.js";
+import { subjects } from "./bangumi-subjects.js";
+import { characters } from "./bangumi-characters.js";
 
 export const subjectCharacters = mysqlTable(
-  "subject_characters",
+  "bangumi_subject_characters",
   {
     id: int().notNull().autoincrement().primaryKey(),
     subject_id: int()
@@ -18,6 +18,7 @@ export const subjectCharacters = mysqlTable(
       .notNull()
       .references(() => characters.id, { onDelete: "cascade" }),
     relation: varchar({ length: 128 }),
+    sort_order: int().notNull().default(0),
   },
   (table) => [
     uniqueIndex("uk_subject_char").on(table.subject_id, table.character_id),

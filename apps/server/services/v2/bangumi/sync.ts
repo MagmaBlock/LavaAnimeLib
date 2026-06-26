@@ -1,38 +1,29 @@
 import { db } from "../../../common/database/connection.js";
-import { bangumiData } from "../../../common/database/schema/bangumi-data.js";
-import { subjects } from "../../../common/database/schema/subjects.js";
-import { subjectAliases } from "../../../common/database/schema/subject-aliases.js";
-import { subjectTags } from "../../../common/database/schema/subject-tags.js";
-import { subjectMetaTags } from "../../../common/database/schema/subject-meta-tags.js";
-import { subjectRatingCounts } from "../../../common/database/schema/subject-rating-counts.js";
-import { subjectInfobox } from "../../../common/database/schema/subject-infobox.js";
-import { subjectEpisodes } from "../../../common/database/schema/subject-episodes.js";
-import { characters as charactersTable } from "../../../common/database/schema/characters.js";
-import { persons as personsTable } from "../../../common/database/schema/persons.js";
-import { personCareers } from "../../../common/database/schema/person-careers.js";
-import { subjectCharacters } from "../../../common/database/schema/subject-characters.js";
-import { characterPersons } from "../../../common/database/schema/character-persons.js";
-import { anime } from "../../../common/database/schema/anime.js";
-import { eq, and } from "drizzle-orm";
+import { subjects } from "../../../common/database/schema/bangumi-subjects.js";
+import { subjectAliases } from "../../../common/database/schema/bangumi-subject-aliases.js";
+import { subjectTags } from "../../../common/database/schema/bangumi-subject-tags.js";
+import { subjectMetaTags } from "../../../common/database/schema/bangumi-subject-meta-tags.js";
+import { subjectRatingCounts } from "../../../common/database/schema/bangumi-subject-rating-counts.js";
+import { subjectInfobox } from "../../../common/database/schema/bangumi-subject-infobox.js";
+import { subjectEpisodes } from "../../../common/database/schema/bangumi-episodes.js";
+import { subjectRelations } from "../../../common/database/schema/bangumi-subject-relations.js";
+import { characters as charactersTable } from "../../../common/database/schema/bangumi-characters.js";
+import { persons as personsTable } from "../../../common/database/schema/bangumi-persons.js";
+import { personCareers } from "../../../common/database/schema/bangumi-person-careers.js";
+import { subjectCharacters } from "../../../common/database/schema/bangumi-subject-characters.js";
+import { characterPersons } from "../../../common/database/schema/bangumi-character-persons.js";
+import { subjectCharacterPersons } from "../../../common/database/schema/bangumi-subject-character-actors.js";
+import { eq } from "drizzle-orm";
 import type {
   BangumiSubject,
+  BangumiSubjectRelation,
   BangumiRelatedCharacter,
-  BangumiInfoboxItem,
-  BangumiInfoboxValue,
 } from "@lavaanime/shared";
 import { getBangumiEpisodes } from "./api.js";
-import config from "../../../common/env.js";
 import { log } from "../../../common/tools/logger.js";
 
-function replaceImageHost(url: string): string {
-  return url.replace(/https:\/\/lain\.bgm\.tv/gi, config.bangumiImage.host);
-}
-
-function extractAliases(
-  subject: BangumiSubject
-): string[] {
+function extractAliases(subject: BangumiSubject): string[] {
   const aliases: string[] = [];
-
   if (subject.name) aliases.push(subject.name);
   if (subject.name_cn) aliases.push(subject.name_cn);
 
@@ -49,15 +40,12 @@ function extractAliases(
           aliases.push(item.value);
         } else if (Array.isArray(item.value)) {
           for (const entry of item.value) {
-            if ("v" in entry) {
-              aliases.push(entry.v);
-            }
+            if ("v" in entry) aliases.push(entry.v);
           }
         }
       }
     }
   }
-
   return [...new Set(aliases)];
 }
 
@@ -65,7 +53,6 @@ function parseInfoboxRows(
   bgmSubject: BangumiSubject
 ): Array<{ key: string; sub_key: string | null; value: string; sort_order: number }> {
   const rows: Array<{ key: string; sub_key: string | null; value: string; sort_order: number }> = [];
-
   if (!bgmSubject.infobox) return rows;
 
   for (const item of bgmSubject.infobox) {
@@ -83,20 +70,11 @@ function parseInfoboxRows(
       }
     }
   }
-
   return rows;
 }
 
-export async function syncSubject(bgmID: number): Promise<void> {
-  const [raw] = await db
-    .select({ subjects: bangumiData.subjects })
-    .from(bangumiData)
-    .where(eq(bangumiData.bgmid, bgmID))
-    .limit(1);
-
-  if (!raw?.subjects) return;
-
-  const bgmSubject: BangumiSubject = JSON.parse(raw.subjects);
+export async function syncSubject(bgmSubject: BangumiSubject): Promise<number> {
+  const bgmID = bgmSubject.id;
 
   const [existingSubject] = await db
     .select({ id: subjects.id })
@@ -115,7 +93,7 @@ export async function syncSubject(bgmID: number): Promise<void> {
     nsfw: bgmSubject.nsfw ? 1 : 0,
     locked: bgmSubject.locked ? 1 : 0,
     platform: bgmSubject.platform,
-    air_date: bgmSubject.date ?? null,
+    date: bgmSubject.date ?? null,
     series: bgmSubject.series ? 1 : 0,
     volumes: bgmSubject.volumes,
     eps: bgmSubject.eps,
@@ -128,27 +106,22 @@ export async function syncSubject(bgmID: number): Promise<void> {
     collect_doing: bgmSubject.collection?.doing ?? 0,
     collect_on_hold: bgmSubject.collection?.on_hold ?? 0,
     collect_dropped: bgmSubject.collection?.dropped ?? 0,
-    image_large: bgmSubject.images?.large ? replaceImageHost(bgmSubject.images.large) : null,
-    image_common: bgmSubject.images?.common ? replaceImageHost(bgmSubject.images.common) : null,
-    image_medium: bgmSubject.images?.medium ? replaceImageHost(bgmSubject.images.medium) : null,
-    image_small: bgmSubject.images?.small ? replaceImageHost(bgmSubject.images.small) : null,
-    image_grid: bgmSubject.images?.grid ? replaceImageHost(bgmSubject.images.grid) : null,
+    image_large: bgmSubject.images?.large ?? null,
+    image_common: bgmSubject.images?.common ?? null,
+    image_medium: bgmSubject.images?.medium ?? null,
+    image_small: bgmSubject.images?.small ?? null,
+    image_grid: bgmSubject.images?.grid ?? null,
   };
 
   if (existingSubject) {
     subjectId = existingSubject.id;
-    await db
-      .update(subjects)
-      .set(subjectValues)
-      .where(eq(subjects.id, subjectId));
+    await db.update(subjects).set(subjectValues).where(eq(subjects.id, subjectId));
   } else {
-    const [inserted] = await db
-      .insert(subjects)
-      .values(subjectValues)
-      .$returningId();
+    const [inserted] = await db.insert(subjects).values(subjectValues).$returningId();
     subjectId = Number(inserted?.id) || 0;
   }
 
+  // Aliases
   await db.delete(subjectAliases).where(eq(subjectAliases.subject_id, subjectId));
   const aliases = extractAliases(bgmSubject);
   if (aliases.length > 0) {
@@ -157,15 +130,15 @@ export async function syncSubject(bgmID: number): Promise<void> {
     );
   }
 
+  // Tags
+  await db.delete(subjectTags).where(eq(subjectTags.subject_id, subjectId));
   if (bgmSubject.tags && bgmSubject.tags.length > 0) {
-    for (const tag of bgmSubject.tags) {
-      await db
-        .insert(subjectTags)
-        .values({ subject_id: subjectId, name: tag.name, count: tag.count })
-        .onDuplicateKeyUpdate({ set: { count: tag.count } });
-    }
+    await db.insert(subjectTags).values(
+      bgmSubject.tags.map((tag) => ({ subject_id: subjectId, name: tag.name, count: tag.count }))
+    );
   }
 
+  // Meta tags
   await db.delete(subjectMetaTags).where(eq(subjectMetaTags.subject_id, subjectId));
   if (bgmSubject.meta_tags && bgmSubject.meta_tags.length > 0) {
     await db.insert(subjectMetaTags).values(
@@ -173,6 +146,7 @@ export async function syncSubject(bgmID: number): Promise<void> {
     );
   }
 
+  // Rating counts
   await db.delete(subjectRatingCounts).where(eq(subjectRatingCounts.subject_id, subjectId));
   if (bgmSubject.rating?.count) {
     const counts = bgmSubject.rating.count;
@@ -184,6 +158,7 @@ export async function syncSubject(bgmID: number): Promise<void> {
     await db.insert(subjectRatingCounts).values(entries);
   }
 
+  // Infobox
   await db.delete(subjectInfobox).where(eq(subjectInfobox.subject_id, subjectId));
   const infoboxRows = parseInfoboxRows(bgmSubject);
   if (infoboxRows.length > 0) {
@@ -192,29 +167,14 @@ export async function syncSubject(bgmID: number): Promise<void> {
     );
   }
 
-  if (bgmSubject.images?.large) {
-    const poster = `${replaceImageHost(bgmSubject.images.large)}/poster`;
-    await db
-      .update(anime)
-      .set({ poster })
-      .where(eq(anime.bgmid, String(bgmID)));
-  }
-
   log.info("Synced subject bgm%d to structured tables", bgmID);
+  return subjectId;
 }
 
-export async function syncCharacters(bgmID: number): Promise<void> {
-  const [raw] = await db
-    .select({ characters: bangumiData.characters })
-    .from(bangumiData)
-    .where(eq(bangumiData.bgmid, bgmID))
-    .limit(1);
-
-  if (!raw?.characters) return;
-
-  const chars: BangumiRelatedCharacter[] = JSON.parse(raw.characters);
-  if (!chars.length) return;
-
+export async function syncRelations(
+  bgmID: number,
+  relations: BangumiSubjectRelation[]
+): Promise<void> {
   const [subjectRow] = await db
     .select({ id: subjects.id })
     .from(subjects)
@@ -224,10 +184,52 @@ export async function syncCharacters(bgmID: number): Promise<void> {
   if (!subjectRow) return;
   const subjectId = subjectRow.id;
 
-  const processedPersonIds = new Set<number>();
-  const processedCharIds = new Set<number>();
+  await db.delete(subjectRelations).where(eq(subjectRelations.subject_id, subjectId));
 
-  for (const char of chars) {
+  if (relations.length > 0) {
+    await db.insert(subjectRelations).values(
+      relations.map((r, index) => ({
+        subject_id: subjectId,
+        related_bgmid: r.id,
+        related_type: r.type ?? null,
+        related_name: r.name ?? null,
+        related_name_cn: r.name_cn ?? null,
+        relation_type: r.relation,
+        image_large: r.images?.large ?? null,
+        image_common: r.images?.common ?? null,
+        image_medium: r.images?.medium ?? null,
+        image_small: r.images?.small ?? null,
+        image_grid: r.images?.grid ?? null,
+        sort_order: index,
+      }))
+    );
+  }
+
+  log.info("Synced %d relations for bgm%d", relations.length, bgmID);
+}
+
+export async function syncCharacters(
+  bgmID: number,
+  chars: BangumiRelatedCharacter[]
+): Promise<void> {
+  const [subjectRow] = await db
+    .select({ id: subjects.id })
+    .from(subjects)
+    .where(eq(subjects.bgmid, bgmID))
+    .limit(1);
+
+  if (!subjectRow) return;
+  const subjectId = subjectRow.id;
+
+  await db.delete(subjectCharacters).where(eq(subjectCharacters.subject_id, subjectId));
+  await db.delete(subjectCharacterPersons).where(eq(subjectCharacterPersons.subject_id, subjectId));
+
+  if (!chars.length) {
+    log.info("Synced 0 characters for bgm%d", bgmID);
+    return;
+  }
+
+  for (const [charIndex, char] of chars.entries()) {
     await db
       .insert(charactersTable)
       .values({
@@ -236,10 +238,10 @@ export async function syncCharacters(bgmID: number): Promise<void> {
         name_cn: char.name_cn ?? null,
         type: char.type,
         summary: char.summary ?? null,
-        image_large: char.images?.large ? replaceImageHost(char.images.large) : null,
-        image_medium: char.images?.medium ? replaceImageHost(char.images.medium) : null,
-        image_small: char.images?.small ? replaceImageHost(char.images.small) : null,
-        image_grid: char.images?.grid ? replaceImageHost(char.images.grid) : null,
+        image_large: char.images?.large ?? null,
+        image_medium: char.images?.medium ?? null,
+        image_small: char.images?.small ?? null,
+        image_grid: char.images?.grid ?? null,
       })
       .onDuplicateKeyUpdate({
         set: {
@@ -250,21 +252,13 @@ export async function syncCharacters(bgmID: number): Promise<void> {
         },
       });
 
-    processedCharIds.add(char.id);
-
     await db
       .insert(subjectCharacters)
-      .values({
-        subject_id: subjectId,
-        character_id: char.id,
-        relation: char.relation,
-      })
-      .onDuplicateKeyUpdate({
-        set: { relation: char.relation },
-      });
+      .values({ subject_id: subjectId, character_id: char.id, relation: char.relation, sort_order: charIndex })
+      .onDuplicateKeyUpdate({ set: { relation: char.relation, sort_order: charIndex } });
 
     if (char.actors) {
-      for (const actor of char.actors) {
+      for (const [actorIndex, actor] of char.actors.entries()) {
         await db
           .insert(personsTable)
           .values({
@@ -273,20 +267,14 @@ export async function syncCharacters(bgmID: number): Promise<void> {
             type: actor.type,
             short_summary: actor.short_summary,
             locked: actor.locked ? 1 : 0,
-            image_large: actor.images?.large ? replaceImageHost(actor.images.large) : null,
-            image_medium: actor.images?.medium ? replaceImageHost(actor.images.medium) : null,
-            image_small: actor.images?.small ? replaceImageHost(actor.images.small) : null,
-            image_grid: actor.images?.grid ? replaceImageHost(actor.images.grid) : null,
+            image_large: actor.images?.large ?? null,
+            image_medium: actor.images?.medium ?? null,
+            image_small: actor.images?.small ?? null,
+            image_grid: actor.images?.grid ?? null,
           })
           .onDuplicateKeyUpdate({
-            set: {
-              name: actor.name,
-              type: actor.type,
-              short_summary: actor.short_summary,
-            },
+            set: { name: actor.name, type: actor.type, short_summary: actor.short_summary },
           });
-
-        processedPersonIds.add(actor.id);
 
         if (actor.career && actor.career.length > 0) {
           await db.delete(personCareers).where(eq(personCareers.person_id, actor.id));
@@ -297,14 +285,18 @@ export async function syncCharacters(bgmID: number): Promise<void> {
 
         await db
           .insert(characterPersons)
-          .values({
-            character_id: char.id,
-            person_id: actor.id,
-          })
+          .values({ character_id: char.id, person_id: actor.id })
           .onDuplicateKeyUpdate({ set: { character_id: char.id } });
+
+        await db
+          .insert(subjectCharacterPersons)
+          .values({ subject_id: subjectId, character_id: char.id, person_id: actor.id, sort_order: actorIndex })
+          .onDuplicateKeyUpdate({ set: { sort_order: actorIndex } });
       }
     }
   }
+
+  log.info("Synced %d characters for bgm%d", chars.length, bgmID);
 }
 
 export async function syncEpisodes(bgmID: number): Promise<void> {
@@ -319,49 +311,51 @@ export async function syncEpisodes(bgmID: number): Promise<void> {
 
   const episodes = await getBangumiEpisodes(bgmID);
 
-  const toInsert = episodes.map((ep) => ({
-    subject_id: subjectId,
-    bgm_ep_id: ep.id,
-    type: ep.type ?? 0,
-    sort: String(ep.sort),
-    ep: ep.ep ?? null,
-    name: ep.name || null,
-    name_cn: ep.name_cn || null,
-    airdate: ep.airdate ?? null,
-    duration: ep.duration ?? null,
-    desc: ep.desc ?? null,
-    status: ep.status ?? null,
-  }));
+  await db.delete(subjectEpisodes).where(eq(subjectEpisodes.subject_id, subjectId));
 
-  if (toInsert.length > 0) {
-    for (const row of toInsert) {
-      await db
-        .insert(subjectEpisodes)
-        .values(row)
-        .onDuplicateKeyUpdate({
-          set: {
-            type: row.type,
-            sort: String(row.sort),
-            ep: row.ep,
-            name: row.name,
-            name_cn: row.name_cn,
-            airdate: row.airdate,
-            duration: row.duration,
-            desc: row.desc,
-            status: row.status,
-          },
-        });
-    }
+  for (const ep of episodes) {
+    await db
+      .insert(subjectEpisodes)
+      .values({
+        subject_id: subjectId,
+        bgm_ep_id: ep.id,
+        type: ep.type ?? 0,
+        sort: String(ep.sort),
+        ep: ep.ep ?? null,
+        name: ep.name || null,
+        name_cn: ep.name_cn || null,
+        airdate: ep.airdate ?? null,
+        duration: ep.duration ?? null,
+        desc: ep.desc ?? null,
+        status: ep.status ?? null,
+      })
+      .onDuplicateKeyUpdate({
+        set: {
+          type: ep.type ?? 0,
+          sort: String(ep.sort),
+          ep: ep.ep ?? null,
+          name: ep.name ?? null,
+          name_cn: ep.name_cn ?? null,
+          airdate: ep.airdate ?? null,
+          duration: ep.duration ?? null,
+          desc: ep.desc ?? null,
+          status: ep.status ?? null,
+        },
+      });
   }
+
+  log.info("Synced %d episodes for bgm%d", episodes.length, bgmID);
 }
 
-export async function syncAll(bgmID: number): Promise<void> {
-  try {
-    await syncSubject(bgmID);
-    await syncCharacters(bgmID);
-    await syncEpisodes(bgmID);
-    log.info("Full sync completed for bgm%d", bgmID);
-  } catch (error) {
-    log.error(error as Error, "Full sync failed for bgm%d", bgmID);
-  }
+export async function syncAll(
+  bgmID: number,
+  bgmSubject: BangumiSubject,
+  relations: BangumiSubjectRelation[],
+  chars: BangumiRelatedCharacter[]
+): Promise<void> {
+  await syncSubject(bgmSubject);
+  await syncRelations(bgmID, relations);
+  await syncCharacters(bgmID, chars);
+  await syncEpisodes(bgmID);
+  log.info("Full sync completed for bgm%d", bgmID);
 }

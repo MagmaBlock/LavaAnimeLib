@@ -1,8 +1,8 @@
 import _ from "lodash";
 import { db } from "../../../common/database/connection.js";
 import { anime } from "../../../common/database/schema/anime.js";
-import { subjects } from "../../../common/database/schema/subjects.js";
-import { subjectAliases } from "../../../common/database/schema/subject-aliases.js";
+import { subjects } from "../../../common/database/schema/bangumi-subjects.js";
+import { subjectAliases } from "../../../common/database/schema/bangumi-subject-aliases.js";
 import { like, and, desc, eq, or, sql } from "drizzle-orm";
 
 function bgmidJoin() {

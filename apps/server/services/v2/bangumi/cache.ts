@@ -1,15 +1,15 @@
-import { and, asc, count, eq, inArray, isNotNull, lt, sql } from "drizzle-orm";
-import type { BangumiSubject } from "@lavaanime/shared";
-import config from "../../../common/env.js";
+import { and, asc, count, eq, inArray, lt, sql } from "drizzle-orm";
 import { db } from "../../../common/database/connection.js";
-import { bangumiData } from "../../../common/database/schema/bangumi-data.js";
+import { subjects } from "../../../common/database/schema/bangumi-subjects.js";
+import { subjectEpisodes } from "../../../common/database/schema/bangumi-episodes.js";
+import { subjectCharacters } from "../../../common/database/schema/bangumi-subject-characters.js";
 import { anime } from "../../../common/database/schema/anime.js";
 import { log } from "../../../common/tools/logger.js";
 import { getSiteSetting, setSiteSetting } from "../site/setting.js";
 import {
-  getBangumiCharacters,
-  getBangumiRelations,
   getBangumiSubjects,
+  getBangumiRelations,
+  getBangumiCharacters,
 } from "./api.js";
 import { syncAll } from "./sync.js";
 
@@ -26,10 +26,9 @@ export interface BangumiCacheSettings {
 export interface BangumiCacheItem {
   bgmID: number;
   updateTime: Date | null;
-  hasSubjects: boolean;
-  hasRelations: boolean;
+  syncStatus: "synced" | "expired" | "unsynced";
+  hasEpisodes: boolean;
   hasCharacters: boolean;
-  expired: boolean;
   animeCount: number;
 }
 
@@ -39,8 +38,104 @@ export interface BangumiCacheListResult {
   settings: BangumiCacheSettings;
 }
 
+export interface BangumiCacheLogEntry {
+  bgmID: number;
+  status: "success" | "failed";
+  time: number;
+  error?: string;
+}
+
+export interface BangumiCacheBatch {
+  startedAt: number;
+  finishedAt: number | null;
+  total: number;
+  completed: number;
+  failed: number;
+}
+
+interface ActiveBatch extends BangumiCacheBatch {
+  members: Set<number>;
+}
+
+export interface BangumiCacheStatus {
+  active: number;
+  pending: number;
+  concurrency: number;
+  refreshing: number[];
+  schedulerRunning: boolean;
+  totalCompleted: number;
+  totalFailed: number;
+  lastEventAt: number | null;
+  currentBatch: BangumiCacheBatch | null;
+  lastBatch: BangumiCacheBatch | null;
+  log: BangumiCacheLogEntry[];
+}
+
 const refreshingBgmIDs = new Set<number>();
+const pendingBgmIDs = new Set<number>();
+const MAX_CONCURRENT = 5;
+let activeCount = 0;
 let schedulerStarted = false;
+
+let totalCompleted = 0;
+let totalFailed = 0;
+let lastEventAt: number | null = null;
+let currentBatch: ActiveBatch | null = null;
+let lastBatch: BangumiCacheBatch | null = null;
+const LOG_MAX = 30;
+const logEntries: BangumiCacheLogEntry[] = [];
+
+function recordRefreshResult(bgmID: number, ok: boolean, error?: string): void {
+  if (ok) totalCompleted++;
+  else totalFailed++;
+  lastEventAt = Date.now();
+  logEntries.unshift({ bgmID, status: ok ? "success" : "failed", time: lastEventAt, error });
+  if (logEntries.length > LOG_MAX) logEntries.length = LOG_MAX;
+  if (currentBatch && currentBatch.members.has(bgmID)) {
+    if (ok) currentBatch.completed++;
+    else currentBatch.failed++;
+    currentBatch.members.delete(bgmID);
+  }
+}
+
+function maybeCloseBatch(): void {
+  if (
+    currentBatch &&
+    activeCount === 0 &&
+    pendingBgmIDs.size === 0 &&
+    currentBatch.members.size === 0
+  ) {
+    currentBatch.finishedAt = Date.now();
+    lastBatch = currentBatch;
+    currentBatch = null;
+  }
+}
+
+export function getBangumiCacheStatus(): BangumiCacheStatus {
+  return {
+    active: activeCount,
+    pending: pendingBgmIDs.size,
+    concurrency: MAX_CONCURRENT,
+    refreshing: [...refreshingBgmIDs],
+    schedulerRunning: schedulerStarted,
+    totalCompleted,
+    totalFailed,
+    lastEventAt,
+    currentBatch: currentBatch
+      ? {
+          startedAt: currentBatch.startedAt,
+          finishedAt: currentBatch.finishedAt,
+          total: currentBatch.total,
+          completed: currentBatch.completed,
+          failed: currentBatch.failed,
+        }
+      : null,
+    lastBatch: lastBatch ? { ...lastBatch } : null,
+    log: [...logEntries],
+  };
+}
+
+// --- Settings ---
 
 export async function getBangumiCacheSettings(): Promise<BangumiCacheSettings> {
   const raw = await getSiteSetting(BANGUMI_CACHE_SETTINGS_KEY);
@@ -48,177 +143,249 @@ export async function getBangumiCacheSettings(): Promise<BangumiCacheSettings> {
   return normalizeSettings(setting);
 }
 
-export async function updateBangumiCacheSettings(input: Partial<BangumiCacheSettings>): Promise<BangumiCacheSettings> {
+export async function updateBangumiCacheSettings(
+  input: Partial<BangumiCacheSettings>
+): Promise<BangumiCacheSettings> {
   const current = await getBangumiCacheSettings();
   const next = normalizeSettings({ ...current, ...input });
   await setSiteSetting(BANGUMI_CACHE_SETTINGS_KEY, next);
   return next;
 }
 
-export async function listBangumiCaches(skip = 0, take = 50): Promise<BangumiCacheListResult> {
+// --- List ---
+
+export async function listBangumiCaches(
+  skip = 0,
+  take = 50
+): Promise<BangumiCacheListResult> {
   const settings = await getBangumiCacheSettings();
   const expireBefore = getExpireBefore(settings.expireHours);
 
-  const totalRows = await db
-    .select({ total: count() })
-    .from(bangumiData);
+  // Get all distinct bgmIDs from anime table with bgmid
+  const allBgmRows = await db
+    .select({ bgmid: anime.bgmid })
+    .from(anime)
+    .where(and(eq(anime.deleted, 0), sql`${anime.bgmid} IS NOT NULL`, sql`${anime.bgmid} != ''`));
 
-  const rows = await db
+  const allBgmIDs = [...new Set(
+    allBgmRows.map(r => Number.parseInt(r.bgmid ?? "", 10)).filter(n => Number.isFinite(n) && n > 0)
+  )].sort((a, b) => a - b);
+
+  const total = allBgmIDs.length;
+  const pageIDs = allBgmIDs.slice(skip, skip + take);
+
+  // Get subjects data for these IDs
+  const subRows = pageIDs.length > 0 ? await db
     .select({
-      bgmID: bangumiData.bgmid,
-      updateTime: bangumiData.update_time,
-      subjects: bangumiData.subjects,
-      relations: bangumiData.relations_anime,
-      characters: bangumiData.characters,
-      animeCount: count(anime.id),
+      bgmid: subjects.bgmid,
+      updatedAt: subjects.fetched_at,
+      subjectId: subjects.id,
     })
-    .from(bangumiData)
-    .leftJoin(anime, and(eq(sql`cast(${anime.bgmid} as unsigned)`, bangumiData.bgmid), eq(anime.deleted, 0)))
-    .groupBy(
-      bangumiData.bgmid,
-      bangumiData.update_time,
-      bangumiData.subjects,
-      bangumiData.relations_anime,
-      bangumiData.characters
-    )
-    .orderBy(asc(bangumiData.bgmid))
-    .limit(take)
-    .offset(skip);
+    .from(subjects)
+    .where(inArray(subjects.bgmid, pageIDs)) : [];
 
-  return {
-    list: rows.map((row) => ({
-      bgmID: row.bgmID,
-      updateTime: row.updateTime,
-      hasSubjects: Boolean(row.subjects),
-      hasRelations: Boolean(row.relations),
-      hasCharacters: Boolean(row.characters),
-      expired: isCacheExpired(row.updateTime, expireBefore),
-      animeCount: Number(row.animeCount),
-    })),
-    total: totalRows[0]?.total ?? 0,
-    settings,
-  };
+  const subMap = new Map(subRows.map(r => [r.bgmid, r]));
+  const subjectIds = subRows.map(r => r.subjectId).filter(Boolean);
+
+  // Check for episodes and characters
+  const epRows = subjectIds.length > 0 ? await db
+    .select({ subject_id: subjectEpisodes.subject_id })
+    .from(subjectEpisodes)
+    .where(inArray(subjectEpisodes.subject_id, subjectIds)) : [];
+
+  const charRows = subjectIds.length > 0 ? await db
+    .select({ subject_id: subjectCharacters.subject_id })
+    .from(subjectCharacters)
+    .where(inArray(subjectCharacters.subject_id, subjectIds)) : [];
+
+  const epSubjectIds = new Set(epRows.map(r => r.subject_id));
+  const charSubjectIds = new Set(charRows.map(r => r.subject_id));
+
+  // Count anime rows per bgmID
+  const countRows = pageIDs.length > 0 ? await db
+    .select({ bgmid: anime.bgmid, cnt: count(anime.id) })
+    .from(anime)
+    .where(and(eq(anime.deleted, 0), inArray(anime.bgmid, pageIDs.map(String))))
+    .groupBy(anime.bgmid) : [];
+
+  const countMap = new Map(countRows.map(r => [parseInt(r.bgmid ?? "0", 10), Number(r.cnt)]));
+
+  const list: BangumiCacheItem[] = pageIDs.map(bgmID => {
+    const sub = subMap.get(bgmID);
+    if (!sub) {
+      return {
+        bgmID,
+        updateTime: null,
+        syncStatus: "unsynced",
+        hasEpisodes: false,
+        hasCharacters: false,
+        animeCount: countMap.get(bgmID) ?? 0,
+      };
+    }
+
+    const expired = isExpired(sub.updatedAt, expireBefore);
+    return {
+      bgmID,
+      updateTime: sub.updatedAt,
+      syncStatus: expired ? "expired" : "synced",
+      hasEpisodes: epSubjectIds.has(sub.subjectId),
+      hasCharacters: charSubjectIds.has(sub.subjectId),
+      animeCount: countMap.get(bgmID) ?? 0,
+    };
+  });
+
+  return { list, total, settings };
 }
 
-export async function ensureBangumiCache(bgmID: number): Promise<void> {
+// --- Ensure / Refresh ---
+
+export async function ensureStructuredData(bgmID: number): Promise<void> {
   if (!Number.isFinite(bgmID) || bgmID <= 0) return;
 
-  const rows = await db
-    .select({ bgmID: bangumiData.bgmid, subjects: bangumiData.subjects })
-    .from(bangumiData)
-    .where(eq(bangumiData.bgmid, bgmID))
+  const settings = await getBangumiCacheSettings();
+  const expireBefore = getExpireBefore(settings.expireHours);
+
+  const [row] = await db
+    .select({ bgmid: subjects.bgmid, updatedAt: subjects.fetched_at })
+    .from(subjects)
+    .where(eq(subjects.bgmid, bgmID))
     .limit(1);
 
-  if (rows.length > 0 && rows[0].subjects) return;
-
-  if (rows.length === 0) {
-    await db
-      .insert(bangumiData)
-      .values({
-        bgmid: bgmID,
-        update_time: new Date(100000000),
-      })
-      .onDuplicateKeyUpdate({
-        set: { update_time: sql`${bangumiData.update_time}` },
-      });
-  }
+  if (row && !isExpired(row.updatedAt, expireBefore)) return;
 
   queueBangumiCacheRefresh(bgmID);
 }
 
 export async function ensureAllAnimeBangumiCaches(): Promise<number> {
-  const animeBgmIDs = await getAllBgmIDInAnimeTable();
-  if (animeBgmIDs.length === 0) return 0;
+  const allBgmIDs = await getAllBgmIDInAnimeTable();
+  if (allBgmIDs.length === 0) return 0;
 
   const existingRows = await db
-    .select({ bgmID: bangumiData.bgmid })
-    .from(bangumiData)
-    .where(inArray(bangumiData.bgmid, animeBgmIDs));
+    .select({ bgmid: subjects.bgmid })
+    .from(subjects)
+    .where(inArray(subjects.bgmid, allBgmIDs));
 
-  const existingBgmIDs = new Set(existingRows.map((row) => row.bgmID));
-  const missingBgmIDs = animeBgmIDs.filter((bgmID) => !existingBgmIDs.has(bgmID));
+  const existingBgmIDs = new Set(existingRows.map(r => r.bgmid));
+  const missingBgmIDs = allBgmIDs.filter(id => !existingBgmIDs.has(id));
 
   for (const bgmID of missingBgmIDs) {
-    await db
-      .insert(bangumiData)
-      .values({
-        bgmid: bgmID,
-        update_time: new Date(100000000),
-      })
-      .onDuplicateKeyUpdate({
-        set: { update_time: sql`${bangumiData.update_time}` },
-      });
+    queueBangumiCacheRefresh(bgmID);
   }
 
   if (missingBgmIDs.length > 0) {
-    log.info("Inserted %d missing Bangumi cache rows", missingBgmIDs.length);
+    log.info("Queued %d unsynced Bangumi entries for refresh", missingBgmIDs.length);
   }
 
   return missingBgmIDs.length;
 }
 
-export function queueBangumiCacheRefresh(bgmID: number): void {
-  if (!Number.isFinite(bgmID) || bgmID <= 0 || refreshingBgmIDs.has(bgmID)) return;
-  refreshingBgmIDs.add(bgmID);
-  refreshBangumiCache(bgmID)
-    .catch((error) => log.error(error, "Bangumi cache refresh failed: bgm%d", bgmID))
-    .finally(() => refreshingBgmIDs.delete(bgmID));
+function processQueue(): void {
+  while (activeCount < MAX_CONCURRENT && pendingBgmIDs.size > 0) {
+    const bgmID = pendingBgmIDs.values().next().value as number;
+    // 已在刷新中的直接丢弃等待中的副本，避免重复入队导致任务丢失
+    if (refreshingBgmIDs.has(bgmID)) {
+      pendingBgmIDs.delete(bgmID);
+      continue;
+    }
+    pendingBgmIDs.delete(bgmID);
+    refreshingBgmIDs.add(bgmID);
+    activeCount++;
+    refreshBangumiCache(bgmID)
+      .then(() => recordRefreshResult(bgmID, true))
+      .catch((error) => {
+        recordRefreshResult(bgmID, false, error?.message ?? String(error));
+        log.error(error, "Bangumi cache refresh failed: bgm%d", bgmID);
+      })
+      .finally(() => {
+        refreshingBgmIDs.delete(bgmID);
+        activeCount--;
+        maybeCloseBatch();
+        processQueue();
+      });
+  }
+}
+
+export function queueBangumiCacheRefresh(bgmID: number): boolean {
+  if (!Number.isFinite(bgmID) || bgmID <= 0) return false;
+  if (refreshingBgmIDs.has(bgmID) || pendingBgmIDs.has(bgmID)) return false;
+  pendingBgmIDs.add(bgmID);
+  if (currentBatch) {
+    currentBatch.members.add(bgmID);
+    currentBatch.total++;
+  }
+  processQueue();
+  return true;
 }
 
 export async function refreshBangumiCache(bgmID: number): Promise<boolean> {
   if (!Number.isFinite(bgmID) || bgmID <= 0) throw new Error("Invalid Bangumi ID");
 
-  const bgmIDListInAnimeTable = await getAllBgmIDInAnimeTable();
-  const subject = await getBangumiSubjects(bgmID);
-  const relations = await getBangumiRelations(bgmID, bgmIDListInAnimeTable);
+  const bgmSubject = await getBangumiSubjects(bgmID);
+  const relations = await getBangumiRelations(bgmID);
   const characters = await getBangumiCharacters(bgmID);
 
-  await db
-    .insert(bangumiData)
-    .values({
-      bgmid: bgmID,
-      subjects: JSON.stringify(subject),
-      relations_anime: JSON.stringify(relations),
-      characters: JSON.stringify(characters),
-      update_time: new Date(),
-    })
-    .onDuplicateKeyUpdate({
-      set: {
-        subjects: JSON.stringify(subject),
-        relations_anime: JSON.stringify(relations),
-        characters: JSON.stringify(characters),
-        update_time: new Date(),
-      },
-    });
+  await syncAll(bgmID, bgmSubject, relations, characters);
 
-  await updateAnimePosterByBangumiSubject(bgmID, subject);
   log.info("Bangumi cache refreshed: bgm%d", bgmID);
-
-  syncAll(bgmID).catch((error) =>
-    log.error(error, "Structured sync failed: bgm%d", bgmID)
-  );
 
   return true;
 }
 
-export async function refreshExpiredBangumiCaches(limit = MAX_AUTO_UPDATE_ITEMS): Promise<number> {
+export async function refreshExpiredBangumiCaches(
+  limit = MAX_AUTO_UPDATE_ITEMS
+): Promise<number> {
   const settings = await getBangumiCacheSettings();
   if (!settings.autoUpdateEnabled) return 0;
 
   const expireBefore = getExpireBefore(settings.expireHours);
-  const rows = await db
-    .select({ bgmID: bangumiData.bgmid })
-    .from(bangumiData)
-    .where(and(isNotNull(bangumiData.update_time), lt(bangumiData.update_time, expireBefore)))
-    .orderBy(asc(bangumiData.update_time))
+
+  // Find expired rows from subjects
+  const expiredRows = await db
+    .select({ bgmid: subjects.bgmid })
+    .from(subjects)
+    .where(lt(subjects.fetched_at, expireBefore))
+    .orderBy(asc(subjects.fetched_at))
     .limit(limit);
 
-  for (const row of rows) {
-    queueBangumiCacheRefresh(row.bgmID);
+  // 预先收集待入队 ID（含 unsynced），统一开批次
+  const candidateIDs: number[] = expiredRows.map((r) => r.bgmid);
+
+  if (candidateIDs.length < limit) {
+    const allBgmIDs = await getAllBgmIDInAnimeTable();
+    const existingRows = await db
+      .select({ bgmid: subjects.bgmid })
+      .from(subjects)
+      .where(inArray(subjects.bgmid, allBgmIDs));
+
+    const existingSet = new Set(existingRows.map(r => r.bgmid));
+    const unsynced = allBgmIDs.filter(id => !existingSet.has(id));
+    const remaining = limit - candidateIDs.length;
+    candidateIDs.push(...unsynced.slice(0, remaining));
   }
 
-  return rows.length;
+  if (candidateIDs.length === 0) return 0;
+
+  // 若无活跃批次则开启新批次；已有批次则继续累加
+  if (!currentBatch) {
+    currentBatch = {
+      startedAt: Date.now(),
+      finishedAt: null,
+      total: 0,
+      completed: 0,
+      failed: 0,
+      members: new Set<number>(),
+    };
+  }
+
+  let queued = 0;
+  for (const bgmID of candidateIDs) {
+    if (queueBangumiCacheRefresh(bgmID)) queued++;
+  }
+
+  return queued;
 }
+
+// --- Scheduler ---
 
 export function startBangumiCacheScheduler(): void {
   if (schedulerStarted) return;
@@ -227,7 +394,7 @@ export function startBangumiCacheScheduler(): void {
   const run = async () => {
     try {
       const count = await refreshExpiredBangumiCaches();
-      if (count > 0) log.info("Queued %d expired Bangumi cache refresh tasks", count);
+      if (count > 0) log.info("Queued %d Bangumi cache refresh tasks", count);
     } catch (error) {
       log.error(error, "Bangumi cache scheduler failed");
     }
@@ -237,11 +404,15 @@ export function startBangumiCacheScheduler(): void {
   setInterval(run, AUTO_UPDATE_INTERVAL_MS);
 }
 
+// --- Internal helpers ---
+
 function normalizeSettings(input: Partial<BangumiCacheSettings>): BangumiCacheSettings {
   const expireHours = Number(input.expireHours);
   return {
     autoUpdateEnabled: input.autoUpdateEnabled !== false,
-    expireHours: Number.isFinite(expireHours) && expireHours > 0 ? Math.floor(expireHours) : DEFAULT_EXPIRE_HOURS,
+    expireHours: Number.isFinite(expireHours) && expireHours > 0
+      ? Math.floor(expireHours)
+      : DEFAULT_EXPIRE_HOURS,
   };
 }
 
@@ -249,9 +420,9 @@ function getExpireBefore(expireHours: number): Date {
   return new Date(Date.now() - expireHours * 60 * 60 * 1000);
 }
 
-function isCacheExpired(updateTime: Date | null, expireBefore: Date): boolean {
-  if (!updateTime) return true;
-  return updateTime.getTime() < expireBefore.getTime();
+function isExpired(updatedAt: Date | null, expireBefore: Date): boolean {
+  if (!updatedAt) return true;
+  return updatedAt.getTime() < expireBefore.getTime();
 }
 
 async function getAllBgmIDInAnimeTable(): Promise<number[]> {
@@ -265,19 +436,4 @@ async function getAllBgmIDInAnimeTable(): Promise<number[]> {
     .filter((id) => Number.isFinite(id) && id > 0);
 
   return [...new Set(ids)];
-}
-
-async function updateAnimePosterByBangumiSubject(
-  bgmID: number,
-  subject: BangumiSubject
-): Promise<void> {
-  const images = subject.images;
-  const poster = images?.large
-    ? `${images.large.replace("https://lain.bgm.tv", config.bangumiImage.host)}/poster`
-    : "https://anime-img.5t5.top/assets/noposter.png";
-
-  await db
-    .update(anime)
-    .set({ poster })
-    .where(eq(anime.bgmid, String(bgmID)));
 }

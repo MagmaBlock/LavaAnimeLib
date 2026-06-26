@@ -1,7 +1,6 @@
 import { sql } from "drizzle-orm";
 import { mysqlTable, int, text, tinyint, datetime, index } from "drizzle-orm/mysql-core";
 import { anime } from "./anime.js";
-import { bangumiData } from "./bangumi-data.js";
 
 export const uploadMessage = mysqlTable(
   "upload_message",
@@ -12,10 +11,7 @@ export const uploadMessage = mysqlTable(
       onDelete: "set null",
       onUpdate: "cascade",
     }),
-    bangumiID: int().references(() => bangumiData.bgmid, {
-      onDelete: "set null",
-      onUpdate: "cascade",
-    }),
+    bangumiID: int(),
     fileName: text(),
     messageSentStatus: tinyint().notNull().default(0),
     uploadTime: datetime({ mode: "date", fsp: 3 }).default(sql`current_timestamp(3)`),

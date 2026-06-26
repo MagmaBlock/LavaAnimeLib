@@ -24,7 +24,7 @@ export async function refreshBangumiCacheController(req: Request, res: Response)
 
 export async function refreshExpiredBangumiCacheController(_req: Request, res: Response): Promise<void> {
   try {
-    const queued = await refreshExpiredBangumiCaches();
+    const queued = await refreshExpiredBangumiCaches(500);
     success(res, { queued });
   } catch (error) {
     log.error(error);

@@ -5,10 +5,10 @@ import {
   text,
   index,
 } from "drizzle-orm/mysql-core";
-import { subjects } from "./subjects.js";
+import { subjects } from "./bangumi-subjects.js";
 
 export const subjectInfobox = mysqlTable(
-  "subject_infobox",
+  "bangumi_subject_infobox",
   {
     id: int().notNull().autoincrement().primaryKey(),
     subject_id: int()

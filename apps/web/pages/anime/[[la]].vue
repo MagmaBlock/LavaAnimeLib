@@ -158,25 +158,17 @@ const notice = computed(() => {
         title="详情"
         body-content-style="padding: 0px;"
       >
-        <AnimeMetaCard v-model:show-admin-tools="anime.showAdminTools" :la-i-d="anime.laID" :is-loading="anime.state.animeData.isLoading" :bgm-i-d="anime.bgmID" :episode-name="anime.getColorEgg?.episodeName" :anime-data="anime.animeData" :follow-label-add="anime.getColorEgg?.follow?.add" :follow-label-remove="anime.getColorEgg?.follow?.remove" />
-        <div class="px-4 pb-4 space-y-4">
-          <AnimeRatingDetail
-            :counts="anime.animeData?.structured?.rating?.counts ?? null"
-            :loading="anime.state.animeData.isLoading"
-          />
-          <AnimeInfobox
-            :items="anime.animeData?.structured?.infobox ?? null"
-            :loading="anime.state.animeData.isLoading"
-          />
-          <AnimeCharacters
-            :characters="anime.animeData?.structured?.characters ?? null"
-            :loading="anime.state.animeData.isLoading"
-          />
-          <AnimeEpisodesList
-            :episodes="anime.animeData?.structured?.episodes ?? null"
-            :loading="anime.state.animeData.isLoading"
-          />
-        </div>
+        <AnimeMetaCard
+          v-model:show-admin-tools="anime.showAdminTools"
+          :la-i-d="anime.laID"
+          :is-loading="anime.state.animeData.isLoading"
+          :bgm-i-d="anime.bgmID"
+          :episode-name="anime.getColorEgg?.episodeName"
+          :active-episode="anime.fileData.activeEpisode"
+          :anime-data="anime.animeData"
+          :follow-label-add="anime.getColorEgg?.follow?.add"
+          :follow-label-remove="anime.getColorEgg?.follow?.remove"
+        />
       </NDrawerContent>
     </NDrawer>
 

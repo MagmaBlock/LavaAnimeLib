@@ -14,13 +14,12 @@ export async function getBangumiSubjects(
 }
 
 export async function getBangumiRelations(
-  bgmID: number,
-  allBgmIDInAnimeTable: number[]
+  bgmID: number
 ): Promise<BangumiSubjectRelation[]> {
   const { data } = await bangumiAPI.get<BangumiSubjectRelation[]>(
     `/v0/subjects/${bgmID}/subjects`
   );
-  return data.filter((r) => allBgmIDInAnimeTable.includes(r.id));
+  return data;
 }
 
 export async function getBangumiCharacters(
@@ -41,7 +40,7 @@ export async function getBangumiEpisodes(
     data: BangumiEpisode[];
     total: number;
   }>(`/v0/episodes`, {
-    params: { subject_id: bgmID, type: 0, limit, offset },
+    params: { subject_id: bgmID, limit, offset },
   });
 
   if (data.total > offset + limit) {

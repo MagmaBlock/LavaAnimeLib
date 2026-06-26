@@ -236,3 +236,52 @@ export interface AnimeDetail
     };
   };
 }
+
+// --- Bangumi Wiki detail types ---
+
+export interface BangumiWikiCharacterResult {
+  id: number;
+  name: string;
+  name_cn: string | null;
+  type: number | null;
+  summary: string | null;
+  images: StructuredImages | null;
+  subjects: Array<{
+    anime_id: number | null;
+    bgmid: number;
+    name: string;
+    name_cn: string | null;
+    poster: string | null;
+    relation: string | null;
+    actors: Array<{
+      id: number;
+      name: string;
+      images: StructuredImages | null;
+      careers: string[];
+    }>;
+  }>;
+}
+
+export interface BangumiWikiPersonResult {
+  id: number;
+  name: string;
+  type: number | null;
+  short_summary: string | null;
+  locked: boolean;
+  images: StructuredImages | null;
+  careers: string[];
+  characters: Array<{
+    character_id: number;
+    name: string;
+    name_cn: string | null;
+    images: StructuredImages | null;
+    relation: string | null;
+    subject: {
+      anime_id: number | null;
+      bgmid: number;
+      name: string;
+      name_cn: string | null;
+      poster: string | null;
+    } | null;
+  }>;
+}

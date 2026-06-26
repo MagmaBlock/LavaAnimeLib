@@ -4,10 +4,10 @@ import {
   tinyint,
   primaryKey,
 } from "drizzle-orm/mysql-core";
-import { subjects } from "./subjects.js";
+import { subjects } from "./bangumi-subjects.js";
 
 export const subjectRatingCounts = mysqlTable(
-  "subject_rating_counts",
+  "bangumi_subject_rating_counts",
   {
     subject_id: int()
       .notNull()

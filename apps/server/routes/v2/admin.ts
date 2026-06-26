@@ -15,6 +15,7 @@ import { adminListIndex } from "../../controllers/v2/admin/file-index/list.js";
 import { adminSearchIndex } from "../../controllers/v2/admin/file-index/search.js";
 import { adminRefreshDir } from "../../controllers/v2/admin/file-index/refresh-dir.js";
 import { adminRefreshDrive } from "../../controllers/v2/admin/file-index/refresh-drive.js";
+import { adminRefreshStatus } from "../../controllers/v2/admin/file-index/refresh-status.js";
 import { adminIndexStats } from "../../controllers/v2/admin/file-index/stats.js";
 import { listBangumiCache } from "../../controllers/v2/admin/bangumi-cache/list.js";
 import {
@@ -25,6 +26,7 @@ import {
   getBangumiCacheSettingsController,
   updateBangumiCacheSettingsController,
 } from "../../controllers/v2/admin/bangumi-cache/settings.js";
+import { getBangumiCacheStatusController } from "../../controllers/v2/admin/bangumi-cache/status.js";
 import { requireAdmin } from "../../middleware/auth/require-auth.js";
 
 const router = Router();
@@ -49,12 +51,14 @@ router.get("/file-index/list", requireAdmin, adminListIndex);
 router.get("/file-index/search", requireAdmin, adminSearchIndex);
 router.post("/file-index/refresh-dir", requireAdmin, adminRefreshDir);
 router.post("/file-index/refresh-drive", requireAdmin, adminRefreshDrive);
+router.get("/file-index/refresh-status", requireAdmin, adminRefreshStatus);
 router.get("/file-index/stats", requireAdmin, adminIndexStats);
 router.get(
   "/bangumi-cache/list",
   requireAdmin,
   listBangumiCache
 );
+router.get("/bangumi-cache/status", requireAdmin, getBangumiCacheStatusController);
 router.get("/bangumi-cache/settings", requireAdmin, getBangumiCacheSettingsController);
 router.post(
   "/bangumi-cache/settings",

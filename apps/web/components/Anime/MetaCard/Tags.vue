@@ -1,10 +1,10 @@
 <template>
   <NSpace :size="[8, 6]">
     <!-- 正常 -->
-    <template v-if="Array.isArray(tags)">
-      <template v-for="(tag, index) in tags" :key="index">
+    <template v-if="Array.isArray(sortedTags)">
+      <template v-for="(tag, index) in sortedTags" :key="index">
         <NTag
-          v-if="index <= tags.length / 3 || showMore"
+          v-if="index <= sortedTags.length / 3 || showMore"
           size="small"
           class="max-w-xs overflow-hidden"
           :bordered="false"
@@ -30,7 +30,7 @@
 </template>
 
 <script lang="ts" setup>
-defineProps<{
+const props = defineProps<{
   tags?: Tag[];
   loading?: boolean;
 }>();
@@ -39,6 +39,11 @@ export type Tag = {
   name: string;
   count: number;
 };
+
+const sortedTags = computed(() => {
+  if (!props.tags) return [];
+  return [...props.tags].sort((a, b) => b.count - a.count);
+});
 
 const showMore = ref(false);
 </script>
