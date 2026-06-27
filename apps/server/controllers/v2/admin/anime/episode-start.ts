@@ -11,7 +11,7 @@ export async function setEpisodeStart(req: Request, res: Response): Promise<void
   const body = parseBody(setEpisodeStartBodySchema, req, res);
   if (!body) return;
   try {
-    const result = await setAnimeEpisodeStart(body.laID, body.episode_start);
+    const result = await setAnimeEpisodeStart(body.laID, body.manual, body.episode_start);
     success(res, { episode_start: result }, "更新成功");
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

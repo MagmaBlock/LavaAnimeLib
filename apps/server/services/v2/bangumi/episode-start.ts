@@ -1,4 +1,4 @@
-import { eq, inArray, and, isNull } from "drizzle-orm";
+import { eq, inArray, and } from "drizzle-orm";
 import { db } from "../../../common/database/connection.js";
 import { subjects } from "../../../common/database/schema/bangumi-subjects.js";
 import { subjectRelations } from "../../../common/database/schema/bangumi-subject-relations.js";
@@ -154,7 +154,7 @@ async function accumulatePrequelEpisodes(
 
 /**
  * 在 syncEpisode 之后回填 anime.episode_start。
- * 仅当 anime.episode_start IS NULL 时写入 (管理员覆盖不被改写)。
+ * 仅对 episode_start_manual = 0 (auto) 的行写入, 手动覆盖 (manual = 1) 永不被改写。
  * 一个 bgmid 可能对应多个 anime 行, 全部回填同一值。
  */
 export async function backfillEpisodeStart(bgmID: number): Promise<void> {
@@ -163,8 +163,8 @@ export async function backfillEpisodeStart(bgmID: number): Promise<void> {
     await db
       .update(anime)
       .set({ episode_start: start })
-      .where(and(eq(anime.bgmid, String(bgmID)), isNull(anime.episode_start)));
-    log.info("回填 episode_start=%d for bgm%d", start, bgmID);
+      .where(and(eq(anime.bgmid, String(bgmID)), eq(anime.episode_start_manual, 0)));
+    log.info("回填 episode_start=%d for bgm%d (auto)", start, bgmID);
   } catch (err) {
     log.warn(err, `回填 episode_start 失败: bgmID=${bgmID}`);
   }
