@@ -252,10 +252,6 @@ function fmt(n: number): string {
   return String(n);
 }
 
-function fmtEp(ep: number): string {
-  return String(ep).padStart(2, "0");
-}
-
 function fmtSort(sort: number): string {
   return sort === Math.floor(sort) ? String(sort).padStart(2, "0") : sort.toFixed(1);
 }
@@ -263,8 +259,8 @@ function fmtSort(sort: number): string {
 function isActiveEpisode(ep: StructuredEpisode): boolean {
   if (props.activeEpisode == null || props.activeEpisode === "") return false;
   const active = String(props.activeEpisode).padStart(2, "0");
-  const epNo = ep.ep != null ? fmtEp(ep.ep) : fmtSort(ep.sort);
-  return active === epNo || String(props.activeEpisode) === String(ep.ep ?? ep.sort);
+  const epNo = fmtSort(ep.sort);
+  return active === epNo || String(props.activeEpisode) === String(ep.sort);
 }
 
 function isUrl(value: string): boolean {

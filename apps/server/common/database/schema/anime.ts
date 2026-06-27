@@ -11,4 +11,5 @@ export const anime = mysqlTable("anime", {
   title: text(),
   deleted: tinyint().notNull().default(0),
   poster: text(),
+  episode_start: int(),
 });

@@ -10,6 +10,8 @@ import { log } from "../../../common/tools/logger.js";
 import type { DriveConfigOverride } from "@lavaanime/shared";
 import type { FileParseResult } from "@lavaanime/shared";
 import { parseJsonField } from "../../../common/tools/parse-json-field.js";
+import { resolveFileEpisode } from "../../../common/tools/episode-normalize.js";
+import { getAnimeEpisodeInfo } from "./episode-info.js";
 
 interface FileItem {
   name: string;
@@ -68,6 +70,8 @@ export async function getFilesByID(
       files = await fileIndexService.findActiveByDrive(thisDrive.id, dirPath);
     }
 
+    const episodeInfo = await getAnimeEpisodeInfo(laID);
+
     return files.map((entry) => {
       const base: FileItem = {
         name: entry.name,
@@ -90,7 +94,16 @@ export async function getFilesByID(
           effectiveConfig.host,
         );
         base.url = downloadUrl;
-        base.parseResult = parseFileName(entry.name);
+        const parsed = parseFileName(entry.name);
+        const resolvedEpisode = resolveFileEpisode(
+          parsed.episode,
+          parsed.extensionName?.type,
+          episodeInfo
+        );
+        base.parseResult = {
+          ...parsed,
+          episode: resolvedEpisode,
+        };
       }
 
       return base;

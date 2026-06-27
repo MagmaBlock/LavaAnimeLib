@@ -28,6 +28,7 @@ import { personCareers } from "../../../common/database/schema/bangumi-person-ca
 import { inArray, eq, and } from "drizzle-orm";
 import { ensureStructuredData } from "../bangumi/cache.js";
 import { rewriteBgmImageUrl, appendPosterSuffix } from "../../../common/tools/bangumi-image.js";
+import { normalizeStructuredEpisodes } from "../../../common/tools/episode-normalize.js";
 import { anime } from "../../../common/database/schema/anime.js";
 
 interface RawAnimeRow {
@@ -132,6 +133,7 @@ async function parseSingleAnimeData(
       },
       images,
       deleted: false,
+      episode_start: rawData.episode_start as number | null | undefined,
     };
 
     if (full && structured) {
@@ -146,7 +148,10 @@ async function parseSingleAnimeData(
         meta_tags: structured.meta_tags,
         ep_count: structured.ep_count,
         infobox: structured.infobox,
-        episodes: structured.episodes,
+        episodes: normalizeStructuredEpisodes(
+          structured.episodes,
+          rawData.episode_start as number | null | undefined
+        ),
         characters: structured.characters,
         collection: structured.collection,
       };
@@ -204,6 +209,7 @@ function parseSingleAnimeWithoutBgm(rawData: RawAnimeRow): ParsedAnime {
       poster: rawData.poster || undefined,
     },
     deleted: false,
+    episode_start: rawData.episode_start as number | null | undefined,
   };
 }
 

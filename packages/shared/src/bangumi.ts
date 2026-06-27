@@ -201,6 +201,12 @@ export interface AnimeBase {
   type: { bdrip: boolean; nsfw: boolean };
   images: Partial<BangumiImages> & { poster?: string };
   deleted: boolean;
+  /**
+   * 绝对集数起始号。用于把不同字幕组/不同 Bangumi 续作的集数对齐到同一编号空间。
+   * 例如第二季前一季 12 话, 则 episode_start = 13, 低于 13 的集数会被加 12 归一化。
+   * NULL 表示尚未计算（自动取默认 1, 等同无偏移）。
+   */
+  episode_start?: number | null;
 }
 
 export interface AnimeRelation extends AnimeBase {

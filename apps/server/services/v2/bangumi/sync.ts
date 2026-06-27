@@ -20,6 +20,7 @@ import type {
   BangumiRelatedCharacter,
 } from "@lavaanime/shared";
 import { getBangumiEpisodes } from "./api.js";
+import { backfillEpisodeStart } from "./episode-start.js";
 import { log } from "../../../common/tools/logger.js";
 
 function extractAliases(subject: BangumiSubject): string[] {
@@ -345,6 +346,9 @@ export async function syncEpisodes(bgmID: number): Promise<void> {
   }
 
   log.info("Synced %d episodes for bgm%d", episodes.length, bgmID);
+
+  // 续作 episode 回填后, 重新计算并写入 anime.episode_start (管理员已设值不受影响)
+  await backfillEpisodeStart(bgmID);
 }
 
 export async function syncAll(

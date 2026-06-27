@@ -5,6 +5,7 @@ import { anime } from "../../../common/database/schema/anime.js";
 import { eq, desc } from "drizzle-orm";
 import { parseAnime, type RawAnimeRow } from "../parser/anime.js";
 import type { FileParseResult } from "@lavaanime/shared";
+import { normalizeEpisodeNumber } from "../../../common/tools/episode-normalize.js";
 
 interface RecentUpdateRecord {
   id: number;
@@ -42,13 +43,21 @@ export async function getRecentUpdates(
   const recentUpdates: RecentUpdateRecord[] = rows.map((row) => {
     const um = row.upload_message;
     const a = row.anime;
+    const episodeStart =
+      a != null ? (a.episode_start as number | null | undefined) ?? null : null;
+    const parsed = parseFileName(um.fileName!);
     return {
       id: um.id,
       index: um.index,
       animeID: um.animeID,
       bangumiID: um.bangumiID,
       fileName: um.fileName,
-      parseResult: parseFileName(um.fileName!),
+      parseResult: {
+        ...parsed,
+        episode: parsed.episode
+          ? normalizeEpisodeNumber(parsed.episode, episodeStart)
+          : parsed.episode,
+      },
       messageSentStatus: um.messageSentStatus,
       messageSkiped: um.messageSkiped,
       uploadTime: um.uploadTime!,
@@ -64,6 +73,7 @@ export async function getRecentUpdates(
             title: a.title,
             deleted: a.deleted,
             poster: a.poster,
+            episode_start: a.episode_start,
           }
         : null,
     };

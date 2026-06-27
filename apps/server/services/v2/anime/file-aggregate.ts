@@ -4,10 +4,12 @@ import { asc, eq } from "drizzle-orm";
 import { db } from "../../../common/database/connection.js";
 import { drives } from "../../../common/database/schema/drive.js";
 import { createDriver } from "../../../common/filesystem/factory.js";
+import { resolveFileEpisode } from "../../../common/tools/episode-normalize.js";
 import { log } from "../../../common/tools/logger.js";
 import { mapDriveRecord } from "../admin/drive.js";
 import * as fileIndexService from "./file-index.js";
 import { getAnimeByID } from "./index.js";
+import { getAnimeEpisodeInfo } from "./episode-info.js";
 
 interface AggregatedFileResult extends AggregatedFileItem {
   parseResult?: FileParseResult;
@@ -19,6 +21,8 @@ export async function getAggregatedFiles(laID: number): Promise<AggregatedFileRe
 
   const animeIndex = anime.index as { year: string; type: string; name: string };
   const dirPath = joinPaths(animeIndex.year, animeIndex.type, animeIndex.name);
+
+  const episodeInfo = await getAnimeEpisodeInfo(laID);
 
   const allDriveRows = await db
     .select()
@@ -90,7 +94,15 @@ export async function getAggregatedFiles(laID: number): Promise<AggregatedFileRe
           drives: [{ driveId: file.driveId, driveName: file.driveName, path: file.path }],
         };
         if (file.type === "file") {
-          item.parseResult = parseFileName(file.name);
+          const parsed = parseFileName(file.name);
+          item.parseResult = {
+            ...parsed,
+            episode: resolveFileEpisode(
+              parsed.episode,
+              parsed.extensionName?.type,
+              episodeInfo
+            ),
+          };
         }
         dedupMap.set(relPath, item);
       }

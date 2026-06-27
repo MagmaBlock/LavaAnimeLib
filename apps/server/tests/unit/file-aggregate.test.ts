@@ -55,6 +55,10 @@ vi.mock("../../services/v2/anime/file-index.js", () => ({
   softDeleteStale: vi.fn(),
 }));
 
+vi.mock("../../services/v2/anime/episode-info.js", () => ({
+  getAnimeEpisodeInfo: vi.fn().mockResolvedValue({ episode_start: null, eps: null }),
+}));
+
 vi.mock("../../common/filesystem/factory.js", () => ({
   createDriver: vi.fn(() => ({
     type: "alist",

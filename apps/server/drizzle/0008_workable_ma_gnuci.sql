@@ -1,0 +1,1 @@
+ALTER TABLE `anime` ADD `episode_start` int;
