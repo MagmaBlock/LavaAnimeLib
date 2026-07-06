@@ -32,7 +32,15 @@ export async function getFilesByID(
   const anime = await getAnimeByID(laID);
   if (anime.deleted) return "此 laID 不存在";
 
-  const thisDrive = await getDrive(drive ?? await getDefaultDrive());
+  let driveId = drive;
+  if (!driveId) {
+    try {
+      driveId = await getDefaultDrive();
+    } catch {
+      return "尚未配置任何存储节点，请联系管理员在后台添加";
+    }
+  }
+  const thisDrive = await getDrive(driveId);
   if (!thisDrive) return "存储节点不存在";
 
   const endpoint = await resolveEndpoint(thisDrive.id, endpointId);
@@ -198,7 +206,15 @@ export async function refreshAnimeFileIndex(laID: number, driveId?: string): Pro
   const anime = await getAnimeByID(laID);
   if (anime.deleted) throw new Error("此 laID 不存在");
 
-  const thisDrive = await getDrive(driveId ?? await getDefaultDrive());
+  let resolvedDriveId = driveId;
+  if (!resolvedDriveId) {
+    try {
+      resolvedDriveId = await getDefaultDrive();
+    } catch {
+      throw new Error("尚未配置任何存储节点，请联系管理员在后台添加");
+    }
+  }
+  const thisDrive = await getDrive(resolvedDriveId);
   if (!thisDrive) throw new Error("存储节点不存在");
 
   const driver = createDriver({ type: thisDrive.type, config: thisDrive.config });

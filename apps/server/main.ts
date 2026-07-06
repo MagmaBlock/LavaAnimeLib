@@ -3,10 +3,13 @@ import type { AddressInfo } from "net";
 import app from "./app.js";
 import { log } from "./common/tools/logger.js";
 import { startBangumiCacheScheduler } from "./services/v2/bangumi/cache.js";
+import { bootstrapFirstAdmin } from "./tasks/v2/bootstrap.js";
 
 process.on("unhandledRejection", (reason) => {
   log.error(reason, "Unhandled rejection");
 });
+
+await bootstrapFirstAdmin();
 
 const server = app.listen(8090, () => {
   const address = server.address() as AddressInfo;

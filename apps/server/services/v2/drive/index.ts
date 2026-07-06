@@ -45,6 +45,8 @@ export interface DriveListResult {
   list: DriveInfo[];
 }
 
+const NO_DRIVES_MESSAGE = "尚未配置任何存储节点，请联系管理员在后台添加";
+
 function toEndpointInfo(ep: EndpointRecord): EndpointInfo {
   return {
     id: ep.id,
@@ -68,8 +70,9 @@ export async function getDriveList(): Promise<DriveListResult> {
       endpoints: endpoints.filter((ep) => ep.enabled).map(toEndpointInfo),
     });
   }
+  const defaultDrive = getDefaultDriveFromList(enabledDrives);
   return {
-    default: getDefaultDriveFromList(enabledDrives).id,
+    default: defaultDrive ? defaultDrive.id : "",
     list: driveList,
   };
 }
@@ -85,7 +88,9 @@ export async function getDrive(drive: string): Promise<DriveRecord | undefined> 
 }
 
 export async function getDefaultDrive(): Promise<string> {
-  return getDefaultDriveFromList(await getEnabledDrives()).id;
+  const drive = getDefaultDriveFromList(await getEnabledDrives());
+  if (!drive) throw new Error(NO_DRIVES_MESSAGE);
+  return drive.id;
 }
 
 async function getEnabledDrives(): Promise<DriveRecord[]> {
@@ -99,8 +104,8 @@ async function getEnabledDrives(): Promise<DriveRecord[]> {
   return rows.map(mapDriveRecord);
 }
 
-function getDefaultDriveFromList(enabledDrives: DriveRecord[]): DriveRecord {
-  if (!enabledDrives.length) throw new Error("没有可用的存储节点");
+function getDefaultDriveFromList(enabledDrives: DriveRecord[]): DriveRecord | null {
+  if (!enabledDrives.length) return null;
   return (
     enabledDrives.find((drive) => drive.isDefault)
     ?? enabledDrives[0]
@@ -108,7 +113,9 @@ function getDefaultDriveFromList(enabledDrives: DriveRecord[]): DriveRecord {
 }
 
 export async function getDefaultDriveRecord(): Promise<DriveRecord> {
-  return getDefaultDriveFromList(await getEnabledDrives());
+  const drive = getDefaultDriveFromList(await getEnabledDrives());
+  if (!drive) throw new Error(NO_DRIVES_MESSAGE);
+  return drive;
 }
 
 export async function hasEnabledDefaultDrive(id: string): Promise<boolean> {
