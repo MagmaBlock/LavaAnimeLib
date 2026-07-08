@@ -61,7 +61,7 @@ const menuOptions = [
       { label: "存储节点", key: "admin-drive" },
       { label: "文件索引", key: "admin-file-index" },
       { label: "Bangumi 缓存", key: "admin-bangumi-cache" },
-      { label: "番剧集数偏移", key: "admin-anime" },
+      { label: "番剧编辑", key: "admin-anime" },
     ],
   },
   {

@@ -29,6 +29,9 @@ import {
 import { getBangumiCacheStatusController } from "../../controllers/v2/admin/bangumi-cache/status.js";
 import { setEpisodeStart } from "../../controllers/v2/admin/anime/episode-start.js";
 import { getEpisodeStart } from "../../controllers/v2/admin/anime/get-episode-start.js";
+import { listAnimeAdminController } from "../../controllers/v2/admin/anime/list.js";
+import { getAnimeAdminController } from "../../controllers/v2/admin/anime/get-anime.js";
+import { updateAnimeController } from "../../controllers/v2/admin/anime/update-anime.js";
 import { requireAdmin } from "../../middleware/auth/require-auth.js";
 
 const router = Router();
@@ -75,5 +78,8 @@ router.post(
 router.post("/bangumi-cache/refresh-expired", requireAdmin, refreshExpiredBangumiCacheController);
 router.get("/anime/episode-start", requireAdmin, getEpisodeStart);
 router.post("/anime/episode-start", requireAdmin, setEpisodeStart);
+router.get("/anime/list", requireAdmin, listAnimeAdminController);
+router.get("/anime", requireAdmin, getAnimeAdminController);
+router.post("/anime/update", requireAdmin, updateAnimeController);
 
 export default router;
