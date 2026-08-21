@@ -7,6 +7,7 @@ import type { FileSystemEntry } from "../../common/filesystem/types.js";
 import * as fileIndexService from "../../services/v2/anime/file-index.js";
 import { log } from "../../common/tools/logger.js";
 import type { DriveConfig } from "@lavaanime/shared";
+import { parseJsonField } from "../../common/tools/parse-json-field.js";
 
 const DIR_CONCURRENCY = 4;
 
@@ -37,7 +38,11 @@ async function scanSingleDrive(row: {
   config: unknown;
 }) {
   try {
-    const driver = createDriver({ type: row.type, config: row.config as DriveConfig });
+    const config = parseJsonField(row.config);
+    if (!config) {
+      throw new Error(`Drive ${row.id} 的 config 无效或未配置`);
+    }
+    const driver = createDriver({ type: row.type, config: config as unknown as DriveConfig });
     log.info(`[${row.id}] 开始全量扫描...`);
 
     const limit = pLimit(DIR_CONCURRENCY);

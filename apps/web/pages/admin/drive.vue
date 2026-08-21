@@ -153,7 +153,11 @@
         </NFormItem>
         <NDivider>策略</NDivider>
         <div class="grid grid-cols-2 gap-3">
-          <NFormItem label="优先级">
+          <NFormItem>
+            <template #label>
+              <span>优先级</span>
+              <div class="text-xs text-gray-400 font-normal">数字越小优先级越高，按升序排列</div>
+            </template>
             <NInputNumber v-model:value="endpointForm.priority" class="!w-full" :min="0" />
           </NFormItem>
           <NFormItem label="启用">
