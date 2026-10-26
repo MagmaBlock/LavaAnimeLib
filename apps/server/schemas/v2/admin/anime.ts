@@ -28,6 +28,11 @@ export const listAnimeAdminQuerySchema = z.object({
   deleted: z.coerce.number().int().min(0).max(1).optional(),
 });
 
+export const librarySyncBodySchema = z.object({
+  /** true = 同时把索引中缺失的番剧标记为已删除; 默认仅报告 */
+  markMissing: z.boolean().optional().default(false),
+});
+
 /** 管理员可编辑字段; 全部 optional 以支持 PATCH 语义 */
 export const updateAnimeBodySchema = z.object({
   laID: z.number().int().positive(),

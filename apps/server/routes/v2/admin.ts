@@ -32,6 +32,8 @@ import { getEpisodeStart } from "../../controllers/v2/admin/anime/get-episode-st
 import { listAnimeAdminController } from "../../controllers/v2/admin/anime/list.js";
 import { getAnimeAdminController } from "../../controllers/v2/admin/anime/get-anime.js";
 import { updateAnimeController } from "../../controllers/v2/admin/anime/update-anime.js";
+import { adminAnimeLibraryPreview } from "../../controllers/v2/admin/anime/library-preview.js";
+import { adminAnimeLibrarySync } from "../../controllers/v2/admin/anime/library-sync.js";
 import { requireAdmin } from "../../middleware/auth/require-auth.js";
 
 const router = Router();
@@ -80,6 +82,8 @@ router.get("/anime/episode-start", requireAdmin, getEpisodeStart);
 router.post("/anime/episode-start", requireAdmin, setEpisodeStart);
 router.get("/anime/list", requireAdmin, listAnimeAdminController);
 router.get("/anime", requireAdmin, getAnimeAdminController);
+router.get("/anime/library/preview", requireAdmin, adminAnimeLibraryPreview);
+router.post("/anime/library/sync", requireAdmin, adminAnimeLibrarySync);
 router.post("/anime/update", requireAdmin, updateAnimeController);
 
 export default router;
