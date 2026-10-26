@@ -18,6 +18,10 @@ export const drives = mysqlTable("drives", {
   isDefault: tinyint().notNull().default(0),
   sortOrder: int().notNull().default(0),
   banNSFW: tinyint().notNull().default(0),
+  lastScanAt: timestamp("last_scan_at", { mode: "date" }),
+  lastScanOk: tinyint("last_scan_ok"),
+  lastScanRows: int("last_scan_rows"),
+  lastScanError: text("last_scan_error"),
   createdAt: timestamp({ mode: "date" }).defaultNow(),
   updatedAt: timestamp({ mode: "date" }).defaultNow().onUpdateNow(),
 });

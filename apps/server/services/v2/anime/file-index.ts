@@ -1,8 +1,10 @@
-import { and, asc, desc, eq, gte, like, lt, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, like, lt, notLike, or, sql } from "drizzle-orm";
 import { db } from "../../../common/database/connection.js";
 import { fileIndex } from "../../../common/database/schema/file-index.js";
+import { withDeadlockRetry } from "../../../common/database/retry.js";
 
 const TTL_HOURS = 1;
+const UPSERT_BATCH_SIZE = 500;
 
 export interface FileIndexRecord {
   id: number;
@@ -84,77 +86,94 @@ export async function findActiveByDrive(
 export async function upsertEntries(
   entries: FileIndexUpsert[]
 ): Promise<void> {
-  for (const entry of entries) {
-    await db
-      .insert(fileIndex)
-      .values({
-        driveId: entry.driveId,
-        animeId: entry.animeId ?? null,
-        path: entry.path,
-        name: entry.name,
-        size: entry.size ?? 0,
-        type: entry.type,
-        modified: entry.modified ?? null,
-        deleted: 0,
-        indexedAt: sql`NOW()`,
-      })
-      .onDuplicateKeyUpdate({
-        set: {
-          name: entry.name,
-          size: entry.size ?? 0,
-          type: entry.type,
-          modified: entry.modified ?? null,
-          deleted: 0,
-          indexedAt: sql`NOW()`,
-          animeId: entry.animeId ?? null,
-        },
-      });
+  for (let offset = 0; offset < entries.length; offset += UPSERT_BATCH_SIZE) {
+    const batch = entries.slice(offset, offset + UPSERT_BATCH_SIZE);
+    const values = batch.map((entry) => ({
+      driveId: entry.driveId,
+      animeId: entry.animeId ?? null,
+      path: entry.path,
+      name: entry.name,
+      size: entry.size ?? 0,
+      type: entry.type,
+      modified: entry.modified ?? null,
+      deleted: 0,
+    }));
+
+    await withDeadlockRetry(
+      () =>
+        db
+          .insert(fileIndex)
+          .values(values)
+          .onDuplicateKeyUpdate({
+            set: {
+              name: sql`VALUES(\`name\`)`,
+              size: sql`VALUES(\`size\`)`,
+              type: sql`VALUES(\`type\`)`,
+              modified: sql`VALUES(\`modified\`)`,
+              deleted: 0,
+              indexedAt: sql`NOW()`,
+              animeId: sql`VALUES(\`anime_id\`)`,
+            },
+          }),
+      { label: `file_index.upsert:${batch[0]?.driveId ?? "unknown"}` },
+    );
   }
 }
 
+/**
+ * 只处理 dirPath 的直接子项：把父目录本次列出的 currentPaths 与库中现存
+ * active 直接子项对比，缺失的子项连同其整棵子树软删除。
+ *
+ * 不做「整棵父目录子树先删再恢复」：扫描中断时只会留下未访问到的子树，
+ * 不会把已扫描成功的深层行误标为 deleted。
+ */
 export async function softDeleteStale(
   driveId: string,
   dirPath: string,
   currentPaths: string[]
 ): Promise<number> {
-  if (currentPaths.length === 0) {
-    const result = await db
-      .update(fileIndex)
-      .set({ deleted: 1 })
-      .where(
-        and(
-          eq(fileIndex.driveId, driveId),
-          like(fileIndex.path, `${dirPrefix(dirPath)}%`),
-          eq(fileIndex.deleted, 0),
-        ),
-      );
-    return result[0].affectedRows;
-  }
+  const prefix = dirPrefix(dirPath);
+  const current = new Set(currentPaths);
 
-  const result = await db
-    .update(fileIndex)
-    .set({ deleted: 1 })
+  const activeDirectChildren = await db
+    .select({ path: fileIndex.path })
+    .from(fileIndex)
     .where(
       and(
         eq(fileIndex.driveId, driveId),
-        like(fileIndex.path, `${dirPrefix(dirPath)}%`),
         eq(fileIndex.deleted, 0),
+        like(fileIndex.path, `${prefix}%`),
+        notLike(fileIndex.path, `${prefix}%/%`),
       ),
     );
 
-  for (const path of currentPaths) {
-    await db
-      .update(fileIndex)
-      .set({ deleted: 0, indexedAt: sql`NOW()` })
-      .where(
-        and(
-          eq(fileIndex.driveId, driveId),
-          eq(fileIndex.path, path),
-        ),
-      );
+  const missingChildren = activeDirectChildren
+    .map((row) => row.path)
+    .filter((path) => !current.has(path));
+
+  let affectedRows = 0;
+  for (const missingPath of missingChildren) {
+    const result = await withDeadlockRetry(
+      () =>
+        db
+          .update(fileIndex)
+          .set({ deleted: 1 })
+          .where(
+            and(
+              eq(fileIndex.driveId, driveId),
+              eq(fileIndex.deleted, 0),
+              or(
+                eq(fileIndex.path, missingPath),
+                like(fileIndex.path, `${missingPath}/%`),
+              ),
+            ),
+          ),
+      { label: `file_index.softDelete:${driveId}` },
+    );
+    affectedRows += result[0].affectedRows;
   }
 
-  return result[0].affectedRows;
+  return affectedRows;
 }
 
 export async function setAnimeId(

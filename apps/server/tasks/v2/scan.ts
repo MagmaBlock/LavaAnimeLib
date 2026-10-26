@@ -1,56 +1,33 @@
 import pLimit from "p-limit";
+import type { LimitFunction } from "p-limit";
 import { db } from "../../common/database/connection.js";
 import { drives } from "../../common/database/schema/drive.js";
-import { eq, and, isNotNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { createDriver } from "../../common/filesystem/factory.js";
-import type { FileSystemEntry } from "../../common/filesystem/types.js";
+import type { FileSystemDriver, FileSystemEntry } from "../../common/filesystem/types.js";
 import * as fileIndexService from "../../services/v2/anime/file-index.js";
+import {
+  sanitizeScanError,
+  updateDriveScanHealth,
+} from "../../services/v2/drive/scan-health.js";
 import { log } from "../../common/tools/logger.js";
 import type { DriveConfig } from "@lavaanime/shared";
 import { parseJsonField } from "../../common/tools/parse-json-field.js";
 
 const DIR_CONCURRENCY = 4;
+const WRITE_CONCURRENCY = 2;
 
-export default async function scanAllDrives() {
-  const driveRows = await db
-    .select({
-      id: drives.id,
-      type: drives.type,
-      config: drives.config,
-    })
-    .from(drives)
-    .where(
-      and(
-        eq(drives.enabled, 1),
-        isNotNull(drives.type),
-        isNotNull(drives.config),
-      ),
-    );
-
-  log.info(`共 ${driveRows.length} 个存储节点待扫描`);
-
-  await Promise.all(driveRows.map((row) => scanSingleDrive(row)));
+export interface ScanDriveResult {
+  driveId: string;
+  ok: boolean;
+  rows: number;
+  finishedAt: Date;
+  error?: string;
 }
 
-async function scanSingleDrive(row: {
-  id: string;
-  type: string;
-  config: unknown;
-}) {
-  try {
-    const config = parseJsonField(row.config);
-    if (!config) {
-      throw new Error(`Drive ${row.id} 的 config 无效或未配置`);
-    }
-    const driver = createDriver({ type: row.type, config: config as unknown as DriveConfig });
-    log.info(`[${row.id}] 开始全量扫描...`);
-
-    const limit = pLimit(DIR_CONCURRENCY);
-    const stats = await scanDirectory(limit, driver, row.id, "/");
-    log.info(`[${row.id}] 扫描完成: ${stats.total} 条 (${stats.files} 文件, ${stats.dirs} 目录, ${stats.directories} 个文件夹)`);
-  } catch (err) {
-    log.error(err, `扫描 Drive ${row.id} 失败`);
-  }
+export interface ScanReport {
+  ok: boolean;
+  drives: ScanDriveResult[];
 }
 
 interface ScanStats {
@@ -60,56 +37,175 @@ interface ScanStats {
   directories: number;
 }
 
-async function scanDirectory(
-  limit: ReturnType<typeof pLimit>,
-  driver: ReturnType<typeof createDriver>,
-  driveId: string,
-  currentPath: string
-): Promise<ScanStats> {
-  let entries: FileSystemEntry[];
+interface DirectoryScanResult {
+  stats: ScanStats;
+  failures: string[];
+}
+
+interface ScanContext {
+  driveId: string;
+  driver: FileSystemDriver;
+  listLimit: LimitFunction;
+  writeLimit: LimitFunction;
+}
+
+export default async function scanAllDrives(): Promise<ScanReport> {
+  const driveRows = await db
+    .select({
+      id: drives.id,
+      type: drives.type,
+      config: drives.config,
+    })
+    .from(drives)
+    .where(eq(drives.enabled, 1));
+
+  log.info(`共 ${driveRows.length} 个存储节点待扫描`);
+
+  const results = await Promise.all(driveRows.map((row) => scanSingleDrive(row)));
+  const ok = results.length > 0 && results.every((result) => result.ok);
+
+  return { ok, drives: results };
+}
+
+async function scanSingleDrive(row: {
+  id: string;
+  type: string;
+  config: unknown;
+}): Promise<ScanDriveResult> {
+  let ok = false;
+  let rows = 0;
+  let error: string | undefined;
+  let config: unknown = null;
+
   try {
-    entries = await limit(() => driver.list(currentPath));
+    config = parseJsonField(row.config);
+    if (!config) {
+      throw new Error(`Drive ${row.id} 的 config 无效或未配置`);
+    }
+    if (typeof row.type !== "string" || row.type.length === 0) {
+      throw new Error(`Drive ${row.id} 的 type 无效或未配置`);
+    }
+
+    const driver = createDriver({
+      type: row.type,
+      config: config as unknown as DriveConfig,
+    });
+    log.info(`[${row.id}] 开始全量扫描...`);
+
+    const outcome = await scanDirectory(
+      {
+        driveId: row.id,
+        driver,
+        listLimit: pLimit(DIR_CONCURRENCY),
+        writeLimit: pLimit(WRITE_CONCURRENCY),
+      },
+      "/",
+    );
+
+    rows = outcome.stats.total;
+
+    if (outcome.failures.length === 0) {
+      ok = true;
+      log.info(
+        `[${row.id}] 扫描完成: ${outcome.stats.total} 条 (${outcome.stats.files} 文件, ${outcome.stats.dirs} 目录, ${outcome.stats.directories} 个文件夹)`,
+      );
+    } else {
+      error = sanitizeScanError(outcome.failures.join("; "), config);
+      log.error(
+        `[${row.id}] 扫描未完成: ${outcome.failures.length} 个目录/写入失败, 已观察 ${rows} 条`,
+      );
+    }
   } catch (err) {
-    log.error(err, `列出目录失败: ${currentPath}`);
-    return { total: 0, files: 0, dirs: 0, directories: 0 };
+    error = sanitizeScanError(err, config);
+    log.error(err, `扫描 Drive ${row.id} 失败`);
   }
 
-  const fileEntries = entries.filter((e) => e.type === "file");
-  const dirEntries = entries.filter((e) => e.type === "dir");
-  log.info(`[${driveId}] ${currentPath} → ${fileEntries.length} 文件, ${dirEntries.length} 目录`);
+  const finishedAt = new Date();
 
-  const currentPaths: string[] = [];
+  try {
+    await updateDriveScanHealth(row.id, {
+      ok,
+      rows,
+      error,
+      scannedAt: finishedAt,
+    });
+  } catch (healthError) {
+    log.error(healthError, `记录 Drive ${row.id} 扫描健康状态失败`);
+  }
 
-  const upsertEntries = entries.map((entry) => {
-    currentPaths.push(entry.path);
+  return error
+    ? { driveId: row.id, ok, rows, finishedAt, error }
+    : { driveId: row.id, ok, rows, finishedAt };
+}
+
+async function scanDirectory(
+  context: ScanContext,
+  currentPath: string,
+): Promise<DirectoryScanResult> {
+  let entries: FileSystemEntry[];
+  try {
+    entries = await context.listLimit(() => context.driver.list(currentPath));
+  } catch (err) {
+    const error = sanitizeScanError(err);
+    log.error(err, `列出目录失败: ${currentPath}`);
     return {
-      driveId,
-      path: entry.path,
-      name: entry.name,
-      size: entry.size,
-      type: entry.type,
-      modified: entry.modified ? new Date(entry.modified) : null,
+      stats: { total: 0, files: 0, dirs: 0, directories: 0 },
+      failures: [`${currentPath}: ${error}`],
     };
-  });
+  }
 
-  await fileIndexService.upsertEntries(upsertEntries);
-  await fileIndexService.softDeleteStale(driveId, currentPath, currentPaths);
+  const fileEntries = entries.filter((entry) => entry.type === "file");
+  const dirEntries = entries.filter((entry) => entry.type === "dir");
+  log.info(
+    `[${context.driveId}] ${currentPath} → ${fileEntries.length} 文件, ${dirEntries.length} 目录`,
+  );
 
-  const stats: ScanStats = { total: entries.length, files: fileEntries.length, dirs: dirEntries.length, directories: 1 };
+  const currentPaths = entries.map((entry) => entry.path);
+  const upsertEntries = entries.map((entry) => ({
+    driveId: context.driveId,
+    path: entry.path,
+    name: entry.name,
+    size: entry.size,
+    type: entry.type,
+    modified: entry.modified ? new Date(entry.modified) : null,
+  }));
+
+  const stats: ScanStats = {
+    total: entries.length,
+    files: fileEntries.length,
+    dirs: dirEntries.length,
+    directories: 1,
+  };
+  const failures: string[] = [];
+
+  try {
+    await context.writeLimit(async () => {
+      await fileIndexService.upsertEntries(upsertEntries);
+      await fileIndexService.softDeleteStale(
+        context.driveId,
+        currentPath,
+        currentPaths,
+      );
+    });
+  } catch (err) {
+    const error = sanitizeScanError(err);
+    log.error(err, `写入目录索引失败: ${currentPath}`);
+    // 写入失败时不再向下递归，避免继续放大不完整的索引状态
+    return { stats, failures: [`${currentPath}: ${error}`] };
+  }
 
   if (dirEntries.length > 0) {
     const subResults = await Promise.all(
-      dirEntries.map((entry) =>
-        scanDirectory(limit, driver, driveId, entry.path)
-      )
+      dirEntries.map((entry) => scanDirectory(context, entry.path)),
     );
     for (const sub of subResults) {
-      stats.total += sub.total;
-      stats.files += sub.files;
-      stats.dirs += sub.dirs;
-      stats.directories += sub.directories;
+      stats.total += sub.stats.total;
+      stats.files += sub.stats.files;
+      stats.dirs += sub.stats.dirs;
+      stats.directories += sub.stats.directories;
+      failures.push(...sub.failures);
     }
   }
 
-  return stats;
+  return { stats, failures };
 }
