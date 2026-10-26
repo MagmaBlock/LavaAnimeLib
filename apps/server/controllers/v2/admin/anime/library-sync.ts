@@ -19,10 +19,14 @@ export async function adminAnimeLibrarySync(
 
   try {
     const result = await applyLibrarySync(body);
+    const missingSuffix =
+      result.preview.missing.length > 0
+        ? `；索引中未见 ${result.preview.missing.length} 部（仅诊断，未删除）`
+        : "";
     success(
       res,
       result,
-      `识别完成：新增 ${result.inserted}，恢复 ${result.restored}，标记删除 ${result.markedMissing}`
+      `识别完成：新增 ${result.inserted}，恢复 ${result.restored}${missingSuffix}`
     );
   } catch (error) {
     if (error instanceof LibrarySyncRejectedError) {

@@ -46,11 +46,11 @@ export async function doAll(
   try {
     const result = await deps.applySync();
     log.info(
-      `番剧识别完成: 新增 ${result.inserted}, 恢复 ${result.restored}, 标记删除 ${result.markedMissing}`,
+      `番剧识别完成: 新增 ${result.inserted}, 恢复 ${result.restored}`,
     );
     if (result.preview.missing.length > 0) {
       log.warn(
-        `发现 ${result.preview.missing.length} 部库内番剧在文件索引中缺失, 未自动标记删除。可在后台预览后手动处理。`,
+        `发现 ${result.preview.missing.length} 部库内番剧在文件索引中未见（仅诊断，未删除；缺失标记暂未开放）。`,
       );
     }
     if (result.preview.unmatched.length > 0) {
