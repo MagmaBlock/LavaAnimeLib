@@ -35,6 +35,9 @@
         <NButton type="primary" :loading="listLoading" @click="onSearch"
           >查询</NButton
         >
+        <NButton :loading="libraryLoading" @click="openLibrarySync"
+          >识别入库</NButton
+        >
       </div>
     </NCard>
 
@@ -53,6 +56,134 @@
         @update:page-size="handlePageSizeChange"
       />
     </NCard>
+
+    <!-- 从文件索引识别番剧 -->
+    <NModal
+      v-model:show="libraryModal"
+      preset="card"
+      title="从文件索引识别番剧"
+      style="width: 760px"
+      :mask-closable="!libraryApplying"
+    >
+      <div v-if="libraryLoading" class="py-10 text-center text-gray-400">
+        正在读取文件索引...
+      </div>
+      <template v-else-if="libraryPreview">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div
+            v-for="stat in libraryStats"
+            :key="stat.label"
+            class="rounded-lg bg-gray-50 dark:bg-gray-800/50 p-3"
+          >
+            <div class="text-xs text-gray-400 mb-0.5">{{ stat.label }}</div>
+            <div :class="['text-lg font-bold', stat.class]">{{ stat.value }}</div>
+          </div>
+        </div>
+
+        <div class="text-xs text-gray-400 mb-3">
+          已索引番剧目录 {{ libraryPreview.directoryCount }} 个。新增与恢复会立即执行，缺失目录默认仅报告。
+        </div>
+        <div
+          v-if="!libraryPreview.canMarkMissing"
+          class="text-xs text-amber-500 mb-3"
+        >
+          多节点分类索引不完整，本次不判定缺失，不会误删任何番剧。
+        </div>
+
+        <div class="max-h-[46vh] overflow-y-auto space-y-4">
+          <section v-if="libraryPreview.discovered.length">
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5">
+              新增（{{ libraryPreview.discovered.length }}）
+            </div>
+            <div
+              v-for="item in libraryPreview.discovered"
+              :key="item.path"
+              class="flex items-center justify-between gap-2 py-1 text-sm border-b border-gray-100 dark:border-gray-800 last:border-0"
+            >
+              <span class="text-gray-700 dark:text-gray-300 truncate">
+                {{ item.year }} / {{ item.type }} / {{ item.name }}
+              </span>
+              <NTag size="small" type="success" :bordered="false">bgm{{ item.bgmid }}</NTag>
+            </div>
+          </section>
+
+          <section v-if="libraryPreview.restorable.length">
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5">
+              待恢复（{{ libraryPreview.restorable.length }}）
+            </div>
+            <div
+              v-for="row in libraryPreview.restorable"
+              :key="row.id"
+              class="flex items-center justify-between gap-2 py-1 text-sm border-b border-gray-100 dark:border-gray-800 last:border-0"
+            >
+              <span class="text-gray-700 dark:text-gray-300 truncate">
+                {{ row.year }} / {{ row.type }} / {{ row.name }}
+              </span>
+              <span class="text-xs text-gray-400 font-mono">laID {{ row.id }}</span>
+            </div>
+          </section>
+
+          <section v-if="libraryPreview.missing.length">
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5">
+              索引中缺失（{{ libraryPreview.missing.length }}）
+            </div>
+            <div
+              v-for="row in libraryPreview.missing"
+              :key="row.id"
+              class="flex items-center justify-between gap-2 py-1 text-sm border-b border-gray-100 dark:border-gray-800 last:border-0"
+            >
+              <span class="text-gray-700 dark:text-gray-300 truncate">
+                {{ row.year }} / {{ row.type }} / {{ row.name }}
+              </span>
+              <span class="text-xs text-gray-400 font-mono">laID {{ row.id }}</span>
+            </div>
+          </section>
+
+          <section v-if="libraryPreview.unmatched.length">
+            <div class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5">
+              无法自动识别（{{ libraryPreview.unmatched.length }}）
+            </div>
+            <div
+              v-for="item in libraryPreview.unmatched"
+              :key="item.path"
+              class="py-1 text-sm border-b border-gray-100 dark:border-gray-800 last:border-0"
+            >
+              <div class="text-gray-700 dark:text-gray-300 truncate">{{ item.path }}</div>
+              <div class="text-xs text-gray-400">{{ item.reason }}</div>
+            </div>
+          </section>
+
+          <div
+            v-if="!libraryPreview.discovered.length && !libraryPreview.restorable.length && !libraryPreview.missing.length && !libraryPreview.unmatched.length"
+            class="py-8 text-center text-gray-400"
+          >
+            索引与番剧表一致，无变更
+          </div>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <NCheckbox
+            v-model:checked="markMissing"
+            :disabled="!libraryPreview?.canMarkMissing"
+          >
+            将索引中缺失的番剧标记为已删除（{{ libraryPreview?.missing.length ?? 0 }}）
+          </NCheckbox>
+          <div class="flex gap-2">
+            <NButton :disabled="libraryApplying" @click="libraryModal = false">取消</NButton>
+            <NButton
+              type="primary"
+              :loading="libraryApplying"
+              :disabled="!libraryHasChanges"
+              @click="applyLibrarySync"
+            >
+              执行入库
+            </NButton>
+          </div>
+        </div>
+      </template>
+    </NModal>
 
     <!-- 编辑 drawer -->
     <NDrawer v-model:show="editDrawer" :width="520" placement="right">
@@ -257,6 +388,34 @@ interface AnimeListItem {
   episode_start_manual: 0 | 1;
 }
 
+interface LibraryDirectoryItem {
+  path: string;
+  year: string;
+  type: string;
+  name: string;
+  bgmid: string;
+  title: string;
+}
+
+interface LibraryAnimeRow {
+  id: number;
+  year: string;
+  type: string;
+  name: string;
+  bgmid: string | null;
+  title: string | null;
+  deleted: number;
+}
+
+interface LibrarySyncPreview {
+  discovered: LibraryDirectoryItem[];
+  restorable: LibraryAnimeRow[];
+  missing: LibraryAnimeRow[];
+  unmatched: { path: string; reason: string }[];
+  directoryCount: number;
+  canMarkMissing: boolean;
+}
+
 const searchValue = ref("");
 const filterDeleted = ref<"" | "0" | "1">("");
 const list = ref<AnimeListItem[]>([]);
@@ -398,6 +557,80 @@ function handlePageSizeChange(pageSize: number) {
   pagination.pageSize = pageSize;
   pagination.page = 1;
   loadList();
+}
+
+// ---- 识别入库 ----
+const libraryModal = ref(false);
+const libraryLoading = ref(false);
+const libraryApplying = ref(false);
+const libraryPreview = ref<LibrarySyncPreview | null>(null);
+const markMissing = ref(false);
+
+const libraryStats = computed(() => [
+  {
+    label: "新增",
+    value: libraryPreview.value?.discovered.length ?? 0,
+    class: "text-green-600 dark:text-green-400",
+  },
+  {
+    label: "待恢复",
+    value: libraryPreview.value?.restorable.length ?? 0,
+    class: "text-blue-600 dark:text-blue-400",
+  },
+  {
+    label: "索引中缺失",
+    value: libraryPreview.value?.missing.length ?? 0,
+    class: "text-amber-600 dark:text-amber-400",
+  },
+  {
+    label: "无法识别",
+    value: libraryPreview.value?.unmatched.length ?? 0,
+    class: "text-red-600 dark:text-red-400",
+  },
+]);
+
+const libraryHasChanges = computed(() => {
+  const preview = libraryPreview.value;
+  if (!preview) return false;
+  return (
+    preview.discovered.length > 0 ||
+    preview.restorable.length > 0 ||
+    (markMissing.value && preview.missing.length > 0)
+  );
+});
+
+async function openLibrarySync() {
+  libraryModal.value = true;
+  libraryLoading.value = true;
+  libraryPreview.value = null;
+  markMissing.value = false;
+  try {
+    const result = await api.get("/v2/admin/anime/library/preview");
+    if (result.data?.code === 200) {
+      libraryPreview.value = result.data.data as LibrarySyncPreview;
+    }
+  } catch (_error) {
+    // 拦截器已提示
+  } finally {
+    libraryLoading.value = false;
+  }
+}
+
+async function applyLibrarySync() {
+  libraryApplying.value = true;
+  try {
+    const result = await api.post("/v2/admin/anime/library/sync", {
+      markMissing: markMissing.value,
+    });
+    window.$message?.success(result.data?.message ?? "识别完成");
+    libraryModal.value = false;
+    pagination.page = 1;
+    await loadList();
+  } catch (_error) {
+    // 拦截器已提示
+  } finally {
+    libraryApplying.value = false;
+  }
 }
 
 // ---- 编辑 drawer ----
