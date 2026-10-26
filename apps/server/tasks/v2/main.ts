@@ -25,22 +25,44 @@ export async function doAll(
     return 1;
   }
 
-  if (!report.ok) {
-    const failed = report.drives.filter((drive) => !drive.ok);
-    const detail = failed
-      .map((drive) => `${drive.driveId}: ${drive.error ?? "未知错误"}`)
-      .join("; ");
-    log.error(
-      `扫描未完全成功 (${failed.length}/${report.drives.length} 个存储节点失败): ${detail || "没有启用的存储节点"}`,
-    );
+  const failed = report.drives.filter((drive) => !drive.ok);
+  const libraryDrives = report.drives.filter((drive) => drive.librarySync);
+
+  if (!report.libraryOk) {
+    if (libraryDrives.length === 0) {
+      log.error(
+        "没有参与番剧识别的存储节点 (需同时启用节点与库范围), 已跳过番剧识别",
+      );
+    } else {
+      const failedLibrary = libraryDrives.filter((drive) => !drive.ok);
+      const detail = failedLibrary
+        .map((drive) => `${drive.driveId}: ${drive.error ?? "未知错误"}`)
+        .join("; ");
+      log.error(
+        `番剧库扫描未完全成功 (${failedLibrary.length}/${libraryDrives.length} 个库节点失败): ${detail}`,
+      );
+    }
     log.error("已跳过番剧识别, 请修复扫描错误后重新执行");
     return 1;
   }
 
-  const totalRows = report.drives.reduce((sum, drive) => sum + drive.rows, 0);
-  log.info(
-    `所有扫描任务已经完成: ${report.drives.length} 个存储节点, ${totalRows} 条索引`,
-  );
+  if (failed.length > 0) {
+    const detail = failed
+      .map((drive) => `${drive.driveId}: ${drive.error ?? "未知错误"}`)
+      .join("; ");
+    log.warn(
+      `非库存储节点扫描失败 (${failed.length} 个): ${detail}; 不影响番剧识别, 继续执行`,
+    );
+    const libraryRows = libraryDrives.reduce((sum, drive) => sum + drive.rows, 0);
+    log.info(
+      `番剧库扫描已完成: ${libraryDrives.length} 个库节点, ${libraryRows} 条索引; ${failed.length} 个非库节点失败`,
+    );
+  } else {
+    const totalRows = report.drives.reduce((sum, drive) => sum + drive.rows, 0);
+    log.info(
+      `所有扫描任务已经完成: ${report.drives.length} 个存储节点, ${totalRows} 条索引`,
+    );
+  }
 
   log.info("开始识别新入盘番剧...");
   try {

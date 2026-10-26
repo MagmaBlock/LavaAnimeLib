@@ -20,13 +20,18 @@ const WRITE_CONCURRENCY = 2;
 export interface ScanDriveResult {
   driveId: string;
   ok: boolean;
+  /** 该节点是否参与番剧库识别/覆盖判定 */
+  librarySync: boolean;
   rows: number;
   finishedAt: Date;
   error?: string;
 }
 
 export interface ScanReport {
+  /** 所有启用节点是否全部扫描成功（诊断用，包含非库节点） */
   ok: boolean;
+  /** 至少一个库节点且全部库节点扫描成功时为 true */
+  libraryOk: boolean;
   drives: ScanDriveResult[];
 }
 
@@ -55,6 +60,7 @@ export default async function scanAllDrives(): Promise<ScanReport> {
       id: drives.id,
       type: drives.type,
       config: drives.config,
+      librarySync: drives.librarySync,
     })
     .from(drives)
     .where(eq(drives.enabled, 1));
@@ -63,19 +69,24 @@ export default async function scanAllDrives(): Promise<ScanReport> {
 
   const results = await Promise.all(driveRows.map((row) => scanSingleDrive(row)));
   const ok = results.length > 0 && results.every((result) => result.ok);
+  const libraryDrives = results.filter((result) => result.librarySync);
+  const libraryOk =
+    libraryDrives.length > 0 && libraryDrives.every((result) => result.ok);
 
-  return { ok, drives: results };
+  return { ok, libraryOk, drives: results };
 }
 
 async function scanSingleDrive(row: {
   id: string;
   type: string;
   config: unknown;
+  librarySync: number;
 }): Promise<ScanDriveResult> {
   let ok = false;
   let rows = 0;
   let error: string | undefined;
   let config: unknown = null;
+  const librarySync = row.librarySync === 1;
 
   try {
     config = parseJsonField(row.config);
@@ -134,8 +145,8 @@ async function scanSingleDrive(row: {
   }
 
   return error
-    ? { driveId: row.id, ok, rows, finishedAt, error }
-    : { driveId: row.id, ok, rows, finishedAt };
+    ? { driveId: row.id, ok, librarySync, rows, finishedAt, error }
+    : { driveId: row.id, ok, librarySync, rows, finishedAt };
 }
 
 async function scanDirectory(

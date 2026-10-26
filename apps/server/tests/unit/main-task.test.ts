@@ -10,8 +10,24 @@ import type { ScanReport } from "../../tasks/v2/scan.js";
 import type { LibrarySyncApplyResult } from "../../services/v2/anime/library-sync.js";
 import { log } from "../../common/tools/logger.js";
 
-function report(ok: boolean, drives: ScanReport["drives"] = []): ScanReport {
-  return { ok, drives };
+function drive(
+  values: Pick<ScanReport["drives"][number], "driveId" | "ok"> &
+    Partial<ScanReport["drives"][number]>,
+): ScanReport["drives"][number] {
+  return {
+    rows: 0,
+    librarySync: true,
+    finishedAt: new Date(),
+    ...values,
+  };
+}
+
+function report(
+  ok: boolean,
+  drives: ScanReport["drives"] = [],
+  libraryOk = ok,
+): ScanReport {
+  return { ok, libraryOk, drives };
 }
 
 function syncResult(): LibrarySyncApplyResult {
@@ -51,7 +67,7 @@ describe("doAll", () => {
       deps(
         async () =>
           report(true, [
-            { driveId: "gd_uni", ok: true, rows: 120, finishedAt: new Date() },
+            drive({ driveId: "gd_uni", ok: true, rows: 120 }),
           ]),
         applySync,
       ),
@@ -64,14 +80,14 @@ describe("doAll", () => {
     );
   });
 
-  it("扫描失败时跳过番剧识别、记录失败 drive 并返回 1", async () => {
+  it("库节点扫描失败时跳过番剧识别、记录失败 drive 并返回 1", async () => {
     const applySync = vi.fn(async () => syncResult());
     const exitCode = await doAll(
       deps(
         async () =>
           report(false, [
-            { driveId: "gd_uni", ok: false, rows: 0, finishedAt: new Date(), error: "deadlock" },
-            { driveId: "r2-test", ok: true, rows: 10, finishedAt: new Date() },
+            drive({ driveId: "gd_uni", ok: false, librarySync: true, error: "deadlock" }),
+            drive({ driveId: "r2-test", ok: true, librarySync: false, rows: 10 }),
           ]),
         applySync,
       ),
@@ -84,6 +100,63 @@ describe("doAll", () => {
     );
     expect(log.info).not.toHaveBeenCalledWith(
       expect.stringContaining("所有扫描任务已经完成"),
+    );
+  });
+
+  it("非库节点失败但库节点成功时仍执行番剧识别并返回 0", async () => {
+    const applySync = vi.fn(async () => syncResult());
+    const exitCode = await doAll(
+      deps(
+        async () =>
+          report(
+            false,
+            [
+              drive({ driveId: "gd_uni", ok: true, rows: 120, librarySync: true }),
+              drive({
+                driveId: "r2-test",
+                ok: false,
+                rows: 0,
+                librarySync: false,
+                error: "auth failed",
+              }),
+            ],
+            true,
+          ),
+        applySync,
+      ),
+    );
+
+    expect(exitCode).toBe(0);
+    expect(applySync).toHaveBeenCalledTimes(1);
+    expect(log.warn).toHaveBeenCalledWith(
+      expect.stringContaining("r2-test: auth failed"),
+    );
+    expect(log.info).toHaveBeenCalledWith(
+      expect.stringContaining("番剧库扫描已完成"),
+    );
+    expect(log.info).not.toHaveBeenCalledWith(
+      expect.stringContaining("所有扫描任务已经完成"),
+    );
+  });
+
+  it("没有库节点时跳过番剧识别并返回 1", async () => {
+    const applySync = vi.fn(async () => syncResult());
+    const exitCode = await doAll(
+      deps(
+        async () =>
+          report(
+            true,
+            [drive({ driveId: "r2-test", ok: true, librarySync: false })],
+            false,
+          ),
+        applySync,
+      ),
+    );
+
+    expect(exitCode).toBe(1);
+    expect(applySync).not.toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalledWith(
+      expect.stringContaining("没有参与番剧识别的存储节点"),
     );
   });
 
@@ -106,6 +179,9 @@ describe("doAll", () => {
 
     expect(exitCode).toBe(1);
     expect(applySync).not.toHaveBeenCalled();
+    expect(log.error).toHaveBeenCalledWith(
+      expect.stringContaining("没有参与番剧识别的存储节点"),
+    );
   });
 
   it("番剧识别失败时返回 1", async () => {
@@ -113,7 +189,7 @@ describe("doAll", () => {
       deps(
         async () =>
           report(true, [
-            { driveId: "gd_uni", ok: true, rows: 1, finishedAt: new Date() },
+            drive({ driveId: "gd_uni", ok: true, rows: 1 }),
           ]),
         async () => {
           throw new Error("library sync failed");

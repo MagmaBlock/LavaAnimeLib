@@ -61,7 +61,9 @@ beforeEach(async () => {
   vi.clearAllMocks();
   await db.execute(sql.raw("DELETE FROM file_index"));
   await db.execute(sql.raw("DELETE FROM drives WHERE id LIKE 'scan-%'"));
-  await db.execute(sql.raw("UPDATE drives SET enabled = IF(id = '1A', 1, 0)"));
+  await db.execute(
+    sql.raw("UPDATE drives SET enabled = IF(id = '1A', 1, 0), library_sync = IF(id = '1A', 1, 0)"),
+  );
   await db.execute(
     sql.raw(
       "UPDATE drives SET last_scan_at = NULL, last_scan_ok = NULL, last_scan_rows = NULL, last_scan_error = NULL",
@@ -72,7 +74,9 @@ beforeEach(async () => {
 afterEach(async () => {
   await db.execute(sql.raw("DELETE FROM file_index"));
   await db.execute(sql.raw("DELETE FROM drives WHERE id LIKE 'scan-%'"));
-  await db.execute(sql.raw("UPDATE drives SET enabled = IF(id = '1A', 1, 0)"));
+  await db.execute(
+    sql.raw("UPDATE drives SET enabled = IF(id = '1A', 1, 0), library_sync = IF(id = '1A', 1, 0)"),
+  );
 });
 
 describe("scanAllDrives", () => {
@@ -87,8 +91,14 @@ describe("scanAllDrives", () => {
     expect(mockList).toHaveBeenCalledTimes(2);
     expect(mockList).toHaveBeenCalledWith("/");
     expect(report.ok).toBe(true);
+    expect(report.libraryOk).toBe(true);
     expect(report.drives).toHaveLength(1);
-    expect(report.drives[0]).toMatchObject({ driveId: "1A", ok: true, rows: 3 });
+    expect(report.drives[0]).toMatchObject({
+      driveId: "1A",
+      ok: true,
+      librarySync: true,
+      rows: 3,
+    });
     expect(report.drives[0].finishedAt).toBeInstanceOf(Date);
 
     const files = await fileIndexService.findActiveByDrive("1A", "/");
@@ -147,6 +157,7 @@ describe("scanAllDrives", () => {
     const report = await scanAllDrives();
 
     expect(report.ok).toBe(false);
+    expect(report.libraryOk).toBe(false);
     expect(report.drives[0].ok).toBe(false);
     expect(report.drives[0].rows).toBe(3);
     expect(report.drives[0].error).toContain("/bad");
@@ -208,6 +219,7 @@ describe("scanAllDrives", () => {
     const report = await scanAllDrives();
 
     expect(report.ok).toBe(false);
+    expect(report.libraryOk).toBe(false);
     expect(report.drives).toEqual([]);
     expect(mockList).not.toHaveBeenCalled();
   });
@@ -227,10 +239,12 @@ describe("scanAllDrives", () => {
     const report = await scanAllDrives();
 
     expect(report.ok).toBe(false);
+    expect(report.libraryOk).toBe(false);
     expect(report.drives).toHaveLength(2);
 
     const bad = report.drives.find((drive) => drive.driveId === "scan-bad")!;
     expect(bad.ok).toBe(false);
+    expect(bad.librarySync).toBe(true);
     expect(bad.rows).toBe(0);
     expect(bad.error).toContain("不支持的文件系统类型");
 
@@ -241,6 +255,32 @@ describe("scanAllDrives", () => {
     expect(health.ok).toBe(0);
     expect(health.rows).toBe(0);
     expect(health.error).toContain("不支持的文件系统类型");
+  });
+
+  it("非库节点失败不影响 libraryOk", async () => {
+    await db.insert(drives).values({
+      id: "scan-archive",
+      name: "scan-archive",
+      description: "archive node",
+      type: "s3",
+      config: {},
+      enabled: 1,
+      librarySync: 0,
+    });
+
+    mockListing({ "/": [file("/ok.mkv", "ok.mkv")] });
+
+    const report = await scanAllDrives();
+
+    expect(report.ok).toBe(false);
+    expect(report.libraryOk).toBe(true);
+
+    const archive = report.drives.find((drive) => drive.driveId === "scan-archive")!;
+    expect(archive).toMatchObject({ ok: false, librarySync: false, rows: 0 });
+    expect(archive.error).toContain("不支持的文件系统类型");
+
+    const library = report.drives.find((drive) => drive.driveId === "1A")!;
+    expect(library).toMatchObject({ ok: true, librarySync: true, rows: 1 });
   });
 
   it("config 无效的 drive 应报告 ok=false", async () => {
