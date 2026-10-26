@@ -78,6 +78,13 @@
       "when": 1793040938445,
       "tag": "0010_massive_scalphunter",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1793041296423,
+      "tag": "0011_long_sunspot",
+      "breakpoints": true
     }
   ]
 }

@@ -35,7 +35,7 @@
           :row-key="rowKey"
           :single-line="false"
           size="small"
-          :scroll-x="1200"
+          :scroll-x="1300"
         />
       </NSpin>
     </NCard>
@@ -88,6 +88,15 @@
             </NFormItem>
             <NFormItem label="禁止 NSFW">
               <NSwitch v-model:value="form.banNSFW" />
+            </NFormItem>
+            <NFormItem>
+              <template #label>
+                <span>参与番剧库同步</span>
+                <div class="text-xs text-gray-400 font-normal">
+                  关闭后该节点只扫盘，不参与新增识别与缺失覆盖判定
+                </div>
+              </template>
+              <NSwitch v-model:value="form.librarySync" />
             </NFormItem>
           </div>
         </NForm>
@@ -214,6 +223,7 @@ interface DriveForm {
   banNSFW: boolean;
   enabled: boolean;
   isDefault: boolean;
+  librarySync: boolean;
   sortOrder: number;
 }
 
@@ -323,6 +333,7 @@ const emptyForm = (): DriveForm => ({
   banNSFW: false,
   enabled: true,
   isDefault: false,
+  librarySync: true,
   sortOrder: 0,
 });
 
@@ -404,6 +415,17 @@ const columns: DataTableColumns<DriveRecord> = [
         row.isDefault ? h(NTag, { size: "small", type: "success" }, () => "默认") : null,
         row.banNSFW ? h(NTag, { size: "small", type: "warning" }, () => "NSFW") : null,
       ]);
+    },
+  },
+  {
+    title: "库同步",
+    key: "librarySync",
+    width: 90,
+    render(row: DriveRecord) {
+      return h(NSwitch, {
+        value: row.librarySync,
+        onUpdateValue: (value: boolean) => quickUpdate(row, { librarySync: value }),
+      });
     },
   },
   {
@@ -575,6 +597,7 @@ function openEditDrawer(row: DriveRecord) {
     banNSFW: row.banNSFW,
     enabled: row.enabled,
     isDefault: row.isDefault,
+    librarySync: row.librarySync,
     sortOrder: row.sortOrder,
   });
   drawerOpen.value = true;
@@ -733,6 +756,7 @@ async function quickUpdate(row: DriveRecord, patch: Partial<DriveForm>) {
       banNSFW: row.banNSFW,
       enabled: row.enabled,
       isDefault: row.isDefault,
+      librarySync: row.librarySync,
       sortOrder: row.sortOrder,
       ...patch,
     });

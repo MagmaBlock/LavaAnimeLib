@@ -78,6 +78,7 @@ describe("admin drive mutations", () => {
       banNSFW: false,
       enabled: true,
       isDefault: false,
+      librarySync: true,
       sortOrder: 0,
     })).rejects.toThrow("存储节点不存在");
   });

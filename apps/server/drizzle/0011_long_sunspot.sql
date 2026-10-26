@@ -1,0 +1,1 @@
+ALTER TABLE `drives` ADD `library_sync` tinyint DEFAULT 1 NOT NULL;

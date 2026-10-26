@@ -81,13 +81,14 @@
         </div>
 
         <div class="text-xs text-gray-400 mb-3">
-          已索引番剧目录 {{ libraryPreview.directoryCount }} 个。新增与恢复会立即执行，缺失目录默认仅报告。
+          已索引番剧目录 {{ libraryPreview.directoryCount }} 个。新增与恢复会立即执行；缺失仅作诊断，不会自动删除。
         </div>
         <div
-          v-if="!libraryPreview.canMarkMissing"
-          class="text-xs text-amber-500 mb-3"
+          v-if="!libraryPreview.canApply"
+          class="rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20 px-3 py-2 text-xs text-amber-700 dark:text-amber-300 mb-3"
         >
-          多节点分类索引不完整，本次不判定缺失，不会误删任何番剧。
+          <div class="font-medium mb-0.5">扫描健康检查未通过，暂不允许入库</div>
+          <div>{{ libraryPreview.blockedReason ?? "请先完成一次成功的全量扫描" }}</div>
         </div>
 
         <div class="max-h-[46vh] overflow-y-auto space-y-4">
@@ -125,7 +126,10 @@
 
           <section v-if="libraryPreview.missing.length">
             <div class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-1.5">
-              索引中缺失（{{ libraryPreview.missing.length }}）
+              索引中未见（{{ libraryPreview.missing.length }}）
+            </div>
+            <div class="text-xs text-gray-400 mb-1.5">
+              仅供参考；当前暂不支持标记删除。
             </div>
             <div
               v-for="row in libraryPreview.missing"
@@ -149,7 +153,10 @@
               class="py-1 text-sm border-b border-gray-100 dark:border-gray-800 last:border-0"
             >
               <div class="text-gray-700 dark:text-gray-300 truncate">{{ item.path }}</div>
-              <div class="text-xs text-gray-400">{{ item.reason }}</div>
+              <div class="text-xs text-gray-400">
+                {{ item.reason }}
+                <span v-if="item.driveIds.length">· {{ item.driveIds.join(" / ") }}</span>
+              </div>
             </div>
           </section>
 
@@ -164,18 +171,15 @@
 
       <template #footer>
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <NCheckbox
-            v-model:checked="markMissing"
-            :disabled="!libraryPreview?.canMarkMissing"
-          >
-            将索引中缺失的番剧标记为已删除（{{ libraryPreview?.missing.length ?? 0 }}）
-          </NCheckbox>
+          <div class="text-xs text-gray-400">
+            缺失只会列出供核对，不会被自动标记删除。
+          </div>
           <div class="flex gap-2">
             <NButton :disabled="libraryApplying" @click="libraryModal = false">取消</NButton>
             <NButton
               type="primary"
               :loading="libraryApplying"
-              :disabled="!libraryHasChanges"
+              :disabled="!libraryPreview?.canApply || !libraryHasChanges"
               @click="applyLibrarySync"
             >
               执行入库
@@ -395,6 +399,7 @@ interface LibraryDirectoryItem {
   name: string;
   bgmid: string;
   title: string;
+  nsfw: number;
 }
 
 interface LibraryAnimeRow {
@@ -411,9 +416,12 @@ interface LibrarySyncPreview {
   discovered: LibraryDirectoryItem[];
   restorable: LibraryAnimeRow[];
   missing: LibraryAnimeRow[];
-  unmatched: { path: string; reason: string }[];
+  unmatched: { path: string; reason: string; driveIds: string[] }[];
   directoryCount: number;
   canMarkMissing: boolean;
+  scanHealthy: boolean;
+  blockedReason: string | null;
+  canApply: boolean;
 }
 
 const searchValue = ref("");
@@ -564,7 +572,6 @@ const libraryModal = ref(false);
 const libraryLoading = ref(false);
 const libraryApplying = ref(false);
 const libraryPreview = ref<LibrarySyncPreview | null>(null);
-const markMissing = ref(false);
 
 const libraryStats = computed(() => [
   {
@@ -578,7 +585,7 @@ const libraryStats = computed(() => [
     class: "text-blue-600 dark:text-blue-400",
   },
   {
-    label: "索引中缺失",
+    label: "索引中未见",
     value: libraryPreview.value?.missing.length ?? 0,
     class: "text-amber-600 dark:text-amber-400",
   },
@@ -594,8 +601,7 @@ const libraryHasChanges = computed(() => {
   if (!preview) return false;
   return (
     preview.discovered.length > 0 ||
-    preview.restorable.length > 0 ||
-    (markMissing.value && preview.missing.length > 0)
+    preview.restorable.length > 0
   );
 });
 
@@ -603,7 +609,6 @@ async function openLibrarySync() {
   libraryModal.value = true;
   libraryLoading.value = true;
   libraryPreview.value = null;
-  markMissing.value = false;
   try {
     const result = await api.get("/v2/admin/anime/library/preview");
     if (result.data?.code === 200) {
@@ -619,9 +624,7 @@ async function openLibrarySync() {
 async function applyLibrarySync() {
   libraryApplying.value = true;
   try {
-    const result = await api.post("/v2/admin/anime/library/sync", {
-      markMissing: markMissing.value,
-    });
+    const result = await api.post("/v2/admin/anime/library/sync", {});
     window.$message?.success(result.data?.message ?? "识别完成");
     libraryModal.value = false;
     pagination.page = 1;

@@ -18,6 +18,8 @@ export const drives = mysqlTable("drives", {
   isDefault: tinyint().notNull().default(0),
   sortOrder: int().notNull().default(0),
   banNSFW: tinyint().notNull().default(0),
+  /** 1 = 参与番剧库识别/覆盖判定; 0 = 测试/归档节点, 只扫盘不入库 */
+  librarySync: tinyint("library_sync").notNull().default(1),
   lastScanAt: timestamp("last_scan_at", { mode: "date" }),
   lastScanOk: tinyint("last_scan_ok"),
   lastScanRows: int("last_scan_rows"),

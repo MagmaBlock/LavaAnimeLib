@@ -26,6 +26,9 @@ function syncResult(): LibrarySyncApplyResult {
       unmatched: [],
       directoryCount: 0,
       canMarkMissing: false,
+      scanHealthy: true,
+      blockedReason: null,
+      canApply: true,
     },
   };
 }
