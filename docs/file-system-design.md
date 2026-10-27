@@ -189,6 +189,7 @@ drives              — 存储节点，内嵌完整连接配置（type / host / 
 | `password` | VARCHAR | AList 密码 |
 | `description` | VARCHAR | 描述 |
 | `banNSFW` | TINYINT | 是否禁止 NSFW 内容 |
+| `librarySync` | TINYINT | 是否参与番剧库识别/覆盖判定，默认 1；测试/归档节点设 0 |
 | `enabled` | TINYINT | 是否启用 |
 | `isDefault` | TINYINT | 是否默认节点 |
 | `sortOrder` | INT | 排序 |
@@ -267,13 +268,35 @@ GET /v2/anime/file?id=1&drive=tky1&endpoint=1
 
 ### 3.1 扫盘任务与番剧识别
 
-扫盘本身只维护 file_index 与真实文件系统的一致性。`pnpm sync` 在扫盘完成后执行一次番剧识别：从 enabled drive 的活跃索引中提取 `/年/分类/番剧名+末尾数字` 三层目录，与 anime 表对比后自动新增番剧、恢复此前软删除的番剧。无法解析的目录只报告，不写入。
+扫盘本身只维护 file_index 与真实文件系统的一致性。`pnpm sync` 在扫盘完成后执行一次番剧识别：从 `enabled=1 AND library_sync=1` 的 drive 活跃索引中提取 `/年/分类/番剧名+末尾数字` 三层目录，与 anime 表对比后自动新增番剧、恢复此前软删除的番剧。无法解析的目录只报告，不写入。
 
-为避免旧版「索引缺失即删库」的刚性行为：
+**库范围（library scope）**：`drives.library_sync` 区分「番剧库镜像节点」与「测试/归档节点」。`library_sync=0` 的节点仍会正常扫盘并服务文件列表/下载，但不参与新增识别、恢复与缺失覆盖判定。生产中的 `r2-test` 这类测试节点应设为 0，避免其少量测试数据把 `completeGroups` 拉成恒空，或反过来在停用其他节点后错误放行缺失判定。
+
+**扫描健康闸门**：识别只信任已落库的扫描健康字段，不读取 API 进程内的 `ScanReport`。每个 `enabled=1 AND library_sync=1` 节点必须同时满足：
+
+- `drives.last_scan_ok = 1`；
+- `drives.last_scan_at` 非空且距今不超过 24 小时；
+- `drives.last_scan_rows >= 0`。
+
+`previewLibrarySync()` 返回 `scanHealthy`、`blockedReason`、`canApply`。任一节点扫描失败、尚未扫描或索引过期时 `canApply=false`，`missing` 仍会计算用于诊断，但 `canMarkMissing` 恒为 false；`applyLibrarySync()` 在写入任何数据前以 `LibrarySyncRejectedError` 拒绝（管理端返回 400）。cron 同样只在全量扫描 `report.ok=true` 后调用 apply。
+
+**当前阶段的行为边界**：
 
 - 自动识别只做新增与恢复，不自动删除；
-- 缺失只在该 `年/分类` 被所有 enabled drive 的活跃索引覆盖时报告；任一节点扫描失败、索引不完整或仅挂载部分内容时，该分类不参与缺失判断；
-- 管理员可通过 `GET /v2/admin/anime/library/preview` 查看识别结果，再通过 `POST /v2/admin/anime/library/sync` 显式执行（可选 `markMissing`）。
+- `markMissing` 字段仅为管理端请求兼容而保留，`applyLibrarySync({ markMissing: true })` 会直接拒绝且不产生任何写入；后台预览不再暴露该选项；
+- 缺失列表仅是诊断信息（「索引中未见」），不提供自动标记删除；
+- 缺失只在该 `年/分类` 被所有 enabled + library_sync 节点的活跃索引覆盖时计算；测试/归档节点不影响覆盖判定。
+
+**发现阶段的数据质量**：
+
+- 目录名中的 `[NSFW]`（大小写不敏感）会置 `anime.nsfw=1`，并从回退标题中剥离；
+- 回退标题会剥离 `[NSFW]`、`[BDRip]`、`[Ma10p]`、`[WEBRip]`、`[HEVC]`、`[10bit]`、`[1080p]`、`[2160p]` 与重复空白，其它方括号内容（如 `[剧场版]`）保留；
+- 若 Bangumi subjects 缓存命中，标题优先取 `name_cn`，其次 `name`，缓存标记 `nsfw=1` 时同样置 `anime.nsfw=1`；按 bgmid 批量查询，`000000` 哨兵不参与查询；
+- `anime.name` 始终保留目录原始名称（上传匹配依赖它），清洗后的标题只写入 `anime.title`；
+- `(year, type, name)` 的匹配 key 会折叠空白，因此仅空格差异不会重复入库；同一 bgmid 已存在于不同 key 时不会自动插入，而是进入 `unmatched` 供人工确认改名/重复；
+- `unmatched` 按 path 跨节点去重，并附带命中该路径的 `driveIds`。
+
+管理员可通过 `GET /v2/admin/anime/library/preview` 查看识别结果（含 `scanHealthy` / `blockedReason` / `canApply`），再通过 `POST /v2/admin/anime/library/sync` 显式执行新增与恢复。
 
 ```
 ┌─────────────────────────────────────────────────────────────┐

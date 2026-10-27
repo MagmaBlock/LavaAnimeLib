@@ -31,6 +31,8 @@ interface DriveRecordBase {
   banNSFW: boolean;
   enabled: boolean;
   isDefault: boolean;
+  /** 是否参与番剧库识别与覆盖判定（测试/归档节点应设为 false） */
+  librarySync: boolean;
   sortOrder: number;
   createdAt: Date | null;
   updatedAt: Date | null;

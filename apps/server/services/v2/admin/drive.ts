@@ -23,6 +23,7 @@ export function mapDriveRecord(row: typeof drives.$inferSelect): DriveRecord {
     banNSFW: toBoolean(row.banNSFW),
     enabled: toBoolean(row.enabled),
     isDefault: toBoolean(row.isDefault),
+    librarySync: toBoolean(row.librarySync),
     sortOrder: row.sortOrder,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
@@ -39,6 +40,7 @@ function toInsertValue(input: DriveUpsertInput): typeof drives.$inferInsert {
     banNSFW: toTinyInt(input.banNSFW),
     enabled: toTinyInt(input.enabled),
     isDefault: toTinyInt(input.isDefault),
+    librarySync: input.librarySync === false ? 0 : 1,
     sortOrder: input.sortOrder,
   };
 }

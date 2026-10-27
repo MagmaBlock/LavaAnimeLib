@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "../../common/database/connection.js";
+import { fileIndex as fileIndexTable } from "../../common/database/schema/file-index.js";
 import * as s from "../../services/v2/anime/file-index.js";
 
 const DRIVE = "test-drive";
@@ -84,6 +85,40 @@ describe("upsertEntries", () => {
     expect(rows).toHaveLength(2);
     expect(rows.find((r) => r.name === "existing.mkv")!.size).toBe(999);
     expect(rows.find((r) => r.name === "new_file.mkv")!.size).toBe(200);
+  });
+
+  it("超过单批上限时应分批写入并恢复已软删除行", async () => {
+    const entries = Array.from({ length: 1100 }, (_, index) => ({
+      driveId: DRIVE,
+      path: `/batch/f${index}.mkv`,
+      name: `f${index}.mkv`,
+      size: index,
+      type: "file",
+    }));
+
+    await s.upsertEntries(entries);
+
+    const [countRow] = await db
+      .select({ count: sql<number>`COUNT(*)` })
+      .from(fileIndexTable)
+      .where(eq(fileIndexTable.driveId, DRIVE));
+    expect(Number(countRow.count)).toBe(1100);
+
+    await db.execute(
+      sql.raw("UPDATE file_index SET deleted = 1 WHERE drive_id = 'test-drive' AND path = '/batch/f700.mkv'"),
+    );
+
+    await s.upsertEntries(
+      entries.map((entry) =>
+        entry.name === "f700.mkv" ? { ...entry, size: 9999 } : entry,
+      ),
+    );
+
+    const rows = await s.findActiveByDrive(DRIVE, "/batch");
+    expect(rows).toHaveLength(1100);
+    const restored = rows.find((row) => row.name === "f700.mkv")!;
+    expect(restored.deleted).toBe(0);
+    expect(restored.size).toBe(9999);
   });
 
   it("应正确存储 animeId", async () => {
@@ -241,18 +276,52 @@ describe("softDeleteStale", () => {
     expect(bActive[0].name).toBe("2.mkv");
   });
 
-  it("全部保留时返回的 affectedRows 为初始标记数", async () => {
+  it("全部保留时不产生写入", async () => {
     await s.upsertEntries([
       { driveId: DRIVE, path: "/root/all.mkv", name: "all.mkv", type: "file" },
     ]);
 
     const affected = await s.softDeleteStale(DRIVE, "/root", ["/root/all.mkv"]);
-    // 先全删再逐一恢复，affectedRows 反映首轮 UPDATE 影响的行数
-    expect(affected).toBe(1);
+    expect(affected).toBe(0);
 
-    // 但条目实际未被删除
+    // 条目实际未被删除
     const active = await s.findActiveByDrive(DRIVE, "/root");
     expect(active).toHaveLength(1);
+  });
+
+  it("缺失的直接子目录应连同整棵子树一起软删除", async () => {
+    await s.upsertEntries([
+      { driveId: DRIVE, path: "/root/gone", name: "gone", type: "dir" },
+      { driveId: DRIVE, path: "/root/gone/file.mkv", name: "file.mkv", type: "file" },
+      { driveId: DRIVE, path: "/root/gone/sub/deep.mkv", name: "deep.mkv", type: "file" },
+      { driveId: DRIVE, path: "/root/keep.mkv", name: "keep.mkv", type: "file" },
+    ]);
+
+    await s.softDeleteStale(DRIVE, "/root", ["/root/keep.mkv"]);
+
+    const all = await db.select().from(fileIndexTable);
+    const gone = all.filter((row) => row.path.startsWith("/root/gone"));
+    expect(gone).toHaveLength(3);
+    expect(gone.every((row) => row.deleted === 1)).toBe(true);
+
+    const keep = all.find((row) => row.path === "/root/keep.mkv");
+    expect(keep?.deleted).toBe(0);
+  });
+
+  it("仍存在的直接子目录，其深层行不应被软删除", async () => {
+    await s.upsertEntries([
+      { driveId: DRIVE, path: "/root/present", name: "present", type: "dir" },
+      { driveId: DRIVE, path: "/root/present/deep.mkv", name: "deep.mkv", type: "file" },
+    ]);
+
+    const affected = await s.softDeleteStale(DRIVE, "/root", ["/root/present"]);
+    expect(affected).toBe(0);
+
+    const active = await s.findActiveByDrive(DRIVE, "/root");
+    expect(active.map((row) => row.path).sort()).toEqual([
+      "/root/present",
+      "/root/present/deep.mkv",
+    ]);
   });
 
   it("同一路径在其他 drive 下不受影响", async () => {

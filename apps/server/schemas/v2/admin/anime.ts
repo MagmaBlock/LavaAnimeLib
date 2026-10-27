@@ -29,7 +29,10 @@ export const listAnimeAdminQuerySchema = z.object({
 });
 
 export const librarySyncBodySchema = z.object({
-  /** true = 同时把索引中缺失的番剧标记为已删除; 默认仅报告 */
+  /**
+   * 兼容旧管理端请求。当前阶段固定关闭：传 true 会被服务端拒绝。
+   * 缺失列表仅用于诊断，不会自动标记删除。
+   */
   markMissing: z.boolean().optional().default(false),
 });
 

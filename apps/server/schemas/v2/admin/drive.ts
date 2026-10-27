@@ -21,6 +21,8 @@ export const driveBodySchema = z.object({
   banNSFW: z.boolean().default(false),
   enabled: z.boolean().default(true),
   isDefault: z.boolean().default(false),
+  /** 是否参与番剧库识别；测试/归档节点设为 false, 默认 true */
+  librarySync: z.boolean().default(true),
   sortOrder: z.number().int().default(0),
 });
 
